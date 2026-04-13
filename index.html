@@ -1103,11 +1103,11 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
     </div>
     <div class="page pp" id="pg-products">
       <div id="products-actions"></div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
-        <select class="fs" id="product-client-filter" onchange="renderProducts()">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:nowrap">
+        <select class="fs" id="product-client-filter" onchange="renderProducts()" style="flex:1;min-width:0">
           <option value="">전체 거래처</option>
         </select>
-        <select class="fs" id="product-category-filter" onchange="renderProducts()">
+        <select class="fs" id="product-category-filter" onchange="renderProducts()" style="flex:1;min-width:0">
           <option value="">전체 카테고리</option>
           <option value="캡(속캡, 마개 등)">캡(속캡, 마개 등)</option>
           <option value="유리병">유리병</option>
@@ -1119,6 +1119,10 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
           <option value="스프레이">스프레이</option>
           <option value="스프레이건">스프레이건</option>
           <option value="스포이드">스포이드</option>
+        </select>
+        <select class="fs" id="product-sort-filter" onchange="renderProducts()" style="flex:1;min-width:0">
+          <option value="latest">최신순</option>
+          <option value="name">가나다순</option>
         </select>
       </div>
       <div id="product-requests-list"></div>
@@ -3939,6 +3943,10 @@ function renderProducts(){
           <option value="스프레이건">스프레이건</option>
           <option value="스포이드">스포이드</option>
         </select>
+        <select class="fs" id="product-sort-filter" onchange="renderProducts()">
+          <option value="latest">최신순</option>
+          <option value="name">가나다순</option>
+        </select>
       `;
       const actions = document.getElementById('products-actions');
       if(actions) actions.insertAdjacentElement('afterend', bar);
@@ -4186,6 +4194,7 @@ function renderProducts(){
 
     const clientFilter=(document.getElementById('product-client-filter')?.value||'').trim();
     const categoryFilter=(document.getElementById('product-category-filter')?.value||'').trim();
+    const sortFilter=(document.getElementById('product-sort-filter')?.value||'latest').trim();
     let list=[...(DATA.products||[])];
     list = normalizeListForRole(list);
 
@@ -4197,7 +4206,17 @@ function renderProducts(){
       list = list.filter(p => (p.cat || '').trim() === categoryFilter);
     }
 
-    list.sort((a,b)=> productTimeKey(b).localeCompare(productTimeKey(a)));
+    const sortProducts = (items=[])=>{
+      const copied = [...items];
+      if(sortFilter === 'name'){
+        copied.sort((a,b)=> (displayProductName(a)||'').localeCompare((displayProductName(b)||''),'ko'));
+      }else{
+        copied.sort((a,b)=> productTimeKey(b).localeCompare(productTimeKey(a)));
+      }
+      return copied;
+    };
+
+    list = sortProducts(list);
 
     const categories = (typeof window.getAllProductCategories === 'function')
       ? window.getAllProductCategories()
@@ -4256,7 +4275,7 @@ function renderProducts(){
 
       categories.forEach(cat=>{
         if(!grouped[cat].length) return;
-        grouped[cat].sort((a,b)=> productTimeKey(b).localeCompare(productTimeKey(a)));
+        grouped[cat] = sortProducts(grouped[cat]);
         html += `
           <div style="margin:16px 0 8px;padding:0 2px;">
             <div style="display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;background:rgba(124,92,252,.10);color:var(--accent);font-size:11px;font-weight:800;border:1px solid rgba(124,92,252,.18);letter-spacing:-.1px;">${cat}</div>
@@ -4266,12 +4285,12 @@ function renderProducts(){
       });
 
       if(uncategorized.length){
-        uncategorized.sort((a,b)=> productTimeKey(b).localeCompare(productTimeKey(a)));
+        const sortedUncategorized = sortProducts(uncategorized);
         html += `
           <div style="margin:16px 0 8px;padding:0 2px;">
             <div style="display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;background:#f5f4ff;color:var(--text2);font-size:11px;font-weight:800;border:1px solid var(--border);">기타</div>
           </div>
-          ${uncategorized.map(cardHTML).join('')}
+          ${sortedUncategorized.map(cardHTML).join('')}
         `;
       }
     }
