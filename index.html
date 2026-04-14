@@ -1574,6 +1574,20 @@ function displayProductName(p){
   return spec ? `[${spec}] ${name}` : name;
 }
 
+function orderMatchesProductName(order, productName){
+  const base=((productName||'')+'').trim();
+  if(!base || !order) return false;
+  const raw=((order.product||'')+'').trim();
+  const rawName=((order.productName||'')+'').trim();
+  if(raw===base || rawName===base) return true;
+  const display=rawName && rawName!==raw
+    ? (String(order.spec||'').trim() ? `[${String(order.spec||'').trim()}] ${rawName}` : rawName)
+    : raw;
+  if(display===base) return true;
+  const stripped=raw.replace(/^\s*\[[^\]]+\]\s*/, '').trim();
+  return stripped===base;
+}
+
 function getOrderDisplayProduct(o){
   if(!o) return '';
   const raw=((o.product)||'').toString().trim();
@@ -2365,7 +2379,7 @@ function getVisibleProductsForOrderClient(cid){
   return list;
 }
 function getLatestOrderForProduct(productName){
-  const list=(DATA.orders||[]).filter(o=>o.product===productName).sort((a,b)=>{
+  const list=(DATA.orders||[]).filter(o=>orderMatchesProductName(o, productName)).sort((a,b)=>{
     const ad=(a.date||'')+(a.id||'');
     const bd=(b.date||'')+(b.id||'');
     return bd.localeCompare(ad);
@@ -2498,10 +2512,11 @@ function submitOrderRequest(){
   const prod=(DATA.products||[]).find(p=>p.id===pid);
   if(!prod){ toast('품목 정보를 찾을 수 없습니다.'); return; }
   const newId='REQ-'+Date.now();
+  const displayName=typeof displayProductName==='function' ? displayProductName(prod) : (prod.name||'');
   fbSet(`orders/${newId}`,{
     id:newId,
     cid:me.cid,
-    product:prod.name,
+    product:displayName,
     productName:prod.name,
     pid:prod.id||'',
     spec:(prod.spec||''),
@@ -2516,7 +2531,7 @@ function submitOrderRequest(){
     requestStatus:'requested',
     hist:[{s:'payment_pending',d:requestDate}]
   });
-  addNotif('📝 신규 발주 요청', `${typeof displayProductName==='function'?displayProductName(prod):prod.name} ${qty.toLocaleString()}개 요청`);
+  addNotif('📝 신규 발주 요청', `${displayName} ${qty.toLocaleString()}개 요청`);
   toast('신규 발주 요청이 등록됐습니다.');
   closeOrderRequestSheet();
   setTimeout(()=>{ if(typeof goTab==='function') goTab('myorders'); }, 80);
@@ -2757,7 +2772,8 @@ function submitOrder(){
   const prod=(DATA.products||[]).find(p=>p.id===pid);
   const newId='ORD-'+Date.now();
   const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
-  fbSet(`orders/${newId}`,{id:newId,cid,product:prod.name,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}]});
+  const displayName=typeof displayProductName==='function' ? displayProductName(prod) : (prod.name||'');
+  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}]});
   addNotif('🆕 신규 발주',`${prod.name} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
   closeOrderSheet();
@@ -3460,7 +3476,7 @@ function toast(msg){
 
 // ===== v12 override start =====
 function latestOrderForProductName(productName){
-  const list=(DATA.orders||[]).filter(o=>o.product===productName);
+  const list=(DATA.orders||[]).filter(o=>orderMatchesProductName(o, productName));
   if(!list.length) return null;
   return list.sort((a,b)=>{
     const da=(a.date||'').toString();
@@ -3560,7 +3576,7 @@ function openNewOrder(){
   (me.role==='admin' ? (DATA.products||[]) : buyerProducts(me.cid)).forEach(p=>{
     const o=document.createElement('option');
     o.value=p.id;
-    o.textContent=`${p.name} (${(p.price||0).toLocaleString()}원/${p.unit}, VAT포함)`;
+    o.textContent=`${displayProductName(p)} (${(p.price||0).toLocaleString()}원/${p.unit}, VAT포함)`;
     ps.appendChild(o);
   });
   document.getElementById('no-qty').value='';
@@ -3590,8 +3606,9 @@ function submitOrder(){
   const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
   const buyCnyInput=document.getElementById('no-buycny');
   const buyCny=(isA&&buyCnyInput&&buyCnyInput.value!=='')?Number(buyCnyInput.value):null;
-  fbSet(`orders/${newId}`,{id:newId,cid,product:prod.name,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',buyCny,status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}]});
-  addNotif('🆕 신규 발주',`${prod.name} ${qty.toLocaleString()}개 발주 접수`);
+  const displayName=displayProductName(prod);
+  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',buyCny,status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}]});
+  addNotif('🆕 신규 발주',`${displayName} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
   closeOrderSheet();
 }
@@ -4583,24 +4600,33 @@ function renderProducts(){
       </div>`;
     }).join('');
   }
+  // 합배송의 대표 발주 ID를 구함
+  // - DATA.orders에서 해당 shipmentId를 가진 발주 중 가장 먼저 발견되는 것을 대표로 사용
+  // - Firebase가 orderIds를 객체로 바꾸거나 repId가 없어도 항상 동작
+  function getRepOrderId(shipmentId){
+    const orders = DATA.orders || [];
+    // 1순위: sh.repId가 실제 orders에 있으면 사용
+    const sh = findShipment(shipmentId);
+    if(sh && sh.repId){
+      const found = orders.find(o => o && String(o.id) === String(sh.repId));
+      if(found) return String(sh.repId);
+    }
+    // 2순위: orders에서 해당 shipmentId를 가진 첫 번째 발주를 대표로
+    const first = orders.find(o => o && String(o.shipmentId) === String(shipmentId));
+    if(first) return String(first.id);
+    return null;
+  }
   function isShipmentRepOrder(o){
     if(!o || !o.shipmentId) return false;
-    const sh=findShipment(o.shipmentId);
-    if(!sh) return false;
-    const ids = normalizeIds(sh.orderIds);
-    const rep = sh.repId || ids[0];
-    // repId가 없거나 repId에 해당하는 발주가 목록에 없으면 첫 번째 발주를 대표로
-    const effectiveRep = (rep && ids.includes(rep)) ? rep : ids[0];
-    return String(effectiveRep) === String(o.id);
+    if(!findShipment(o.shipmentId)) return false;
+    const repId = getRepOrderId(o.shipmentId);
+    return !!repId && repId === String(o.id);
   }
   function isShipmentChildHidden(o){
     if(!o || !o.shipmentId) return false;
-    const sh=findShipment(o.shipmentId);
-    if(!sh) return false;
-    const ids = normalizeIds(sh.orderIds);
-    const rep = sh.repId || ids[0];
-    const effectiveRep = (rep && ids.includes(rep)) ? rep : ids[0];
-    return String(effectiveRep) !== String(o.id);
+    if(!findShipment(o.shipmentId)) return false;
+    const repId = getRepOrderId(o.shipmentId);
+    return !repId || repId !== String(o.id);
   }
 
   window.toggleShipmentPick = function(id){
@@ -4863,20 +4889,23 @@ function renderProducts(){
       const sh=findShipment(o.shipmentId);
       if(!sh) return oldOcHTML ? oldOcHTML(o, showC) : '';
       const totals=shipmentTotals(sh);
-      const rep=shipmentRep(sh) || o;
+      // DATA.orders에서 직접 대표 발주 찾기 (repId 신뢰 안 함)
+      const repId2 = getRepOrderId(sh.id);
+      const rep = (repId2 ? (DATA.orders||[]).find(x=>String(x.id)===repId2) : null) || o;
       const stat=shipmentStatus(sh);
       const pick = (me&&me.role==='admin') ? '' : '';
       return `<div class="oc" onclick="openShipmentDetail('${sh.id}')">
         ${me&&me.role==='admin' ? `<div class="ship-pick-wrap" onclick="event.preventDefault();event.stopPropagation();window.toggleShipmentGroupPick('${sh.id}');return false;" onpointerdown="event.stopPropagation()" ontouchstart="event.stopPropagation()"><button type="button" class="ship-pick-label ${SHIP_GROUP_SELECTED.has(sh.id)?'on':''}" onclick="event.preventDefault();event.stopPropagation();window.toggleShipmentGroupPick('${sh.id}');return false;" onpointerdown="event.stopPropagation()" ontouchstart="event.stopPropagation()" aria-label="합배송 선택" aria-pressed="${SHIP_GROUP_SELECTED.has(sh.id)?'true':'false'}"><span class="ship-check-icon" aria-hidden="true"></span></button></div>`:''}
         <div class="on">${sh.id}<span class="ship-badge">합배송</span></div>
-        <div class="oname">${shipmentTitle(sh)}</div>
-        ${showC?`<div class="ocln">🏢 ${cname(rep.cid)}</div>`:'<div style="margin-bottom:10px"></div>'}
-        <div class="omr">
+        <div class="oname" style="cursor:pointer">${shipmentTitle(sh)}</div>
+        ${showC?`<div class="ocln" style="cursor:pointer">🏢 ${cname(rep.cid)}</div>`:'<div style="margin-bottom:10px"></div>'}
+        <div class="omr" style="cursor:pointer">
           <div class="oms">
             <div class="mi">수량<span class="mv">${totals.qty.toLocaleString()}개</span></div>
             <div class="mi">금액<span class="mv">${fmt(totals.amount)}</span></div>
             <div class="mi">발주일<span class="mv">${totals.date}</span></div>
           </div>
+          <button type="button" class="cbtn" onclick="event.preventDefault();event.stopPropagation();openShipmentDetail('${sh.id}')">상세</button>
         </div>
         ${miniProgressHTML(stat, (shipmentOrders(sh.id).flatMap(x=>x.hist||[])), badge(stat))}
       </div>`;
@@ -4889,9 +4918,9 @@ function renderProducts(){
   const oldRenderOrders = window.renderOrders;
   window.renderOrders = function(){
     if(typeof oldRenderOrders==='function') oldRenderOrders();
-    const reqBox=document.getElementById('order-request-list');
-    if(reqBox && me && me.role==='admin'){
-      reqBox.insertAdjacentHTML('afterbegin', buildShipToolbar());
+    const bulkBox=document.getElementById('orders-bulk-toolbar');
+    if(bulkBox && me && me.role==='admin'){
+      bulkBox.innerHTML = buildShipToolbar();
     }
   };
 })();
