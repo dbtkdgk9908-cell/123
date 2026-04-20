@@ -289,6 +289,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 .cbtn:active{transform:scale(.94);}
 .link-btn{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff!important;font-size:10px;font-weight:700;text-decoration:none;box-shadow:0 3px 10px rgba(217,119,6,.14);position:relative;z-index:3;pointer-events:auto;}
 .link-btn:active{transform:scale(.97);}
+.link-btn.disabled{background:#ece9f3!important;color:#9b95ad!important;box-shadow:none!important;border:1px solid #ddd6e8!important;cursor:pointer!important;pointer-events:auto!important;}
 
 .tag{display:inline-block;padding:2px 7px;border-radius:14px;font-size:9px;font-weight:700;margin-right:4px;margin-top:2px;}
 .tb{background:rgba(124,92,252,.1);color:var(--accent);}
@@ -1292,6 +1293,12 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         <input class="fi" id="p-buylink" placeholder="https://detail.1688.com/...">
       </div>
 
+      <div class="fg" id="p-zhname-wrap" style="display:none">
+        <label class="fl">🇨🇳 중국어 품목명</label>
+        <input class="fi" id="p-zhname" placeholder="예: [30cm] 纤维棒">
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">1688 발주서에 자동으로 사용됩니다</div>
+      </div>
+
       <div class="f2" id="p-admin-meta-wrap" style="display:none">
         <div class="fg"><label class="fl">매입단가(위안)</label><input class="fi" type="number" step="0.01" id="p-buycny" placeholder="예: 2.35"></div>
         <div class="fg"><label class="fl">최근 주문</label><div class="fi" id="p-lastbuy" style="display:flex;align-items:center;color:var(--text2)">-</div></div>
@@ -1911,7 +1918,7 @@ function goTab(id){
   const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주'};
   document.getElementById('tbtitle').textContent=titles[id]||'';
   const fab=document.getElementById('fab');
-  fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');
+  fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');if(id==='poform')fab.className='fab hidden';
   if(id==='clients') fab.onclick=openAddClient;
   else if(id==='products') fab.onclick=(me.role==='admin'?openAddProd:openProductReqSheet);
   else if(id==='stmt') fab.onclick=()=>openStmtSheet(null);
@@ -2912,7 +2919,10 @@ function renderProducts(){
           <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.moq||0).toLocaleString()}</div>
         </div>
         <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-          ${(me&&me.role==='admin'&&p.buyLink) ? `<a class="link-btn" href="${p.buyLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">1688</a>` : ''}
+          ${(me&&me.role==='admin'&&(p.buyLink||p.zhName)) ? (p.buyLink
+            ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
+            : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
+          ) : ''}
           ${me&&me.role==='admin' ? `<button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>
           <button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>` : ``}
         </div>
@@ -2958,6 +2968,7 @@ function openAddProd(reqId=null){
 
     const linkWrap=document.getElementById('p-buylink-wrap');
     if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
 
     const adminWrap=document.getElementById('p-admin-meta-wrap');
     if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
@@ -3017,6 +3028,7 @@ function editProd(id){
 
     const linkWrap=document.getElementById('p-buylink-wrap');
     if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
 
     const adminWrap=document.getElementById('p-admin-meta-wrap');
     if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
@@ -3088,9 +3100,12 @@ function submitProduct(){
     if(me&&me.role==='admin'){
       payload.buyLink=buyLink;
       payload.buyCny=buyCny;
+      const zhNameEl=document.getElementById('p-zhname');
+      if(zhNameEl && zhNameEl.value.trim()) payload.zhName=zhNameEl.value.trim();
     }else{
       if(existing.buyLink) payload.buyLink=existing.buyLink;
       if(existing.buyCny!=null) payload.buyCny=existing.buyCny;
+      if(existing.zhName) payload.zhName=existing.zhName;
     }
 
     if(existing.lastOrderDate) payload.lastOrderDate=existing.lastOrderDate;
@@ -3638,6 +3653,7 @@ function openAddProd(reqId=null){
   if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
   const buyWrap=document.getElementById('p-buylink-wrap');
   if(buyWrap) buyWrap.style.display=(me&&me.role==='admin')?'block':'none';
+  const znWrap2=document.getElementById('p-zhname-wrap');if(znWrap2)znWrap2.style.display=(me&&me.role==='admin')?'block':'none';
   const lastBox=document.getElementById('p-lastbuy');
   if(lastBox) lastBox.textContent='-';
   const sel=document.getElementById('p-client-ids');
@@ -3680,10 +3696,12 @@ function editProd(id){
   document.getElementById('p-cat').value=p.cat||'';
   const buyLinkEl=document.getElementById('p-buylink'); if(buyLinkEl) buyLinkEl.value=p.buyLink||'';
   const buyCnyEl=document.getElementById('p-buycny'); if(buyCnyEl) buyCnyEl.value=(p.buyCny??'');
+  const zhEl=document.getElementById('p-zhname'); if(zhEl) zhEl.value=(p.zhName||'');
   const adminWrap=document.getElementById('p-admin-meta-wrap');
   if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
   const buyWrap=document.getElementById('p-buylink-wrap');
   if(buyWrap) buyWrap.style.display=(me&&me.role==='admin')?'block':'none';
+  const znWrap2=document.getElementById('p-zhname-wrap');if(znWrap2)znWrap2.style.display=(me&&me.role==='admin')?'block':'none';
   const last=latestOrderForProductName(p.name);
   const lastBox=document.getElementById('p-lastbuy');
   if(lastBox){
@@ -3749,7 +3767,10 @@ function renderProducts(){
           <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.moq||0).toLocaleString()}</div>
         </div>
         <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-          ${(me&&me.role==='admin'&&p.buyLink) ? `<a class="link-btn" href="${p.buyLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">1688</a>` : ''}
+          ${(me&&me.role==='admin'&&(p.buyLink||p.zhName)) ? (p.buyLink
+            ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
+            : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
+          ) : ''}
           <button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>
           <button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>
         </div>
@@ -3805,6 +3826,7 @@ function openAddProd(reqId=null){
 
     const linkWrap=document.getElementById('p-buylink-wrap');
     if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
 
     const adminWrap=document.getElementById('p-admin-meta-wrap');
     if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
@@ -3865,6 +3887,7 @@ function editProd(id){
 
     const linkWrap=document.getElementById('p-buylink-wrap');
     if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
 
     const adminWrap=document.getElementById('p-admin-meta-wrap');
     if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
@@ -3915,9 +3938,12 @@ function submitProduct(){
     if(me&&me.role==='admin'){
       payload.buyLink=buyLink;
       payload.buyCny=buyCny;
+      const zhNameEl=document.getElementById('p-zhname');
+      if(zhNameEl && zhNameEl.value.trim()) payload.zhName=zhNameEl.value.trim();
     }else{
       if(existing.buyLink) payload.buyLink=existing.buyLink;
       if(existing.buyCny!=null) payload.buyCny=existing.buyCny;
+      if(existing.zhName) payload.zhName=existing.zhName;
     }
 
     if(existing.lastOrderDate) payload.lastOrderDate=existing.lastOrderDate;
@@ -3956,7 +3982,10 @@ function renderProducts(){
           <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.moq||0).toLocaleString()}</div>
         </div>
         <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-          ${(me&&me.role==='admin'&&p.buyLink) ? `<a class="link-btn" href="${p.buyLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">1688</a>` : ''}
+          ${(me&&me.role==='admin'&&(p.buyLink||p.zhName)) ? (p.buyLink
+            ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
+            : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
+          ) : ''}
           <button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>
           <button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>
         </div>
@@ -4048,7 +4077,7 @@ function renderProducts(){
     const rejectBtn=document.getElementById('p-reject-btn');
     if(rejectBtn) rejectBtn.style.display=reqId?'block':'none';
 
-      ['p-name','p-spec','p-unit','p-price','p-cat','p-moq','p-lead','p-buylink','p-buycny'].forEach(id=>{
+      ['p-name','p-spec','p-unit','p-price','p-cat','p-moq','p-lead','p-note','p-buylink','p-zhname','p-buycny'].forEach(id=>{
         const el=document.getElementById(id);
         if(el) el.value='';
       });
@@ -4072,6 +4101,7 @@ function renderProducts(){
 
       const linkWrap=document.getElementById('p-buylink-wrap');
       if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
       const adminWrap=document.getElementById('p-admin-meta-wrap');
       if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
       const leadInput=document.getElementById('p-lead');
@@ -4130,6 +4160,7 @@ function renderProducts(){
       setVal('p-cat', p.cat||'');
       setVal('p-note', p.memo||'');
       setVal('p-buylink', p.buyLink||'');
+      setVal('p-zhname', p.zhName||'');
       setVal('p-buycny', p.buyCny ?? '');
 
       const sel=document.getElementById('p-client-ids');
@@ -4146,6 +4177,7 @@ function renderProducts(){
 
       const linkWrap=document.getElementById('p-buylink-wrap');
       if(linkWrap) linkWrap.style.display=(me&&me.role==='admin')?'block':'none';
+    const znWrap=document.getElementById('p-zhname-wrap');if(znWrap)znWrap.style.display=(me&&me.role==='admin')?'block':'none';
       const adminWrap=document.getElementById('p-admin-meta-wrap');
       if(adminWrap) adminWrap.style.display=(me&&me.role==='admin')?'grid':'none';
       const leadInput=document.getElementById('p-lead');
@@ -4220,11 +4252,14 @@ function renderProducts(){
 
       if(me&&me.role==='admin'){
         payload.buyLink=(document.getElementById('p-buylink')?.value||'').trim();
+        const zhName=(document.getElementById('p-zhname')?.value||'').trim();
+        payload.zhName=zhName;
         const buyCnyRaw=document.getElementById('p-buycny')?.value;
         payload.buyCny=(buyCnyRaw!=='' && buyCnyRaw!=null) ? Number(buyCnyRaw) : null;
       }else{
         // 구매처 수정 허용: 일반 품목정보는 수정 가능, 관리자 전용 값은 보존
         payload.buyLink = existingById.buyLink || '';
+        payload.zhName = existingById.zhName || '';
         payload.buyCny = (existingById.buyCny!==undefined ? existingById.buyCny : null);
       }
 
@@ -4310,7 +4345,10 @@ function renderProducts(){
             <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.moq||0).toLocaleString()}</div>
           </div>
           <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-            ${(me&&me.role==='admin'&&p.buyLink) ? `<a class="link-btn" href="${p.buyLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">1688</a>` : ''}
+            ${(me&&me.role==='admin'&&(p.buyLink||p.zhName)) ? (p.buyLink
+            ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
+            : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
+          ) : ''}
             ${me ? `<button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>` : ``}
             ${me&&me.role==='admin' ? `<button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>` : ``}
           </div>
@@ -5707,7 +5745,277 @@ function renderProducts(){
     if(e.target===ov) closeCategorySettingSheet();
   });
 })();
+
+// ─── 발주서 기능 ───
+let poItems = [];
+let poItemId = 0;
+
+window.addPoItem = function() {
+  poItemId++;
+  const id = poItemId;
+  poItems.push({id, spec:'', name:'', qty:''});
+  renderPoItems();
+};
+
+window.removePoItem = function(id) {
+  poItems = poItems.filter(i => i.id !== id);
+  renderPoItems();
+  generatePoForm();
+};
+
+window.renderPoItems = function() {
+  const el = document.getElementById('po-items');
+  if (!el) return;
+  if (!poItems.length) {
+    el.innerHTML = '';
+    document.getElementById('po-preview-wrap').style.display = 'none';
+    return;
+  }
+  el.innerHTML = poItems.map(item => `
+    <div style="background:#fff;border:1px solid var(--border2);border-radius:16px;padding:16px;position:relative">
+      <button onclick="removePoItem(${item.id})" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1">×</button>
+      <div style="display:grid;gap:8px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">규격</label>
+          <input type="text" class="inp" placeholder="예: 30cm, 200ml" value="${item.spec}"
+            oninput="updatePoItem(${item.id},'spec',this.value)"
+            style="margin-bottom:0;min-height:44px;font-size:14px">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">품목명 (한국어)</label>
+          <input type="text" class="inp" placeholder="예: 섬유스틱, 디퓨저병" value="${item.name}"
+            oninput="updatePoItem(${item.id},'name',this.value)"
+            style="margin-bottom:0;min-height:44px;font-size:14px">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">수량</label>
+          <input type="number" class="inp" placeholder="예: 500" value="${item.qty}"
+            oninput="updatePoItem(${item.id},'qty',this.value)"
+            style="margin-bottom:0;min-height:44px;font-size:14px">
+        </div>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.updatePoItem = function(id, field, value) {
+  const item = poItems.find(i => i.id === id);
+  if (!item) return;
+  item[field] = value;
+  clearTimeout(window._poTimer);
+  window._poTimer = setTimeout(() => generatePoForm(), 600);
+};
+
+window.generatePoForm = async function() {
+  const valid = poItems.filter(i => i.name && i.qty);
+  if (!valid.length) {
+    document.getElementById('po-preview-wrap').style.display = 'none';
+    return;
+  }
+  const preview = document.getElementById('po-preview');
+  const wrap = document.getElementById('po-preview-wrap');
+  wrap.style.display = 'block';
+  preview.textContent = '번역 중...';
+
+  const itemList = valid.map((item, i) => {
+    const spec = item.spec ? `[${item.spec}] ` : '';
+    return `${i+1}. ${spec}${item.name} - ${item.qty}개`;
+  }).join('\n');
+
+  const prompt = `아래 한국어 품목 리스트를 1688 공급업체에게 보낼 중국어 발주 메시지로 만들어주세요.
+규격(괄호 안)은 그대로 유지하고 품목명만 중국어로 번역하세요.
+수량은 숫자+个 형식으로 표시하세요.
+아래 형식으로만 답하세요 (설명 없이):
+
+您好！请帮我确认以下订单：
+
+[번역된 목록]
+
+请确认库存及价格，谢谢！
+
+품목:
+${itemList}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+    const data = await resp.json();
+    preview.textContent = (data.content?.[0]?.text || '').trim();
+  } catch(e) {
+    const lines = valid.map((item, i) => {
+      const spec = item.spec ? `[${item.spec}] ` : '';
+      return `${i+1}. ${spec}${item.name} - ${item.qty}个`;
+    }).join('\n');
+    preview.textContent = `您好！请帮我确认以下订单：\n\n${lines}\n\n请确认库存及价格，谢谢！`;
+  }
+};
+
+window.copyPoText = function() {
+  const text = document.getElementById('po-preview').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('po-copy-msg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  });
+};
+
+// ─── 1688 발주 시트 ───
+let _po1688 = {id:'', name:'', spec:'', link:'', zh:''};
+
+window.open1688Sheet = async function(id, name, spec, link, zhName) {
+  _po1688 = {id, name, spec, link, zh: zhName||''};
+  document.getElementById('po1688-title').textContent = name || '품목';
+  document.getElementById('po1688-spec').textContent = spec ? `[${spec}]` : '';
+  document.getElementById('po1688-qty').value = '';
+  document.getElementById('po1688-preview-wrap').style.display = 'none';
+  document.getElementById('po1688-copy-msg').style.display = 'none';
+  const linkEl = document.getElementById('po1688-link');
+  if (linkEl) {
+    if (link) {
+      linkEl.href = link;
+      linkEl.style.background = '#fff7ed';
+      linkEl.style.color = '#ea580c';
+      linkEl.style.border = '1.5px solid #fed7aa';
+      linkEl.style.pointerEvents = 'auto';
+      linkEl.style.cursor = 'pointer';
+      linkEl.setAttribute('target','_blank');
+      linkEl.removeAttribute('aria-disabled');
+    } else {
+      linkEl.removeAttribute('href');
+      linkEl.style.background = '#ece9f3';
+      linkEl.style.color = '#9b95ad';
+      linkEl.style.border = '1.5px solid #ddd6e8';
+      linkEl.style.pointerEvents = 'none';
+      linkEl.style.cursor = 'not-allowed';
+      linkEl.setAttribute('aria-disabled','true');
+    }
+  }
+  document.getElementById('po1688-overlay').style.display = 'flex';
+
+  if (zhName) {
+    document.getElementById('po1688-zh').textContent = zhName;
+    document.getElementById('po1688-qty').disabled = false;
+    document.getElementById('po1688-qty').placeholder = '수량 입력';
+    update1688Preview();
+    return;
+  }
+
+  document.getElementById('po1688-zh').textContent = '번역 중...';
+  document.getElementById('po1688-qty').disabled = true;
+  document.getElementById('po1688-qty').placeholder = '번역 완료 후 입력하세요';
+
+  // Claude API로 번역 (zhName 없을 때만)
+  try {
+    const specPart = spec ? `[${spec}] ` : '';
+    const prompt = `"${specPart}${name}" 을 중국어로 번역해주세요. 규격(괄호 안)은 그대로 유지하고 품목명만 번역하세요. 번역 결과만 답하세요. 예: [30cm] 纤维棒`;
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+    const data = await resp.json();
+    _po1688.zh = (data.content?.[0]?.text || name).trim();
+  } catch(e) {
+    _po1688.zh = name;
+  }
+  document.getElementById('po1688-zh').textContent = _po1688.zh;
+  document.getElementById('po1688-qty').disabled = false;
+  document.getElementById('po1688-qty').placeholder = '수량 입력';
+  update1688Preview();
+};
+
+window.close1688Sheet = function() {
+  document.getElementById('po1688-overlay').style.display = 'none';
+};
+
+window.update1688Preview = function() {
+  const qty = document.getElementById('po1688-qty').value;
+  const wrap = document.getElementById('po1688-preview-wrap');
+  if (!qty || !_po1688.zh) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('po1688-preview').textContent =
+    `您好！请帮我确认以下订单：\n\n1. ${_po1688.zh} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+};
+
+window.copy1688Text = function() {
+  const qty = document.getElementById('po1688-qty').value;
+  if (!qty) { toast('수량을 입력해주세요'); return; }
+  const text = `您好！请帮我确认以下订单：\n\n1. ${_po1688.zh} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('po1688-copy-msg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  });
+};
 </script>
 
+
+    <div style="font-size:13px;color:var(--text3)">품목을 입력하면 자동으로 중국어 발주서를 생성해요</div>
+  </div>
+
+  <!-- 품목 입력 -->
+  <div id="po-items" style="display:grid;gap:10px;margin-bottom:16px"></div>
+
+  <button type="button" onclick="addPoItem()" style="width:100%;padding:14px;border:2px dashed var(--border2);border-radius:16px;background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:20px">
+    + 품목 추가
+  </button>
+
+  <!-- 발주서 미리보기 -->
+  <div id="po-preview-wrap" style="display:none">
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.5px">발주서 미리보기</div>
+    <div id="po-preview" style="background:#fff;border:1px solid var(--border2);border-radius:16px;padding:20px;font-size:15px;line-height:2;white-space:pre-wrap;color:var(--text);margin-bottom:12px"></div>
+    <button type="button" onclick="copyPoText()" style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:-.2px">
+      📋 텍스트 복사
+    </button>
+    <div id="po-copy-msg" style="text-align:center;font-size:13px;color:var(--green);font-weight:600;margin-top:10px;display:none">✅ 복사됐어요! 1688 채팅창에 붙여넣으세요</div>
+  </div>
+</div>
+
+<!-- 1688 발주 시트 -->
+<div id="po1688-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center" onclick="if(event.target===this)close1688Sheet()">
+  <div id="po1688-sheet" style="background:#fff;border-radius:24px 24px 0 0;padding:20px 20px 40px;width:100%;max-height:85vh;overflow-y:auto;animation:sheetUp .25s ease">
+    <div style="width:40px;height:4px;background:#E0E0E0;border-radius:2px;margin:0 auto 20px"></div>
+    <div id="po1688-title" style="font-size:18px;font-weight:900;letter-spacing:-.4px;margin-bottom:4px"></div>
+    <div id="po1688-spec" style="font-size:13px;color:var(--text3);margin-bottom:20px"></div>
+
+    <!-- 번역 미리보기 -->
+    <div style="background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:16px;padding:16px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:#9a3412;letter-spacing:.5px;margin-bottom:6px">🇨🇳 중국어 번역</div>
+      <div id="po1688-zh" style="font-size:16px;font-weight:700;color:#1c1917">번역 중...</div>
+    </div>
+
+    <!-- 수량 입력 -->
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:8px">수량</label>
+      <input type="number" id="po1688-qty" placeholder="수량 입력" style="width:100%;padding:16px;border:1.5px solid var(--border2);border-radius:14px;font-size:18px;font-weight:700;font-family:inherit;outline:none;color:var(--text);background:#fafafa" oninput="update1688Preview()">
+    </div>
+
+    <!-- 발주서 미리보기 -->
+    <div id="po1688-preview-wrap" style="display:none;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:8px">발주서 미리보기</div>
+      <div id="po1688-preview" style="background:#f8f7ff;border:1px solid var(--border2);border-radius:14px;padding:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+    </div>
+
+    <!-- 버튼들 -->
+    <button type="button" onclick="copy1688Text()" style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">
+      📋 발주서 복사
+    </button>
+    <a id="po1688-link" href="#" target="_blank" style="display:block;width:100%;padding:16px;background:#fff7ed;color:#ea580c;border:1.5px solid #fed7aa;border-radius:14px;font-size:16px;font-weight:700;text-align:center;text-decoration:none">
+      🔗 1688 링크 열기
+    </a>
+    <div id="po1688-copy-msg" style="text-align:center;font-size:13px;color:var(--green);font-weight:600;margin-top:12px;display:none">✅ 복사됐어요! 1688 채팅창에 붙여넣으세요</div>
+  </div>
+</div>
 </body>
 </html>
