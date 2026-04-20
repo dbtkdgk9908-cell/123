@@ -5875,7 +5875,8 @@ let _po1688 = {id:'', name:'', spec:'', link:'', zh:''};
 
 function formatPo1688Name(spec, name) {
   const safeSpec = (spec || '').trim();
-  const safeName = (name || '').trim();
+  let safeName = (name || '').trim();
+  safeName = safeName.replace(/^\s*\[[^\]]*\]\s*/, '');
   if (safeSpec && safeName) return `[${safeSpec}] ${safeName}`;
   return safeName || (safeSpec ? `[${safeSpec}]` : '');
 }
