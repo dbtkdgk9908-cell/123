@@ -1164,13 +1164,14 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
       </div>
       <div class="memobox" id="d-request-box" style="display:none;background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.18);margin-bottom:14px"><span style="font-size:13px;color:#9a3412" id="d-request-text"></span></div>
       <div class="divider"></div>
-      <div id="d-tracking-sec">
+      <div id="d-tracking-sec" style="display:none">
         <div class="sec-lbl">🛒 1688 주문번호</div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <input class="fi" id="d-tracking-no" placeholder="1688 주문번호 입력" style="flex:1;font-size:14px;font-family:monospace;letter-spacing:0.02em" oninput="saveTrackingNo()">
-          <button onclick="open1688Order()" style="padding:0 14px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">1688 확인</button>
+          <input class="fi" id="d-tracking-no" placeholder="1688 주문번호 입력" style="flex:1;font-size:14px;font-family:monospace;letter-spacing:0.02em">
+          <button onclick="saveTrackingNo(true)" style="padding:0 14px;background:#f5f4fb;border:1px solid rgba(94,75,196,.12);border-radius:12px;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">저장</button>
+          <button onclick="open1688Order()" style="padding:0 14px;background:linear-gradient(135deg,#f97316,#ea580c);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">확인</button>
         </div>
-        <div style="font-size:11px;color:var(--text3)">* 주문번호 입력 후 저장됩니다. '1688 확인' 버튼을 누르면 해당 주문 페이지로 바로 이동합니다.</div>
+        <div style="font-size:11px;color:var(--text3)">* 저장은 주문번호만 저장하고, 확인은 저장 후 해당 주문 페이지로 바로 이동합니다.</div>
       </div>
       <div class="divider"></div>
       <button class="bfull" id="d-stmt-btn" style="background:rgba(34,192,132,.1);color:var(--green);border:1.5px solid rgba(34,192,132,.25);font-size:14px" onclick="openStmtFromOrder()">📄 거래명세서 발행</button>
@@ -2276,7 +2277,7 @@ function openDetail(id){
     <div class="dc"><div class="dcl">VAT</div><div class="dcv">${fmt(orderVat(o))}</div></div>
     <div class="dc"><div class="dcl">합계</div><div class="dcv">${fmt(orderTotal(o))}</div></div>
     <div class="dc"><div class="dcl">발주일</div><div class="dcv">${o.date}</div></div>
-    ${o.order1688 ? `<div class="dc" style="grid-column:1/-1"><div class="dcl">1688 주문번호</div><div class="dcv" style="font-family:monospace;font-size:12px;display:flex;align-items:center;gap:8px">${o.order1688}<a href="https://trade.1688.com/order/order_detail.htm?orderId=${o.order1688}" target="_blank" style="font-size:10px;color:var(--accent);font-weight:700;text-decoration:none;background:rgba(109,93,246,.1);padding:2px 8px;border-radius:8px">1688 확인 →</a></div></div>` : ''}
+    ${(me.role==='admin' && o.order1688) ? `<div class="dc" style="grid-column:1/-1"><div class="dcl">1688 주문번호</div><div class="dcv" style="font-family:monospace;font-size:12px;display:flex;align-items:center;gap:8px">${o.order1688}<a href="https://trade.1688.com/order/order_detail.htm?orderId=${o.order1688}" target="_blank" style="font-size:10px;color:var(--accent);font-weight:700;text-decoration:none;background:rgba(109,93,246,.1);padding:2px 8px;border-radius:8px">1688 확인 →</a></div></div>` : ''}
     `
   const rb=document.getElementById('d-request-box');
   const rt=document.getElementById('d-request-text');
@@ -2334,9 +2335,12 @@ function changeStatus(oid,ns){
   setTimeout(()=>openDetail(oid),300);
 }
 
-function saveTrackingNo(){
-  const no=document.getElementById('d-tracking-no').value.trim();
-  if(currentOrderId) fbUpdate(`orders/${currentOrderId}`,{trackingNo:no, order1688:no});
+function saveTrackingNo(showToast=false){
+  const input=document.getElementById('d-tracking-no');
+  const no=input?input.value.trim():'';
+  if(!currentOrderId) return;
+  fbUpdate(`orders/${currentOrderId}`,{trackingNo:no, order1688:no});
+  if(showToast) toast('1688 주문번호가 저장됐습니다.');
 }
 function updateOrderStatusByRule(oid, nextStatus, note){
   const o=(DATA.orders||[]).find(x=>x.id===oid); if(!o) return;
@@ -5869,10 +5873,17 @@ window.copyPoText = function() {
 // ─── 1688 발주 시트 ───
 let _po1688 = {id:'', name:'', spec:'', link:'', zh:''};
 
+function formatPo1688Name(spec, name) {
+  const safeSpec = (spec || '').trim();
+  const safeName = (name || '').trim();
+  if (safeSpec && safeName) return `[${safeSpec}] ${safeName}`;
+  return safeName || (safeSpec ? `[${safeSpec}]` : '');
+}
+
 window.open1688Sheet = async function(id, name, spec, link, zhName) {
   _po1688 = {id, name, spec, link, zh: zhName||''};
-  document.getElementById('po1688-title').textContent = name || '품목';
-  document.getElementById('po1688-spec').textContent = spec ? `[${spec}]` : '';
+  document.getElementById('po1688-title').textContent = formatPo1688Name(spec, name) || '품목';
+  document.getElementById('po1688-spec').textContent = '';
   document.getElementById('po1688-qty').value = '';
   document.getElementById('po1688-preview-wrap').style.display = 'none';
   document.getElementById('po1688-copy-msg').style.display = 'none';
@@ -5900,7 +5911,7 @@ window.open1688Sheet = async function(id, name, spec, link, zhName) {
   document.getElementById('po1688-overlay').style.display = 'flex';
 
   if (zhName) {
-    document.getElementById('po1688-zh').textContent = zhName;
+    document.getElementById('po1688-zh').textContent = formatPo1688Name(spec, zhName);
     document.getElementById('po1688-qty').disabled = false;
     document.getElementById('po1688-qty').placeholder = '수량 입력';
     update1688Preview();
@@ -5929,7 +5940,7 @@ window.open1688Sheet = async function(id, name, spec, link, zhName) {
   } catch(e) {
     _po1688.zh = name;
   }
-  document.getElementById('po1688-zh').textContent = _po1688.zh;
+  document.getElementById('po1688-zh').textContent = formatPo1688Name(_po1688.spec, _po1688.zh);
   document.getElementById('po1688-qty').disabled = false;
   document.getElementById('po1688-qty').placeholder = '수량 입력';
   update1688Preview();
@@ -5944,14 +5955,16 @@ window.update1688Preview = function() {
   const wrap = document.getElementById('po1688-preview-wrap');
   if (!qty || !_po1688.zh) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
+  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
   document.getElementById('po1688-preview').textContent =
-    `您好！请帮我确认以下订单：\n\n1. ${_po1688.zh} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+    `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
 };
 
 window.copy1688Text = function() {
   const qty = document.getElementById('po1688-qty').value;
   if (!qty) { toast('수량을 입력해주세요'); return; }
-  const text = `您好！请帮我确认以下订单：\n\n1. ${_po1688.zh} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
+  const text = `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
   navigator.clipboard.writeText(text).then(() => {
     const msg = document.getElementById('po1688-copy-msg');
     msg.style.display = 'block';
