@@ -1500,6 +1500,20 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
     <div class="sh-bd">
       <div class="sec-lbl">진행 현황</div>
       <div class="pscroll" style="margin-bottom:14px"><div class="ptrack" id="ship-progress"></div></div>
+
+      <!-- 합배송 일괄 진행현황 변경 (관리자 전용) -->
+      <div id="ship-bulk-status-panel" style="display:none;margin-bottom:20px">
+        <div style="background:linear-gradient(135deg,#f0edff,#faf8ff);border:1.5px solid rgba(109,93,246,.18);border-radius:18px;padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-size:13px;font-weight:900;color:var(--text);letter-spacing:-0.02em">📦 합배송 전체 상태 일괄 변경</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">단계를 선택하면 전체 품목이 한 번에 바뀝니다</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="ship-bulk-step-btns"></div>
+        </div>
+      </div>
+
       <div id="ship-items"></div>
       <div id="ship-admin-actions" style="display:none;margin-top:12px">
         <button class="bfull" style="margin-bottom:10px;background:linear-gradient(135deg,#22c084,#16a34a);color:#fff;border:1.5px solid rgba(22,163,74,.22);font-size:15px;font-weight:900;box-shadow:0 10px 24px rgba(34,192,132,.28), inset 0 1px 0 rgba(255,255,255,.22);letter-spacing:-0.02em" onclick="openShipmentStmtSheetCurrent()">🧾 합배송 거래명세서 발행</button>
@@ -4887,6 +4901,34 @@ function renderProducts(){
 
     document.getElementById('ship-items').innerHTML = itemsHtml;
     document.getElementById('ship-admin-actions').style.display = isAdmin ? 'block' : 'none';
+
+    // 합배송 일괄 진행현황 패널 (관리자 전용)
+    const bulkPanel = document.getElementById('ship-bulk-status-panel');
+    const bulkBtns = document.getElementById('ship-bulk-step-btns');
+    if(bulkPanel && bulkBtns){
+      if(isAdmin){
+        // 현재 합배송 전체 대표 상태 계산 (가장 뒤처진 단계 기준)
+        const allStatuses = orders.map(o => stepIdx(normalizeOrderStatusKey(o.status)));
+        const minIdx = Math.min(...allStatuses);
+        bulkBtns.innerHTML = STEPS.map((s, i) => {
+          const isCurrent = (i === minIdx);
+          const isDone = (i < minIdx);
+          return `<button type="button" onclick="changeShipmentGroupStatus('${id}','${s.key}')"
+            style="padding:10px 8px;border-radius:14px;font-size:12px;font-weight:800;cursor:pointer;border:1.5px solid ${isCurrent ? s.color : isDone ? 'rgba(34,192,132,.3)' : 'rgba(94,75,196,.14)'};
+            background:${isCurrent ? s.color+'22' : isDone ? 'rgba(34,192,132,.07)' : '#fff'};
+            color:${isCurrent ? s.color : isDone ? '#16a34a' : 'var(--text2)'};
+            display:flex;align-items:center;gap:6px;transition:all .15s ease"
+            title="${s.label}으로 전체 변경">
+            <span style="font-size:15px">${s.icon}</span>
+            <span style="line-height:1.2">${s.label}${isCurrent ? '<br><span style="font-size:9px;opacity:.7">현재 상태</span>' : ''}</span>
+          </button>`;
+        }).join('');
+        bulkPanel.style.display = 'block';
+      } else {
+        bulkPanel.style.display = 'none';
+      }
+    }
+
     document.getElementById('shipov').classList.add('open');
   };
 
@@ -4910,18 +4952,23 @@ function renderProducts(){
     setTimeout(()=>{ if(CURRENT_SHIPMENT_ID) openShipmentDetail(CURRENT_SHIPMENT_ID); }, 100);
   };
 
-  window.changeShipmentGroupStatus = function(shipmentId, key){
+  window.changeShipmentGroupStatus = async function(shipmentId, key){
     const sh=findShipment(shipmentId);
     if(!sh) return;
     const orders=shipmentOrders(shipmentId);
     if(!orders.length) return;
+    const s=stepOf(key);
+    const ok = await openAppDialog({type:'confirm',title:'전체 상태 변경',message:`합배송 내 ${orders.length}건을\n"${s.icon} ${s.label}"으로 일괄 변경할까요?`,okText:'변경',cancelText:'취소'});
+    if(!ok) return;
     orders.forEach(o=>{
-      const hist=[...(o.hist||[]), {s:key, d:today()}];
+      const hist=[...(o.hist||[])];
+      if(!hist.some(h=>h.s===key)) hist.push({s:key, d:today()});
       const extra=(key==='production')?{requestOnly:false, requestStatus:'', acceptedAt:null}:{};
       fbUpdate(`orders/${o.id}`, {status:key, hist, ...extra});
     });
-    toast('합배송 상태가 변경됐습니다.');
-    setTimeout(()=>{ if(CURRENT_SHIPMENT_ID) openShipmentDetail(CURRENT_SHIPMENT_ID); }, 120);
+    addNotif('📦 합배송 일괄 변경',`${shipmentId} → ${s.icon} ${s.label} (${orders.length}건)`);
+    toast(`합배송 ${orders.length}건 → "${s.label}"로 변경됐습니다.`);
+    setTimeout(()=>{ if(CURRENT_SHIPMENT_ID) openShipmentDetail(CURRENT_SHIPMENT_ID); }, 150);
   };
 
   window.open1688FromShip = function(orderId){
