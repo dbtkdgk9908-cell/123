@@ -1163,108 +1163,75 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
       <div style="border-top:2px dashed rgba(94,75,196,.12);margin-bottom:14px;"></div>
 
       <div style="background:linear-gradient(135deg,#7c5cfc,#a78bfa);border-radius:20px;padding:18px 16px 14px;margin-bottom:16px;color:#fff;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🔢 단가 비교 계산기</div>
-        <div style="font-size:12px;opacity:.85;">기존 단가 vs 신규 단가를 직접 비교해보세요</div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">✨ 연간 얼마나 절감할 수 있을까요?</div>
+        <div style="font-size:12px;opacity:.85;">구매금액을 입력하면 실제 절감액을 바로 확인해드려요</div>
       </div>
 
-      <!-- 단가 입력 -->
+      <!-- 입력 -->
       <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;letter-spacing:-.01em;">📌 단가 입력</div>
-        <div class="f2" style="margin-bottom:0">
+        <div class="f2" style="margin-bottom:14px;">
           <div class="fg" style="margin-bottom:0">
-            <label class="fl">기존 단가 (원, VAT포함)</label>
-            <input class="fi" type="number" id="pc-old-price" placeholder="예: 1200" oninput="calcPriceCmp()" style="font-size:16px;font-weight:900;color:var(--text);">
+            <label class="fl">실제 절감률 <span style="font-size:10px;color:var(--green);font-weight:600;">· 발주 데이터 기반 자동계산</span></label>
+            <div style="position:relative;">
+              <input class="fi" type="number" id="pc-rate-input" step="0.1" readonly style="font-size:22px;font-weight:900;color:var(--accent);padding-right:40px;background:#f7f6ff;cursor:default;border-color:rgba(94,75,196,.15);">
+              <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:900;color:var(--accent);">%</span>
+            </div>
           </div>
           <div class="fg" style="margin-bottom:0">
-            <label class="fl">신규 단가 (원, VAT포함)</label>
-            <input class="fi" type="number" id="pc-new-price" placeholder="예: 980" oninput="calcPriceCmp()" style="font-size:16px;font-weight:900;color:var(--green);">
-          </div>
-        </div>
-      </div>
-
-      <!-- 주문 조건 입력 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;letter-spacing:-.01em;">📦 주문 조건</div>
-        <div class="f2" style="margin-bottom:12px">
-          <div class="fg" style="margin-bottom:0">
-            <label class="fl">1회 주문 수량</label>
-            <input class="fi" type="number" id="pc-qty" placeholder="예: 500" oninput="calcPriceCmp()" style="font-size:16px;font-weight:800;">
-          </div>
-          <div class="fg" style="margin-bottom:0">
-            <label class="fl">연간 주문 횟수</label>
-            <input class="fi" type="number" id="pc-freq" placeholder="예: 12" oninput="calcPriceCmp()" style="font-size:16px;font-weight:800;">
+            <label class="fl">연간 구매금액 (원)</label>
+            <input class="fi" type="number" id="pc-annual-input" placeholder="예: 300000000" oninput="calcRateCmp()" style="font-size:16px;font-weight:800;color:var(--text);">
           </div>
         </div>
+        <!-- 금액 빠른 선택 -->
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">빠른 입력</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button onclick="setPcFreq(12)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">월 1회(12)</button>
-          <button onclick="setPcFreq(6)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">격월(6)</button>
-          <button onclick="setPcFreq(4)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">분기(4)</button>
-          <button onclick="setPcFreq(2)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">반기(2)</button>
-          <button onclick="setPcFreq(1)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">연 1회</button>
+          <button onclick="setPcAnnual(100000000)"  style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">1억</button>
+          <button onclick="setPcAnnual(200000000)"  style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">2억</button>
+          <button onclick="setPcAnnual(300000000)"  style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">3억</button>
+          <button onclick="setPcAnnual(500000000)"  style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">5억</button>
+          <button onclick="setPcAnnual(1000000000)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">10억</button>
         </div>
       </div>
 
-      <!-- 결과 카드 -->
-      <div id="pc-result" style="display:none">
-        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📊 단가 비교</div>
-          <div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <span style="font-size:12px;font-weight:700;color:var(--text2);">기존 단가</span>
-              <span id="pc-old-lbl" style="font-size:14px;font-weight:900;color:var(--text);">-</span>
-            </div>
-            <div style="height:12px;background:#f3f1fd;border-radius:8px;overflow:hidden;">
-              <div id="pc-old-bar" style="height:100%;background:linear-gradient(90deg,#e4c4fc,#c084fc);border-radius:8px;width:100%;transition:width .4s ease;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <span style="font-size:12px;font-weight:700;color:var(--green);">신규 단가</span>
-              <span id="pc-new-lbl" style="font-size:14px;font-weight:900;color:var(--green);">-</span>
-            </div>
-            <div style="height:12px;background:#f3f1fd;border-radius:8px;overflow:hidden;">
-              <div id="pc-new-bar" style="height:100%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:8px;width:80%;transition:width .4s ease;"></div>
-            </div>
-          </div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;">
-            <span style="font-size:13px;font-weight:800;padding:7px 16px;border-radius:20px;" id="pc-rate-txt"></span>
-          </div>
+      <!-- 결과 -->
+      <div id="pc-result" style="display:none;">
+
+        <!-- 메인 절감액 -->
+        <div style="background:linear-gradient(135deg,#18b67a,#0d9160);border-radius:20px;padding:22px 18px;margin-bottom:12px;color:#fff;text-align:center;position:relative;overflow:hidden;">
+          <div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+          <div style="font-size:12px;font-weight:700;opacity:.85;margin-bottom:8px;">연간 절감액</div>
+          <div id="pc-result-main" style="font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:6px;">-</div>
+          <div id="pc-result-badge" style="display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:800;">-% 절감</div>
         </div>
 
+        <!-- 월별 절감액 + 구매금액 비교 -->
         <div class="sg" style="margin-bottom:12px;">
           <div class="sc" style="--c:var(--green);">
-            <div class="sl">1회 주문 절감액</div>
-            <div class="sv" id="pc-save-once">-</div>
-            <div class="ss" id="pc-save-once-sub"></div>
+            <div class="sl">월 절감액</div>
+            <div class="sv" id="pc-result-month">-</div>
+            <div class="ss">연간 ÷ 12</div>
           </div>
           <div class="sc" style="--c:#6d5df6;">
-            <div class="sl">연간 절감액</div>
-            <div class="sv" id="pc-save-year">-</div>
-            <div class="ss" id="pc-save-year-sub"></div>
+            <div class="sl">실제 구매비용</div>
+            <div class="sv" id="pc-result-actual">-</div>
+            <div class="ss" id="pc-result-actual-sub">절감 후 금액</div>
           </div>
         </div>
 
+        <!-- 시각화 바 -->
         <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📋 연간 비용 비교</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-            <div style="background:#f7f6ff;border-radius:14px;padding:12px 8px;">
-              <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;">구분</div>
-              <div style="font-size:12px;font-weight:800;color:var(--text2);">1회 주문액</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;">×<span id="pc-tbl-freq">-</span>회</div>
-              <div style="font-size:12px;font-weight:800;color:var(--text2);">연간 총액</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:12px;font-weight:800;color:var(--text2);">구매금액 대비 절감 비중</div>
+            <div id="pc-result-pct-lbl" style="font-size:13px;font-weight:900;color:var(--accent);"></div>
+          </div>
+          <div style="height:22px;background:#f3f1fd;border-radius:12px;overflow:hidden;margin-bottom:10px;">
+            <div id="pc-result-bar" style="height:100%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:12px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">
+              <span id="pc-bar-label" style="font-size:10px;font-weight:800;color:#fff;white-space:nowrap;"></span>
             </div>
-            <div style="background:linear-gradient(180deg,#fdf4ff,#f7f6ff);border:1px solid rgba(192,132,252,.2);border-radius:14px;padding:12px 8px;">
-              <div style="font-size:10px;color:#a855f7;font-weight:700;margin-bottom:6px;">기존 단가</div>
-              <div id="pc-tbl-old-once" style="font-size:13px;font-weight:900;color:var(--text);">-</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;"> </div>
-              <div id="pc-tbl-old-year" style="font-size:13px;font-weight:900;color:var(--text);">-</div>
-            </div>
-            <div style="background:linear-gradient(180deg,#f0fdf4,#f7fff9);border:1px solid rgba(52,211,153,.25);border-radius:14px;padding:12px 8px;">
-              <div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:6px;">신규 단가</div>
-              <div id="pc-tbl-new-once" style="font-size:13px;font-weight:900;color:var(--green);">-</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;"> </div>
-              <div id="pc-tbl-new-year" style="font-size:13px;font-weight:900;color:var(--green);">-</div>
-            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--text3);">
+            <span>0원</span>
+            <span id="pc-total-lbl">-</span>
           </div>
         </div>
 
@@ -1274,8 +1241,8 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
       <!-- 빈 상태 -->
       <div id="pc-empty" style="text-align:center;padding:40px 20px;color:var(--text3);">
         <div style="font-size:40px;margin-bottom:12px;">💡</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:6px;">단가를 입력해보세요</div>
-        <div style="font-size:12px;line-height:1.7;">기존 단가와 신규 단가, 주문 수량과<br>연간 주문 횟수를 입력하면<br>절감액을 자동으로 계산해드려요</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:6px;">절감률과 구매금액을 입력해보세요</div>
+        <div style="font-size:12px;line-height:1.7;">절감률(%)과 연간 구매금액을 입력하면<br>연간 · 월별 절감액을 바로 계산해드려요</div>
       </div>
     </div>
     <div class="page pp" id="pg-myorders"><button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openOrderRequestSheet()">＋ 신규 발주 요청</button><div class="fw" style="margin-top:0;margin-bottom:12px"><input class="si" id="myosearch" placeholder="🔍 발주번호, 품목 검색..." oninput="renderMyOrders()"><div class="fr"><select class="fs" id="myostatus" onchange="renderMyOrders()"><option value="">전체 상태</option></select></div></div><div id="my-orders"></div></div>
@@ -6210,6 +6177,16 @@ function renderSavingsSummary(){
 
   const totalSaved = orders.reduce((s, o) => s + calcSaved(o), 0);
   const savedOrders = orders.filter(o => calcSaved(o) > 0);
+  // 총 발주금액 대비 절감률 계산 → 계산기에 자동 입력
+  const totalOrderAmt = orders.reduce((s, o) => s + (Number(o.amount)||0), 0);
+  const autoRate = (totalOrderAmt > 0 && totalSaved > 0)
+    ? Math.round((totalSaved / (totalOrderAmt + totalSaved)) * 1000) / 10
+    : 0;
+  const rateInput = document.getElementById('pc-rate-input');
+  if(rateInput && autoRate > 0) {
+    rateInput.value = autoRate;
+    if(typeof calcRateCmp === 'function') calcRateCmp();
+  }
 
   const totalEl = document.getElementById('pc-total-saved');
   const subEl   = document.getElementById('pc-total-saved-sub');
@@ -6289,13 +6266,13 @@ function renderSavingsSummary(){
 
 // ── 단가 비교 (Price Comparison) ─────────────────────────────────────────────
 
-window.setPcFreq = function(n) {
-  document.getElementById('pc-freq').value = n;
-  calcPriceCmp();
+window.setPcAnnual = function(n) {
+  document.getElementById('pc-annual-input').value = n;
+  calcRateCmp();
 };
 
 window.resetPriceCmp = function() {
-  ['pc-old-price','pc-new-price','pc-qty','pc-freq'].forEach(id => {
+  ['pc-rate-input','pc-annual-input'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -6303,16 +6280,14 @@ window.resetPriceCmp = function() {
   document.getElementById('pc-empty').style.display = 'block';
 };
 
-window.calcPriceCmp = function() {
-  const oldP = parseFloat(document.getElementById('pc-old-price').value) || 0;
-  const newP = parseFloat(document.getElementById('pc-new-price').value) || 0;
-  const qty  = parseInt(document.getElementById('pc-qty').value)  || 0;
-  const freq = parseInt(document.getElementById('pc-freq').value) || 0;
+window.calcRateCmp = function() {
+  const rate   = parseFloat(document.getElementById('pc-rate-input').value) || 0;
+  const annual = parseFloat(document.getElementById('pc-annual-input').value) || 0;
 
   const resultEl = document.getElementById('pc-result');
   const emptyEl  = document.getElementById('pc-empty');
 
-  if(!oldP || !newP || !qty || !freq){
+  if(!rate || !annual) {
     resultEl.style.display = 'none';
     emptyEl.style.display  = 'block';
     return;
@@ -6321,70 +6296,29 @@ window.calcPriceCmp = function() {
   resultEl.style.display = 'block';
   emptyEl.style.display  = 'none';
 
-  const diff      = oldP - newP;
-  const saveOnce  = diff * qty;
-  const saveYear  = saveOnce * freq;
-  const oldOnce   = oldP * qty;
-  const newOnce   = newP * qty;
-  const oldYear   = oldOnce * freq;
-  const newYear   = newOnce * freq;
-  const rate      = oldP > 0 ? ((diff / oldP) * 100).toFixed(1) : 0;
+  const saved  = Math.round(annual * rate / 100);
+  const actual = annual - saved;
+  const monthly = Math.round(saved / 12);
 
   const fmt = n => n.toLocaleString('ko-KR') + '원';
+  const fmtShort = n => {
+    if(n >= 100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'') + '억원';
+    if(n >= 10000000)  return (n/10000000).toFixed(1).replace(/\.0$/,'')  + '천만원';
+    if(n >= 10000)     return (n/10000).toFixed(0) + '만원';
+    return fmt(n);
+  };
 
-  // 단가 라벨
-  document.getElementById('pc-old-lbl').textContent = fmt(oldP);
-  document.getElementById('pc-new-lbl').textContent = fmt(newP);
+  document.getElementById('pc-result-main').textContent  = fmtShort(saved);
+  document.getElementById('pc-result-badge').textContent = rate + '% 절감';
+  document.getElementById('pc-result-month').textContent = fmtShort(monthly);
+  document.getElementById('pc-result-actual').textContent = fmtShort(actual);
+  document.getElementById('pc-result-actual-sub').textContent = `연간 ${fmtShort(annual)} 중`;
+  document.getElementById('pc-result-pct-lbl').textContent = rate + '%';
+  document.getElementById('pc-total-lbl').textContent = fmtShort(annual);
 
-  // 바 비율
-  const maxP = Math.max(oldP, newP);
-  document.getElementById('pc-old-bar').style.width = (oldP / maxP * 100).toFixed(1) + '%';
-  document.getElementById('pc-new-bar').style.width = (newP / maxP * 100).toFixed(1) + '%';
-
-  // 할인율 배지
-  const rateTxt = document.getElementById('pc-rate-txt');
-  if(diff > 0){
-    rateTxt.textContent = `▼ ${Math.abs(rate)}% 인하 · 단가 ${fmt(Math.abs(diff))} 절감`;
-    rateTxt.style.background = 'rgba(24,182,122,.12)';
-    rateTxt.style.color = 'var(--green)';
-  } else if(diff < 0){
-    rateTxt.textContent = `▲ ${Math.abs(rate)}% 인상 · 단가 ${fmt(Math.abs(diff))} 증가`;
-    rateTxt.style.background = 'rgba(239,93,103,.10)';
-    rateTxt.style.color = 'var(--red)';
-  } else {
-    rateTxt.textContent = '단가 동일';
-    rateTxt.style.background = 'rgba(94,75,196,.08)';
-    rateTxt.style.color = 'var(--text3)';
-  }
-
-  // 절감액 카드
-  const saveOnceSv  = document.getElementById('pc-save-once');
-  const saveYearSv  = document.getElementById('pc-save-year');
-  const saveOnceSub = document.getElementById('pc-save-once-sub');
-  const saveYearSub = document.getElementById('pc-save-year-sub');
-
-  if(diff >= 0){
-    saveOnceSv.textContent  = fmt(saveOnce);
-    saveYearSv.textContent  = fmt(saveYear);
-    saveOnceSv.style.color  = 'var(--green)';
-    saveYearSv.style.color  = '#6d5df6';
-    saveOnceSub.textContent = `${qty.toLocaleString()}개 × ${fmt(diff)}`;
-    saveYearSub.textContent = `연 ${freq}회 주문 기준`;
-  } else {
-    saveOnceSv.textContent  = '+' + fmt(Math.abs(saveOnce));
-    saveYearSv.textContent  = '+' + fmt(Math.abs(saveYear));
-    saveOnceSv.style.color  = 'var(--red)';
-    saveYearSv.style.color  = 'var(--red)';
-    saveOnceSub.textContent = `${qty.toLocaleString()}개 × ${fmt(Math.abs(diff))} 증가`;
-    saveYearSub.textContent = `연 ${freq}회 주문 기준`;
-  }
-
-  // 테이블
-  document.getElementById('pc-tbl-freq').textContent     = freq;
-  document.getElementById('pc-tbl-old-once').textContent = fmt(oldOnce);
-  document.getElementById('pc-tbl-new-once').textContent = fmt(newOnce);
-  document.getElementById('pc-tbl-old-year').textContent = fmt(oldYear);
-  document.getElementById('pc-tbl-new-year').textContent = fmt(newYear);
+  const barPct = Math.min(rate, 100);
+  document.getElementById('pc-result-bar').style.width = barPct + '%';
+  document.getElementById('pc-bar-label').textContent = barPct >= 8 ? fmtShort(saved) : '';
 };
 
 window.update1688Preview = function() {
