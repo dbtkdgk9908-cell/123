@@ -6228,22 +6228,43 @@ function renderSavingsSummary(){
     }
   }
 
-  // 월별 절감 추이 (최근 6개월)
+  // 월별 절감 추이 — 배송완료(delivered) 시점 기준
   const monthMap = {};
   orders.forEach(o => {
     const saved = calcSaved(o);
-    if(saved <= 0 || !o.date) return;
-    const ym = o.date.slice(0,7);
-    monthMap[ym] = (monthMap[ym]||0) + saved;
+    if(saved <= 0) return;
+    // hist에서 delivered 날짜 찾기, 없으면 status가 delivered여도 date로 폴백
+    const deliveredHist = (o.hist||[]).find(h => h.s === 'delivered' || h.s === 'tracking_delivered_confirmed');
+    const deliveredDate = deliveredHist ? deliveredHist.d : (o.status === 'delivered' ? o.date : null);
+    if(!deliveredDate) return;
+    const ym = String(deliveredDate).slice(0,7);
+    if(ym && ym.length === 7) monthMap[ym] = (monthMap[ym]||0) + saved;
   });
-  const allMonths = [];
+
+  // 데이터 있는 달 중 가장 오래된 달부터 이번 달까지 표시 (최소 6개월)
   const now = new Date();
-  for(let i=5; i>=0; i--){
-    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    const ym = d.toISOString().slice(0,7);
-    const label = `${d.getMonth()+1}월`;
-    allMonths.push({ym, label, val: monthMap[ym]||0});
+  const thisYm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const dataYms = Object.keys(monthMap).sort();
+  const oldestYm = dataYms.length > 0 ? dataYms[0] : thisYm;
+
+  // oldestYm ~ thisYm 사이 모든 달 생성
+  const allMonths = [];
+  let cur = new Date(oldestYm + '-01');
+  const end = new Date(thisYm + '-01');
+  while(cur <= end){
+    const ym = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
+    allMonths.push({ym, label:`${cur.getMonth()+1}월`, val: monthMap[ym]||0});
+    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
   }
+  // 최소 6개월 보장 (앞에 빈달 채우기)
+  while(allMonths.length < 6){
+    const first = allMonths[0];
+    const d = new Date(first.ym + '-01');
+    const prev = new Date(d.getFullYear(), d.getMonth()-1, 1);
+    const ym = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
+    allMonths.unshift({ym, label:`${prev.getMonth()+1}월`, val: monthMap[ym]||0});
+  }
+
   const maxMonth = Math.max(...allMonths.map(m=>m.val), 1);
   const barsEl   = document.getElementById('pc-monthly-bars');
   const labelsEl = document.getElementById('pc-monthly-labels');
@@ -6251,8 +6272,9 @@ function renderSavingsSummary(){
     barsEl.innerHTML = allMonths.map(m => {
       const h = Math.max(Math.round(m.val / maxMonth * 72), m.val>0?6:2);
       const color = m.val > 0 ? 'linear-gradient(180deg,#34d399,#10b981)' : '#f0eeff';
+      const valLabel = m.val > 0 ? `<div style="font-size:9px;font-weight:800;color:var(--green);">${(m.val/10000).toFixed(0)}만</div>` : '';
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;">
-        ${m.val>0?`<div style="font-size:9px;font-weight:800;color:var(--green);">${(m.val/10000).toFixed(0)}만</div>`:''}
+        ${valLabel}
         <div style="width:100%;height:${h}px;background:${color};border-radius:6px 6px 3px 3px;"></div>
       </div>`;
     }).join('');
