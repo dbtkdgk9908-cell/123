@@ -1129,6 +1129,155 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
       <div id="product-requests-list"></div>
       <div id="products-list"></div>
     </div>
+
+    <!-- 단가 비교 페이지 (독립 탭) -->
+    <div class="page pp" id="pg-pricecmp">
+
+      <!-- ① 누적 절감액 현황 (발주 데이터 기반) -->
+      <div id="pc-cumul-section">
+        <div style="background:linear-gradient(135deg,#18b67a,#0d9160);border-radius:20px;padding:18px 16px 16px;margin-bottom:14px;color:#fff;position:relative;overflow:hidden;">
+          <div style="position:absolute;right:-18px;top:-18px;width:90px;height:90px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+          <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;letter-spacing:.5px;">누적 절감액 (발주 기반 자동 계산)</div>
+          <div id="pc-total-saved" style="font-size:32px;font-weight:900;letter-spacing:-1px;margin-bottom:2px;">-</div>
+          <div id="pc-total-saved-sub" style="font-size:12px;opacity:.8;">품목에 기존단가를 입력하면 발주할 때마다 쌓여요</div>
+        </div>
+
+        <!-- 품목별 절감 그래프 -->
+        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📦 품목별 누적 절감액</div>
+          <div id="pc-prod-bars">
+            <div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">
+              품목에 기존단가를 설정하고 발주를 등록하면<br>여기에 자동으로 표시돼요
+            </div>
+          </div>
+        </div>
+
+        <!-- 월별 절감 추이 -->
+        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📅 월별 절감 추이</div>
+          <div id="pc-monthly-bars" style="display:flex;align-items:flex-end;gap:6px;height:80px;"></div>
+          <div id="pc-monthly-labels" style="display:flex;gap:6px;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <div style="border-top:2px dashed rgba(94,75,196,.12);margin-bottom:14px;"></div>
+
+      <div style="background:linear-gradient(135deg,#7c5cfc,#a78bfa);border-radius:20px;padding:18px 16px 14px;margin-bottom:16px;color:#fff;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🔢 단가 비교 계산기</div>
+        <div style="font-size:12px;opacity:.85;">기존 단가 vs 신규 단가를 직접 비교해보세요</div>
+      </div>
+
+      <!-- 단가 입력 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;letter-spacing:-.01em;">📌 단가 입력</div>
+        <div class="f2" style="margin-bottom:0">
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">기존 단가 (원, VAT포함)</label>
+            <input class="fi" type="number" id="pc-old-price" placeholder="예: 1200" oninput="calcPriceCmp()" style="font-size:16px;font-weight:900;color:var(--text);">
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">신규 단가 (원, VAT포함)</label>
+            <input class="fi" type="number" id="pc-new-price" placeholder="예: 980" oninput="calcPriceCmp()" style="font-size:16px;font-weight:900;color:var(--green);">
+          </div>
+        </div>
+      </div>
+
+      <!-- 주문 조건 입력 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;letter-spacing:-.01em;">📦 주문 조건</div>
+        <div class="f2" style="margin-bottom:12px">
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">1회 주문 수량</label>
+            <input class="fi" type="number" id="pc-qty" placeholder="예: 500" oninput="calcPriceCmp()" style="font-size:16px;font-weight:800;">
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">연간 주문 횟수</label>
+            <input class="fi" type="number" id="pc-freq" placeholder="예: 12" oninput="calcPriceCmp()" style="font-size:16px;font-weight:800;">
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="setPcFreq(12)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">월 1회(12)</button>
+          <button onclick="setPcFreq(6)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">격월(6)</button>
+          <button onclick="setPcFreq(4)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">분기(4)</button>
+          <button onclick="setPcFreq(2)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">반기(2)</button>
+          <button onclick="setPcFreq(1)" style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">연 1회</button>
+        </div>
+      </div>
+
+      <!-- 결과 카드 -->
+      <div id="pc-result" style="display:none">
+        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📊 단가 비교</div>
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text2);">기존 단가</span>
+              <span id="pc-old-lbl" style="font-size:14px;font-weight:900;color:var(--text);">-</span>
+            </div>
+            <div style="height:12px;background:#f3f1fd;border-radius:8px;overflow:hidden;">
+              <div id="pc-old-bar" style="height:100%;background:linear-gradient(90deg,#e4c4fc,#c084fc);border-radius:8px;width:100%;transition:width .4s ease;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:12px;font-weight:700;color:var(--green);">신규 단가</span>
+              <span id="pc-new-lbl" style="font-size:14px;font-weight:900;color:var(--green);">-</span>
+            </div>
+            <div style="height:12px;background:#f3f1fd;border-radius:8px;overflow:hidden;">
+              <div id="pc-new-bar" style="height:100%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:8px;width:80%;transition:width .4s ease;"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:13px;font-weight:800;padding:7px 16px;border-radius:20px;" id="pc-rate-txt"></span>
+          </div>
+        </div>
+
+        <div class="sg" style="margin-bottom:12px;">
+          <div class="sc" style="--c:var(--green);">
+            <div class="sl">1회 주문 절감액</div>
+            <div class="sv" id="pc-save-once">-</div>
+            <div class="ss" id="pc-save-once-sub"></div>
+          </div>
+          <div class="sc" style="--c:#6d5df6;">
+            <div class="sl">연간 절감액</div>
+            <div class="sv" id="pc-save-year">-</div>
+            <div class="ss" id="pc-save-year-sub"></div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📋 연간 비용 비교</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+            <div style="background:#f7f6ff;border-radius:14px;padding:12px 8px;">
+              <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;">구분</div>
+              <div style="font-size:12px;font-weight:800;color:var(--text2);">1회 주문액</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;">×<span id="pc-tbl-freq">-</span>회</div>
+              <div style="font-size:12px;font-weight:800;color:var(--text2);">연간 총액</div>
+            </div>
+            <div style="background:linear-gradient(180deg,#fdf4ff,#f7f6ff);border:1px solid rgba(192,132,252,.2);border-radius:14px;padding:12px 8px;">
+              <div style="font-size:10px;color:#a855f7;font-weight:700;margin-bottom:6px;">기존 단가</div>
+              <div id="pc-tbl-old-once" style="font-size:13px;font-weight:900;color:var(--text);">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;"> </div>
+              <div id="pc-tbl-old-year" style="font-size:13px;font-weight:900;color:var(--text);">-</div>
+            </div>
+            <div style="background:linear-gradient(180deg,#f0fdf4,#f7fff9);border:1px solid rgba(52,211,153,.25);border-radius:14px;padding:12px 8px;">
+              <div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:6px;">신규 단가</div>
+              <div id="pc-tbl-new-once" style="font-size:13px;font-weight:900;color:var(--green);">-</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;"> </div>
+              <div id="pc-tbl-new-year" style="font-size:13px;font-weight:900;color:var(--green);">-</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="resetPriceCmp()" style="width:100%;padding:14px;background:#f3f1fd;border:1.5px solid rgba(94,75,196,.14);border-radius:16px;color:var(--text2);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 초기화</button>
+      </div>
+
+      <!-- 빈 상태 -->
+      <div id="pc-empty" style="text-align:center;padding:40px 20px;color:var(--text3);">
+        <div style="font-size:40px;margin-bottom:12px;">💡</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:6px;">단가를 입력해보세요</div>
+        <div style="font-size:12px;line-height:1.7;">기존 단가와 신규 단가, 주문 수량과<br>연간 주문 횟수를 입력하면<br>절감액을 자동으로 계산해드려요</div>
+      </div>
+    </div>
     <div class="page pp" id="pg-myorders"><button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openOrderRequestSheet()">＋ 신규 발주 요청</button><div class="fw" style="margin-top:0;margin-bottom:12px"><input class="si" id="myosearch" placeholder="🔍 발주번호, 품목 검색..." oninput="renderMyOrders()"><div class="fr"><select class="fs" id="myostatus" onchange="renderMyOrders()"><option value="">전체 상태</option></select></div></div><div id="my-orders"></div></div>
   </div>
   <div id="tabs"></div>
@@ -1260,6 +1409,11 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
       <div class="f2">
         <div class="fg"><label class="fl">단위 *</label><input class="fi" id="p-unit" placeholder="개, EA..."></div>
         <div class="fg"><label class="fl">단가(VAT 포함)</label><input class="fi" type="number" id="p-price" placeholder="0"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">기존 단가(VAT 포함) <span style="font-weight:600;color:var(--text3);font-size:10px;">— 절감금액 자동 계산에 사용</span></label>
+        <input class="fi" type="number" id="p-oldprice" placeholder="이전에 쓰던 단가 (없으면 비워두세요)" style="border-color:rgba(24,182,122,.3);">
       </div>
 
       <div class="f2">
@@ -1850,12 +2004,14 @@ const ADMIN_TABS=[
   {id:'stmt',icon:'📄',lbl:'명세서'},
   {id:'clients',icon:'🏢',lbl:'거래처'},
   {id:'products',icon:'📦',lbl:'품목'},
+  {id:'pricecmp',icon:'💰',lbl:'절감금액'},
 ];
 const CLIENT_TABS=[
   {id:'home',icon:'📊',lbl:'현황'},
   {id:'myorders',icon:'📋',lbl:'발주',badge:true},
   {id:'stmt',icon:'📄',lbl:'명세서'},
   {id:'products',icon:'📦',lbl:'품목'},
+  {id:'pricecmp',icon:'💰',lbl:'절감금액'},
 ];
 
 function initApp(){
@@ -1930,10 +2086,10 @@ function goTab(id){
   document.querySelectorAll('.ti').forEach(t=>t.classList.remove('active'));
   const pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');
   const tb=document.getElementById('tab-'+id);if(tb)tb.classList.add('active');
-  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주'};
+  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주',pricecmp:'절감금액'};
   document.getElementById('tbtitle').textContent=titles[id]||'';
   const fab=document.getElementById('fab');
-  fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');if(id==='poform')fab.className='fab hidden';
+  fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');if(id==='poform'||id==='pricecmp')fab.className='fab hidden';
   if(id==='clients') fab.onclick=openAddClient;
   else if(id==='products') fab.onclick=(me.role==='admin'?openAddProd:openProductReqSheet);
   else if(id==='stmt') fab.onclick=()=>openStmtSheet(null);
@@ -1945,6 +2101,7 @@ function goTab(id){
   if(id==='clients') renderClients();
   if(id==='products'){ renderProductActions(); renderProducts(); }
   if(id==='myorders') renderMyOrders();
+  if(id==='pricecmp') renderSavingsSummary();
 }
 
 // ── 대시보드 ──────────────────────────────────────────────────────────────────
@@ -2809,7 +2966,9 @@ function submitOrder(){
   const newId='ORD-'+Date.now();
   const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
   const displayName=typeof displayProductName==='function' ? displayProductName(prod) : (prod.name||'');
-  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',status:'payment_pending',date,memo,order1688:order1688||'',hist:[{s:'payment_pending',d:date}]});
+  const oldPrice0=prod.oldPrice||null;
+  const savedPerOrder0=(oldPrice0!=null && oldPrice0>prod.price) ? (oldPrice0 - prod.price)*qty : 0;
+  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',status:'payment_pending',date,memo,order1688:order1688||'',hist:[{s:'payment_pending',d:date}],savedAmount:savedPerOrder0,oldPrice:oldPrice0||null});
   addNotif('🆕 신규 발주',`${prod.name} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
   closeOrderSheet();
@@ -2968,7 +3127,7 @@ function openAddProd(reqId=null){
     const rejectBtn=document.getElementById('p-reject-btn');
     if(rejectBtn) rejectBtn.style.display=reqId?'block':'none';
 
-    ['p-name','p-spec','p-unit','p-price','p-cat','p-moq','p-lead','p-note','p-buylink','p-buycny'].forEach(id=>{
+    ['p-name','p-spec','p-unit','p-price','p-oldprice','p-cat','p-moq','p-lead','p-note','p-buylink','p-buycny'].forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.value='';
     });
@@ -3113,7 +3272,10 @@ function submitProduct(){
     const nowIso=new Date().toISOString();
     const id=editPid||('p'+Date.now());
     const existing=(DATA.products||[]).find(x=>x.id===id)||{};
+    const oldPriceEl=document.getElementById('p-oldprice');
+    const oldPrice=(oldPriceEl && oldPriceEl.value!=='') ? parseInt(oldPriceEl.value)||null : (existing.oldPrice??null);
     const payload={id,name,spec,unit,price,moq,lead,cat,clientIds,createdAt:existing.createdAt||nowIso,updatedAt:nowIso};
+    if(oldPrice!=null) payload.oldPrice=oldPrice;
 
     if(me&&me.role==='admin'){
       payload.buyLink=buyLink;
@@ -3646,13 +3808,15 @@ function submitOrder(){
   if(!pid){toast('❌ 품목을 선택하세요.');return;}
   if(!qty||qty<=0){toast('❌ 수량을 입력하세요.');return;}
   const prod=(DATA.products||[]).find(p=>p.id===pid);
-  if(!prod){toast('❌ 품목 정보를 찾을 수 없습니다.');return;}
   const newId='ORD-'+Date.now();
   const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
   const buyCnyInput=document.getElementById('no-buycny');
   const buyCny=(isA&&buyCnyInput&&buyCnyInput.value!=='')?Number(buyCnyInput.value):null;
   const displayName=displayProductName(prod);
-  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',buyCny,status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}]});
+  // 절감액 계산: 기존단가가 있고 현재단가보다 높으면 절감
+  const oldPrice=prod.oldPrice||null;
+  const savedPerOrder=(oldPrice!=null && oldPrice>prod.price) ? (oldPrice - prod.price)*qty : 0;
+  fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',buyCny,status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}],savedAmount:savedPerOrder,oldPrice:oldPrice||null});
   addNotif('🆕 신규 발주',`${displayName} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
   closeOrderSheet();
@@ -3664,7 +3828,7 @@ function openAddProd(reqId=null){
   document.getElementById('psh-title').textContent=reqId?'요청 품목 등록':'품목 추가';
   const rejectBtn=document.getElementById('p-reject-btn');
   if(rejectBtn) rejectBtn.style.display=reqId?'block':'none';
-  ['p-name','p-spec','p-unit','p-price','p-cat','p-moq','p-lead','p-buylink','p-buycny'].forEach(id=>{
+  ['p-name','p-spec','p-unit','p-price','p-oldprice','p-cat','p-moq','p-lead','p-buylink','p-buycny'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const adminWrap=document.getElementById('p-admin-meta-wrap');
@@ -3709,6 +3873,7 @@ function editProd(id){
   document.getElementById('p-spec').value=p.spec||'';
   document.getElementById('p-unit').value=p.unit||'';
   document.getElementById('p-price').value=p.price||0;
+  const oldPEl=document.getElementById('p-oldprice'); if(oldPEl) oldPEl.value=(p.oldPrice!=null?p.oldPrice:'');
   document.getElementById('p-moq').value=p.moq||'';
   document.getElementById('p-lead').value=p.lead||'';
   document.getElementById('p-cat').value=p.cat||'';
@@ -3738,6 +3903,7 @@ function editProd(id){
 
 function submitProduct(){
   const name=document.getElementById('p-name').value.trim();
+  const spec=(document.getElementById('p-spec')?.value||'').trim();
   const unit=document.getElementById('p-unit').value.trim();
   const price=parseInt(document.getElementById('p-price').value)||0;
   const moq=parseInt(document.getElementById('p-moq').value)||0;
@@ -3748,15 +3914,26 @@ function submitProduct(){
   const existing=(DATA.products||[]).find(x=>x.id===editPid)||{};
   if(!name||!unit){toast('❌ 품목명과 단위는 필수입니다.');return;}
   const id=editPid||('p'+Date.now());
-  const payload={id,name,unit,price,moq,lead,cat,clientIds};
+  const nowIso=new Date().toISOString();
+  const oldPriceEl2=document.getElementById('p-oldprice');
+  const oldPrice2=(oldPriceEl2 && oldPriceEl2.value!=='') ? parseInt(oldPriceEl2.value)||null : (existing.oldPrice??null);
+  const payload={id,name,spec,unit,price,moq,lead,cat,clientIds,createdAt:existing.createdAt||nowIso,updatedAt:nowIso};
+  if(oldPrice2!=null) payload.oldPrice=oldPrice2;
+  // 기존 필드 보존
+  if(existing.lastOrderDate) payload.lastOrderDate=existing.lastOrderDate;
+  if(existing.lastBuyCny!=null) payload.lastBuyCny=existing.lastBuyCny;
   if(me&&me.role==='admin'){
     const buyLinkInput=document.getElementById('p-buylink');
     const buyCnyInput=document.getElementById('p-buycny');
+    const zhEl=document.getElementById('p-zhname');
     payload.buyLink=buyLinkInput?buyLinkInput.value.trim():'';
     payload.buyCny=(buyCnyInput && buyCnyInput.value!=='') ? Number(buyCnyInput.value) : null;
+    if(zhEl && zhEl.value.trim()) payload.zhName=zhEl.value.trim();
+    else if(existing.zhName) payload.zhName=existing.zhName;
   }else{
     if(existing.buyLink) payload.buyLink=existing.buyLink;
     if(existing.buyCny!==undefined) payload.buyCny=existing.buyCny;
+    if(existing.zhName) payload.zhName=existing.zhName;
   }
   fbSet(`products/${id}`,payload);
   if(currentRequestToConvert){
@@ -3779,6 +3956,7 @@ function renderProducts(){
         <div style="text-align:center">
           <div style="font-size:9px;color:var(--text3)">단가(VAT 포함)</div>
           <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.price||0).toLocaleString()}</div>
+          ${(p.oldPrice && p.oldPrice > p.price) ? `<div style="font-size:9px;font-weight:700;color:var(--green);">▼${((p.oldPrice-p.price)/p.oldPrice*100).toFixed(0)}% 인하</div>` : ''}
         </div>
         <div style="text-align:center">
           <div style="font-size:9px;color:var(--text3)">MOQ</div>
@@ -3951,7 +4129,11 @@ function submitProduct(){
 
     const id=editPid||('p'+Date.now());
     const existing=(DATA.products||[]).find(x=>x.id===id)||{};
+    const oldPriceElA=document.getElementById('p-oldprice');
+    const oldPriceA=(oldPriceElA && oldPriceElA.value!=='') ? parseInt(oldPriceElA.value)||null : (existing.oldPrice??null);
     const payload={id,name,spec,unit,price,moq,lead,cat,clientIds};
+    if(oldPriceA!=null) payload.oldPrice=oldPriceA;
+    else if(existing.oldPrice!=null) payload.oldPrice=existing.oldPrice;
 
     if(me&&me.role==='admin'){
       payload.buyLink=buyLink;
@@ -4173,6 +4355,7 @@ function renderProducts(){
       setVal('p-spec', p.spec||'');
       setVal('p-unit', p.unit||'');
       setVal('p-price', p.price||0);
+      setVal('p-oldprice', p.oldPrice!=null ? p.oldPrice : '');
       setVal('p-moq', p.moq||'');
       setVal('p-lead', p.lead||'');
       setVal('p-cat', p.cat||'');
@@ -4267,6 +4450,11 @@ function renderProducts(){
         updatedAt: nowIso,
         memo: note
       };
+      // oldPrice 보존: 입력값 우선, 없으면 기존 DB값 유지
+      const oldPriceElB=document.getElementById('p-oldprice');
+      const oldPriceInputVal = oldPriceElB ? oldPriceElB.value.trim() : '';
+      const oldPriceB = oldPriceInputVal !== '' ? (parseInt(oldPriceInputVal)||null) : (existingById.oldPrice ?? null);
+      if(oldPriceB != null) payload.oldPrice = oldPriceB;
 
       if(me&&me.role==='admin'){
         payload.buyLink=(document.getElementById('p-buylink')?.value||'').trim();
@@ -5996,6 +6184,207 @@ window.open1688Sheet = async function(id, name, spec, link, zhName) {
 
 window.close1688Sheet = function() {
   document.getElementById('po1688-overlay').style.display = 'none';
+};
+
+// ── 절감금액 탭: 누적 절감액 렌더 ────────────────────────────────────────────
+function renderSavingsSummary(){
+  const orders = DATA.orders || [];
+  const products = DATA.products || [];
+  const fmt = n => n.toLocaleString('ko-KR') + '원';
+
+  // savedAmount가 없는 발주도 pid+oldPrice로 소급 계산
+  const calcSaved = (o) => {
+    if(Number(o.savedAmount) > 0) return Number(o.savedAmount);
+    // oldPrice가 발주에 기록된 경우
+    if(o.oldPrice && o.price && o.oldPrice > o.price) return (o.oldPrice - o.price) * (o.qty||0);
+    // 현재 품목의 oldPrice로 계산
+    if(o.pid){
+      const prod = products.find(p=>p.id===o.pid);
+      if(prod && prod.oldPrice){
+        const unitPrice = o.qty ? Math.round((Number(o.amount)||0)/Number(o.qty)) : 0;
+        if(prod.oldPrice > unitPrice && unitPrice > 0) return (prod.oldPrice - unitPrice) * (o.qty||0);
+      }
+    }
+    return 0;
+  };
+
+  const totalSaved = orders.reduce((s, o) => s + calcSaved(o), 0);
+  const savedOrders = orders.filter(o => calcSaved(o) > 0);
+
+  const totalEl = document.getElementById('pc-total-saved');
+  const subEl   = document.getElementById('pc-total-saved-sub');
+  if(totalEl) totalEl.textContent = totalSaved > 0 ? fmt(totalSaved) : '0원';
+  if(subEl){
+    subEl.textContent = totalSaved > 0
+      ? `총 ${savedOrders.length}건 발주에서 절감 · 품목 단가 인하 효과`
+      : '품목에 기존단가를 입력하면 발주할 때마다 쌓여요';
+  }
+
+  // 품목별 절감 집계
+  const byProd = {};
+  orders.forEach(o => {
+    const saved = calcSaved(o);
+    if(saved <= 0) return;
+    const key = o.productName || o.product || '-';
+    byProd[key] = (byProd[key]||0) + saved;
+  });
+  const prodList = Object.entries(byProd).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const prodBarsEl = document.getElementById('pc-prod-bars');
+  if(prodBarsEl){
+    if(prodList.length === 0){
+      prodBarsEl.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">품목에 기존단가를 설정하고 발주를 등록하면<br>여기에 자동으로 표시돼요</div>';
+    } else {
+      const maxVal = prodList[0][1];
+      prodBarsEl.innerHTML = prodList.map(([name, val]) => {
+        const pct = Math.round(val / maxVal * 100);
+        return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;">${name}</span>
+              <span style="font-size:13px;font-weight:900;color:var(--green);">${fmt(val)}</span>
+            </div>
+            <div style="height:10px;background:#f3f1fd;border-radius:6px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:6px;transition:width .4s ease;"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // 월별 절감 추이 (최근 6개월)
+  const monthMap = {};
+  orders.forEach(o => {
+    const saved = calcSaved(o);
+    if(saved <= 0 || !o.date) return;
+    const ym = o.date.slice(0,7);
+    monthMap[ym] = (monthMap[ym]||0) + saved;
+  });
+  const allMonths = [];
+  const now = new Date();
+  for(let i=5; i>=0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const ym = d.toISOString().slice(0,7);
+    const label = `${d.getMonth()+1}월`;
+    allMonths.push({ym, label, val: monthMap[ym]||0});
+  }
+  const maxMonth = Math.max(...allMonths.map(m=>m.val), 1);
+  const barsEl   = document.getElementById('pc-monthly-bars');
+  const labelsEl = document.getElementById('pc-monthly-labels');
+  if(barsEl){
+    barsEl.innerHTML = allMonths.map(m => {
+      const h = Math.max(Math.round(m.val / maxMonth * 72), m.val>0?6:2);
+      const color = m.val > 0 ? 'linear-gradient(180deg,#34d399,#10b981)' : '#f0eeff';
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;">
+        ${m.val>0?`<div style="font-size:9px;font-weight:800;color:var(--green);">${(m.val/10000).toFixed(0)}만</div>`:''}
+        <div style="width:100%;height:${h}px;background:${color};border-radius:6px 6px 3px 3px;"></div>
+      </div>`;
+    }).join('');
+  }
+  if(labelsEl){
+    labelsEl.innerHTML = allMonths.map(m =>
+      `<div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--text3);">${m.label}</div>`
+    ).join('');
+  }
+}
+
+// ── 단가 비교 (Price Comparison) ─────────────────────────────────────────────
+
+window.setPcFreq = function(n) {
+  document.getElementById('pc-freq').value = n;
+  calcPriceCmp();
+};
+
+window.resetPriceCmp = function() {
+  ['pc-old-price','pc-new-price','pc-qty','pc-freq'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('pc-result').style.display = 'none';
+  document.getElementById('pc-empty').style.display = 'block';
+};
+
+window.calcPriceCmp = function() {
+  const oldP = parseFloat(document.getElementById('pc-old-price').value) || 0;
+  const newP = parseFloat(document.getElementById('pc-new-price').value) || 0;
+  const qty  = parseInt(document.getElementById('pc-qty').value)  || 0;
+  const freq = parseInt(document.getElementById('pc-freq').value) || 0;
+
+  const resultEl = document.getElementById('pc-result');
+  const emptyEl  = document.getElementById('pc-empty');
+
+  if(!oldP || !newP || !qty || !freq){
+    resultEl.style.display = 'none';
+    emptyEl.style.display  = 'block';
+    return;
+  }
+
+  resultEl.style.display = 'block';
+  emptyEl.style.display  = 'none';
+
+  const diff      = oldP - newP;
+  const saveOnce  = diff * qty;
+  const saveYear  = saveOnce * freq;
+  const oldOnce   = oldP * qty;
+  const newOnce   = newP * qty;
+  const oldYear   = oldOnce * freq;
+  const newYear   = newOnce * freq;
+  const rate      = oldP > 0 ? ((diff / oldP) * 100).toFixed(1) : 0;
+
+  const fmt = n => n.toLocaleString('ko-KR') + '원';
+
+  // 단가 라벨
+  document.getElementById('pc-old-lbl').textContent = fmt(oldP);
+  document.getElementById('pc-new-lbl').textContent = fmt(newP);
+
+  // 바 비율
+  const maxP = Math.max(oldP, newP);
+  document.getElementById('pc-old-bar').style.width = (oldP / maxP * 100).toFixed(1) + '%';
+  document.getElementById('pc-new-bar').style.width = (newP / maxP * 100).toFixed(1) + '%';
+
+  // 할인율 배지
+  const rateTxt = document.getElementById('pc-rate-txt');
+  if(diff > 0){
+    rateTxt.textContent = `▼ ${Math.abs(rate)}% 인하 · 단가 ${fmt(Math.abs(diff))} 절감`;
+    rateTxt.style.background = 'rgba(24,182,122,.12)';
+    rateTxt.style.color = 'var(--green)';
+  } else if(diff < 0){
+    rateTxt.textContent = `▲ ${Math.abs(rate)}% 인상 · 단가 ${fmt(Math.abs(diff))} 증가`;
+    rateTxt.style.background = 'rgba(239,93,103,.10)';
+    rateTxt.style.color = 'var(--red)';
+  } else {
+    rateTxt.textContent = '단가 동일';
+    rateTxt.style.background = 'rgba(94,75,196,.08)';
+    rateTxt.style.color = 'var(--text3)';
+  }
+
+  // 절감액 카드
+  const saveOnceSv  = document.getElementById('pc-save-once');
+  const saveYearSv  = document.getElementById('pc-save-year');
+  const saveOnceSub = document.getElementById('pc-save-once-sub');
+  const saveYearSub = document.getElementById('pc-save-year-sub');
+
+  if(diff >= 0){
+    saveOnceSv.textContent  = fmt(saveOnce);
+    saveYearSv.textContent  = fmt(saveYear);
+    saveOnceSv.style.color  = 'var(--green)';
+    saveYearSv.style.color  = '#6d5df6';
+    saveOnceSub.textContent = `${qty.toLocaleString()}개 × ${fmt(diff)}`;
+    saveYearSub.textContent = `연 ${freq}회 주문 기준`;
+  } else {
+    saveOnceSv.textContent  = '+' + fmt(Math.abs(saveOnce));
+    saveYearSv.textContent  = '+' + fmt(Math.abs(saveYear));
+    saveOnceSv.style.color  = 'var(--red)';
+    saveYearSv.style.color  = 'var(--red)';
+    saveOnceSub.textContent = `${qty.toLocaleString()}개 × ${fmt(Math.abs(diff))} 증가`;
+    saveYearSub.textContent = `연 ${freq}회 주문 기준`;
+  }
+
+  // 테이블
+  document.getElementById('pc-tbl-freq').textContent     = freq;
+  document.getElementById('pc-tbl-old-once').textContent = fmt(oldOnce);
+  document.getElementById('pc-tbl-new-once').textContent = fmt(newOnce);
+  document.getElementById('pc-tbl-old-year').textContent = fmt(oldYear);
+  document.getElementById('pc-tbl-new-year').textContent = fmt(newYear);
 };
 
 window.update1688Preview = function() {
