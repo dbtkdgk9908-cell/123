@@ -381,7 +381,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 #stmt-preview{
   position:fixed;
   inset:0;
-  background:#efedf8;
+  background:#e8e8f0;
   z-index:200;
   overflow-y:auto;
   display:none;
@@ -392,7 +392,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
   padding:14px 16px;
   position:sticky;
   top:0;
-  background:rgba(239,237,248,.96);
+  background:rgba(232,232,240,.96);
   z-index:10;
   backdrop-filter:blur(4px);
 }
@@ -407,10 +407,10 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 }
 .stmt-wrap{
   background:#fff;
-  width:178mm;
-  max-width:178mm;
+  width:195mm;
+  max-width:195mm;
   margin:0 auto 14px;
-  padding:14mm 9mm 14mm;
+  padding:12mm 10mm 12mm;
   color:#1e1b36;
   font-size:12px;
   line-height:1.4;
@@ -683,7 +683,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
 @page{
   size:A4 portrait;
-  margin:6mm;
+  margin:8mm;
 }
 @media print{
   html,body{
@@ -712,10 +712,10 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
   }
   #stmt-preview{
     display:block !important;
-    position:static !important;
-    inset:auto !important;
+    position:fixed !important;
+    inset:0 !important;
     background:#fff !important;
-    overflow:hidden !important;
+    overflow:visible !important;
     height:auto !important;
     min-height:0 !important;
     max-height:none !important;
@@ -725,77 +725,81 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
   .stmt-wrap{
     box-shadow:none !important;
     border-radius:0 !important;
-    margin:0 !important;
-    max-width:100% !important;
-    width:100% !important;
-    padding:0 !important;
-    font-size:10.2px !important;
-    line-height:1.25 !important;
+    margin:0 auto !important;
+    max-width:194mm !important;
+    width:194mm !important;
+    padding:6mm 8mm !important;
+    font-size:10px !important;
+    line-height:1.3 !important;
     page-break-inside:avoid;
     break-inside:avoid;
   }
   .stmt-main-title{
-    font-size:22px !important;
-    margin-bottom:8px !important;
+    font-size:20px !important;
+    margin-bottom:6px !important;
   }
   .stmt-header{
-    gap:8px !important;
-    margin-bottom:8px !important;
+    gap:6px !important;
+    margin-bottom:6px !important;
   }
   .stmt-party-title{
-    padding:5px !important;
-    font-size:10px !important;
+    padding:4px !important;
+    font-size:9.5px !important;
   }
   .stmt-party-lbl{
     font-size:8px !important;
-    padding:5px 4px !important;
+    padding:4px 3px !important;
   }
   .stmt-party-val{
-    font-size:8.8px !important;
-    padding:5px 4px !important;
-    min-height:26px !important;
+    font-size:8.5px !important;
+    padding:4px 3px !important;
+    min-height:24px !important;
   }
   .stmt-highlight-wrap{
-    gap:6px !important;
-    margin:6px 0 8px !important;
+    gap:5px !important;
+    margin:5px 0 6px !important;
   }
   .stmt-highlight{
-    padding:8px 10px !important;
+    padding:6px 8px !important;
   }
   .stmt-highlight-label{
-    font-size:8.5px !important;
-    margin-bottom:4px !important;
+    font-size:8px !important;
+    margin-bottom:3px !important;
   }
   .stmt-highlight-value{
-    font-size:12px !important;
+    font-size:11px !important;
   }
   .stmt-highlight.total .stmt-highlight-value{
-    font-size:14px !important;
+    font-size:13px !important;
   }
   .stmt-table th,
   .stmt-table td{
-    font-size:9.2px !important;
-    padding:5px 3px !important;
-    line-height:1.15 !important;
+    font-size:9px !important;
+    padding:4px 3px !important;
+    line-height:1.2 !important;
   }
   .stmt-table td{
-    min-height:24px !important;
+    min-height:22px !important;
   }
   .stmt-note{
-    font-size:8.5px !important;
-    padding:6px 8px !important;
-    min-height:22px !important;
-    margin-bottom:4px !important;
+    font-size:8px !important;
+    padding:5px 6px !important;
+    min-height:20px !important;
+    margin-bottom:3px !important;
   }
   .stmt-total-cell{
-    padding:6px 4px !important;
+    padding:5px 4px !important;
   }
   .stmt-total-lbl{
     font-size:8px !important;
     margin-bottom:2px !important;
   }
   .stmt-total-val{
-    font-size:11px !important;
+    font-size:10px !important;
+  }
+  .stmt-stamp{
+    width:60px !important;
+    height:60px !important;
   }
 }
 
@@ -3692,24 +3696,30 @@ async function downloadStmtPDF(){
     const el=document.getElementById('stmt-print-content');
     // 현재 명세서 ID로 파일명 결정
     const stmtId=(el.querySelector('.stmt-no')||{}).textContent||'거래명세서';
+    // A4 용지 기준: 210 x 297mm, 96dpi 기준 794 x 1123px
+    // stmt-wrap을 A4 width(794px)로 임시 고정하여 캡처
+    const origStyle = el.style.cssText;
+    el.style.cssText = 'width:794px;max-width:794px;padding:28px 32px;border-radius:0;box-shadow:none;background:#fff;';
     const canvas=await html2canvas(el,{
       scale:2,
       useCORS:true,
       backgroundColor:'#ffffff',
-      logging:false
+      logging:false,
+      width:794,
+      windowWidth:794
     });
-    const imgData=canvas.toDataURL('image/jpeg',0.92);
+    el.style.cssText = origStyle;
+    const imgData=canvas.toDataURL('image/jpeg',0.95);
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pageW=pdf.internal.pageSize.getWidth();
-    const pageH=pdf.internal.pageSize.getHeight();
+    const pageW=pdf.internal.pageSize.getWidth(); // 210mm
+    const pageH=pdf.internal.pageSize.getHeight(); // 297mm
+    const margin=8; // 여백 8mm
+    const drawW=pageW-margin*2;
     const imgW=canvas.width;
     const imgH=canvas.height;
-    const ratio=Math.min(pageW/imgW*10, pageH/imgH*10)/10;
-    const drawW=imgW*ratio;
-    const drawH=imgH*ratio;
-    const offX=(pageW-drawW)/2;
-    pdf.addImage(imgData,'JPEG',offX,8,drawW,drawH);
+    const drawH=(imgH/imgW)*drawW;
+    pdf.addImage(imgData,'JPEG',margin,margin,drawW,drawH);
     const fileName=stmtId.split('·')[0].trim().replace(/[^a-zA-Z0-9가-힣\-_]/g,'_')+'_거래명세서.pdf';
     pdf.save(fileName);
     toast('✅ PDF 저장 완료!');
@@ -6090,662 +6100,7 @@ function renderProducts(){
     if(e.target===ov) closeCategorySettingSheet();
   });
 })();
-
-// ─── 발주서 기능 ───
-let poItems = [];
-let poItemId = 0;
-
-window.addPoItem = function() {
-  poItemId++;
-  const id = poItemId;
-  poItems.push({id, spec:'', name:'', qty:''});
-  renderPoItems();
-};
-
-window.removePoItem = function(id) {
-  poItems = poItems.filter(i => i.id !== id);
-  renderPoItems();
-  generatePoForm();
-};
-
-window.renderPoItems = function() {
-  const el = document.getElementById('po-items');
-  if (!el) return;
-  if (!poItems.length) {
-    el.innerHTML = '';
-    document.getElementById('po-preview-wrap').style.display = 'none';
-    return;
-  }
-  el.innerHTML = poItems.map(item => `
-    <div style="background:#fff;border:1px solid var(--border2);border-radius:16px;padding:16px;position:relative">
-      <button onclick="removePoItem(${item.id})" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1">×</button>
-      <div style="display:grid;gap:8px">
-        <div>
-          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">규격</label>
-          <input type="text" class="inp" placeholder="예: 30cm, 200ml" value="${item.spec}"
-            oninput="updatePoItem(${item.id},'spec',this.value)"
-            style="margin-bottom:0;min-height:44px;font-size:14px">
-        </div>
-        <div>
-          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">품목명 (한국어)</label>
-          <input type="text" class="inp" placeholder="예: 섬유스틱, 디퓨저병" value="${item.name}"
-            oninput="updatePoItem(${item.id},'name',this.value)"
-            style="margin-bottom:0;min-height:44px;font-size:14px">
-        </div>
-        <div>
-          <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:4px">수량</label>
-          <input type="number" class="inp" placeholder="예: 500" value="${item.qty}"
-            oninput="updatePoItem(${item.id},'qty',this.value)"
-            style="margin-bottom:0;min-height:44px;font-size:14px">
-        </div>
-      </div>
-    </div>
-  `).join('');
-};
-
-window.updatePoItem = function(id, field, value) {
-  const item = poItems.find(i => i.id === id);
-  if (!item) return;
-  item[field] = value;
-  clearTimeout(window._poTimer);
-  window._poTimer = setTimeout(() => generatePoForm(), 600);
-};
-
-window.generatePoForm = async function() {
-  const valid = poItems.filter(i => i.name && i.qty);
-  if (!valid.length) {
-    document.getElementById('po-preview-wrap').style.display = 'none';
-    return;
-  }
-  const preview = document.getElementById('po-preview');
-  const wrap = document.getElementById('po-preview-wrap');
-  wrap.style.display = 'block';
-  preview.textContent = '번역 중...';
-
-  const itemList = valid.map((item, i) => {
-    const spec = item.spec ? `[${item.spec}] ` : '';
-    return `${i+1}. ${spec}${item.name} - ${item.qty}개`;
-  }).join('\n');
-
-  const prompt = `아래 한국어 품목 리스트를 1688 공급업체에게 보낼 중국어 발주 메시지로 만들어주세요.
-규격(괄호 안)은 그대로 유지하고 품목명만 중국어로 번역하세요.
-수량은 숫자+个 형식으로 표시하세요.
-아래 형식으로만 답하세요 (설명 없이):
-
-您好！请帮我确认以下订单：
-
-[번역된 목록]
-
-请确认库存及价格，谢谢！
-
-품목:
-${itemList}`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{role: 'user', content: prompt}]
-      })
-    });
-    const data = await resp.json();
-    preview.textContent = (data.content?.[0]?.text || '').trim();
-  } catch(e) {
-    const lines = valid.map((item, i) => {
-      const spec = item.spec ? `[${item.spec}] ` : '';
-      return `${i+1}. ${spec}${item.name} - ${item.qty}个`;
-    }).join('\n');
-    preview.textContent = `您好！请帮我确认以下订单：\n\n${lines}\n\n请确认库存及价格，谢谢！`;
-  }
-};
-
-window.copyPoText = function() {
-  const text = document.getElementById('po-preview').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const msg = document.getElementById('po-copy-msg');
-    msg.style.display = 'block';
-    setTimeout(() => msg.style.display = 'none', 3000);
-  });
-};
-
-// ─── 1688 발주 시트 ───
-let _po1688 = {id:'', name:'', spec:'', link:'', zh:''};
-
-function formatPo1688Name(spec, name) {
-  const safeSpec = (spec || '').trim();
-  let safeName = (name || '').trim();
-  safeName = safeName.replace(/^\s*\[[^\]]*\]\s*/, '');
-  if (safeSpec && safeName) return `[${safeSpec}] ${safeName}`;
-  return safeName || (safeSpec ? `[${safeSpec}]` : '');
-}
-
-window.open1688Sheet = async function(id, name, spec, link, zhName) {
-  _po1688 = {id, name, spec, link, zh: zhName||''};
-  document.getElementById('po1688-title').textContent = formatPo1688Name(spec, name) || '품목';
-  document.getElementById('po1688-spec').textContent = '';
-  document.getElementById('po1688-qty').value = '';
-  document.getElementById('po1688-preview-wrap').style.display = 'none';
-  document.getElementById('po1688-copy-msg').style.display = 'none';
-  const linkEl = document.getElementById('po1688-link');
-  if (linkEl) {
-    if (link) {
-      linkEl.href = link;
-      linkEl.style.background = '#fff7ed';
-      linkEl.style.color = '#ea580c';
-      linkEl.style.border = '1.5px solid #fed7aa';
-      linkEl.style.pointerEvents = 'auto';
-      linkEl.style.cursor = 'pointer';
-      linkEl.setAttribute('target','_blank');
-      linkEl.removeAttribute('aria-disabled');
-    } else {
-      linkEl.removeAttribute('href');
-      linkEl.style.background = '#ece9f3';
-      linkEl.style.color = '#9b95ad';
-      linkEl.style.border = '1.5px solid #ddd6e8';
-      linkEl.style.pointerEvents = 'none';
-      linkEl.style.cursor = 'not-allowed';
-      linkEl.setAttribute('aria-disabled','true');
-    }
-  }
-  document.getElementById('po1688-overlay').style.display = 'flex';
-
-  if (zhName) {
-    document.getElementById('po1688-zh').textContent = formatPo1688Name(spec, zhName);
-    document.getElementById('po1688-qty').disabled = false;
-    document.getElementById('po1688-qty').placeholder = '수량 입력';
-    update1688Preview();
-    return;
-  }
-
-  document.getElementById('po1688-zh').textContent = '번역 중...';
-  document.getElementById('po1688-qty').disabled = true;
-  document.getElementById('po1688-qty').placeholder = '번역 완료 후 입력하세요';
-
-  // Claude API로 번역 (zhName 없을 때만)
-  try {
-    const specPart = spec ? `[${spec}] ` : '';
-    const prompt = `"${specPart}${name}" 을 중국어로 번역해주세요. 규격(괄호 안)은 그대로 유지하고 품목명만 번역하세요. 번역 결과만 답하세요. 예: [30cm] 纤维棒`;
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{role: 'user', content: prompt}]
-      })
-    });
-    const data = await resp.json();
-    _po1688.zh = (data.content?.[0]?.text || name).trim();
-  } catch(e) {
-    _po1688.zh = name;
-  }
-  document.getElementById('po1688-zh').textContent = formatPo1688Name(_po1688.spec, _po1688.zh);
-  document.getElementById('po1688-qty').disabled = false;
-  document.getElementById('po1688-qty').placeholder = '수량 입력';
-  update1688Preview();
-};
-
-window.close1688Sheet = function() {
-  document.getElementById('po1688-overlay').style.display = 'none';
-};
-
-
-// ── 수입 원가 계산기 (어드민 전용) ──────────────────────────────────────────
-function initCostCalcVisibility(){
-  const wrap = document.getElementById('pc-cost-calc-wrap');
-  if(wrap) wrap.style.display = (me && me.role==='admin') ? 'block' : 'none';
-}
-
-window.setCcCbm = function(v){
-  const el = document.getElementById('cc-cbm');
-  if(el){ el.value = v; calcImportCost(); }
-};
-
-window.resetImportCost = function(){
-  ['cc-cbm','cc-cny','cc-rate','cc-dim-w','cc-dim-d','cc-dim-h','cc-dim-qty'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  _ccPallet=false; updatePalletUI();
-  const _dr=document.getElementById('cc-dim-result'); if(_dr) _dr.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
-  const _ab=document.getElementById('cc-dim-apply-btn'); if(_ab) _ab.style.display='none';
-  document.getElementById('cc-result').style.display='none';
-  document.getElementById('cc-empty').style.display='block';
-};
-
-
-// 기타비용 항목 추가/제거
-let _ccExtraId = 0;
-window.addCcExtraItem = function(){
-  _ccExtraId++;
-  const id = _ccExtraId;
-  const wrap = document.getElementById('cc-extra-items');
-  if(!wrap) return;
-  const div = document.createElement('div');
-  div.id = 'cc-extra-' + id;
-  div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;';
-  div.innerHTML = `
-    <input class="fi" type="text" placeholder="항목명 (예: 지게차비용)" id="cc-extra-label-${id}"
-      oninput="calcImportCost()" style="min-height:44px;font-size:13px;font-weight:700;">
-    <input class="fi" type="number" placeholder="금액" id="cc-extra-amt-${id}"
-      oninput="calcImportCost()" style="min-height:44px;font-size:13px;font-weight:700;width:110px;">
-    <button type="button" onclick="removeCcExtraItem(${id})"
-      style="width:36px;height:44px;background:#fff1f1;border:1.5px solid rgba(239,68,68,.2);border-radius:12px;color:#ef4444;font-size:18px;cursor:pointer;flex-shrink:0;">×</button>
-  `;
-  wrap.appendChild(div);
-};
-window.removeCcExtraItem = function(id){
-  const el = document.getElementById('cc-extra-' + id);
-  if(el) el.remove();
-  calcImportCost();
-};
-function getCcExtraItems(){
-  const wrap = document.getElementById('cc-extra-items');
-  if(!wrap) return [];
-  return Array.from(wrap.querySelectorAll('[id^="cc-extra-label-"]')).map(el=>{
-    const id = el.id.replace('cc-extra-label-','');
-    const label = el.value.trim() || '기타비용';
-    const amt = parseFloat(document.getElementById('cc-extra-amt-'+id)?.value) || 0;
-    return {label, amt};
-  }).filter(x=>x.amt > 0);
-}
-
-
-// CBM 계산기 (가로×세로×높이×수량 + 파렛트)
-let _ccPallet = false;
-window.togglePallet = function(){
-  _ccPallet = !_ccPallet;
-  updatePalletUI();
-  calcCbmFromDims();
-};
-function updatePalletUI(){
-  const chk = document.getElementById('cc-pallet-check');
-  const badge = document.getElementById('cc-pallet-badge');
-  if(chk){
-    chk.style.background = _ccPallet ? 'var(--accent)' : '#fff';
-    chk.style.borderColor = _ccPallet ? 'var(--accent)' : 'rgba(94,75,196,.3)';
-    chk.innerHTML = _ccPallet ? '<svg width="13" height="13" viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
-  }
-  if(badge) badge.style.display = _ccPallet ? 'block' : 'none';
-}
-window.calcCbmFromDims = function(){
-  const w   = parseFloat(document.getElementById('cc-dim-w')?.value) || 0;
-  const d   = parseFloat(document.getElementById('cc-dim-d')?.value) || 0;
-  const h   = parseFloat(document.getElementById('cc-dim-h')?.value) || 0;
-  const qty = parseFloat(document.getElementById('cc-dim-qty')?.value) || 1;
-  const resultEl = document.getElementById('cc-dim-result');
-  const applyBtn = document.getElementById('cc-dim-apply-btn');
-  if(!w || !d || !h){
-    if(resultEl) resultEl.textContent = '가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
-    if(applyBtn) applyBtn.style.display = 'none';
-    return;
-  }
-  const boxCbm    = Math.round(w * d * h / 1000000 * 100000) / 100000;
-  const totalBox  = Math.round(boxCbm * qty * 100000) / 100000;
-  const palletCbm = _ccPallet ? 0.2 : 0;
-  const totalCbm  = Math.round((totalBox + palletCbm) * 10000) / 10000;
-  if(resultEl){
-    let txt = '<span style="color:var(--text2);">박스 '+boxCbm+' CBM × '+qty+'개 = '+totalBox+' CBM</span>';
-    if(_ccPallet) txt += '<span style="color:var(--accent);"> + 파렛트 0.2</span>';
-    txt += ' → <span style="color:var(--accent);font-size:15px;font-weight:900;"> '+totalCbm+' CBM</span>';
-    resultEl.innerHTML = txt;
-  }
-  if(applyBtn) applyBtn.style.display = 'block';
-};
-window.applyCbmFromDims = function(){
-  const w   = parseFloat(document.getElementById('cc-dim-w')?.value) || 0;
-  const d   = parseFloat(document.getElementById('cc-dim-d')?.value) || 0;
-  const h   = parseFloat(document.getElementById('cc-dim-h')?.value) || 0;
-  const qty = parseFloat(document.getElementById('cc-dim-qty')?.value) || 1;
-  const boxCbm   = Math.round(w * d * h / 1000000 * 100000) / 100000;
-  const totalBox = Math.round(boxCbm * qty * 100000) / 100000;
-  const palletCbm= _ccPallet ? 0.2 : 0;
-  const totalCbm = Math.round((totalBox + palletCbm) * 10000) / 10000;
-  const cbmEl = document.getElementById('cc-cbm');
-  if(cbmEl){ cbmEl.value = totalCbm; calcImportCost(); }
-};
-
-window.calcImportCost = function(){
-  const cbm  = parseFloat(document.getElementById('cc-cbm')?.value) || 0;
-  const cny  = parseFloat(document.getElementById('cc-cny')?.value) || 0;
-  const rate = parseFloat(document.getElementById('cc-rate')?.value) || 0;
-
-  const resultEl = document.getElementById('cc-result');
-  const emptyEl  = document.getElementById('cc-empty');
-  if(!cbm || !cny || !rate){
-    if(resultEl) resultEl.style.display='none';
-    if(emptyEl)  emptyEl.style.display='block';
-    return;
-  }
-
-  const fmt = n => Math.round(n).toLocaleString('ko-KR') + '원';
-
-  // ── 비용 항목 ──
-  const prodKrw     = Math.round(cny * rate);           // 제품비(원화)
-  const workCost    = Math.max(10000, Math.round(cbm * 10000));  // 컨테이너 작업비
-  const shipCost    = Math.round(cbm * 60000);           // 운송비
-  const originCert  = 33000;                             // 원산지증명원
-  const blCharge    = 20000;                             // BL차지비
-  const handling    = 11000;                             // 핸들링비용
-  const customs     = 33000;                             // 통관수수료
-
-  // ── 부가세 ──
-  const importVat   = Math.round(prodKrw * 0.1);        // 수입부가세 (관세 0원)
-  const serviceVat  = Math.round((workCost + shipCost + originCert + blCharge + handling) * 0.1);
-  const customsVat  = Math.round(customs * 0.1);         // 통관수수료 부가세 (별도)
-  const totalVat    = importVat + serviceVat + customsVat;
-
-  // 기타비용
-  const extraItems = getCcExtraItems();
-  const extraTotal = extraItems.reduce((s,x)=>s+x.amt, 0);
-
-  const logisticsCost = workCost + shipCost + originCert + blCharge + handling + customs + extraTotal;
-  const grandTotal    = prodKrw + logisticsCost + totalVat;
-
-  // ── 테이블 행 렌더 ──
-  const rows = [
-    {label:'제품비 ('+cny+'위안 × '+rate+'원)', amt: prodKrw,    vat: importVat,  vatNote:'수입부가세'},
-    {label:'컨테이너 작업비 ('+cbm+'CBM, 최소 1만원)', amt: workCost,   vat: null},
-    {label:'운송비 ('+cbm+'CBM × 60,000원)',     amt: shipCost,   vat: null},
-    {label:'원산지증명원',                          amt: originCert, vat: null},
-    {label:'BL차지비',                              amt: blCharge,   vat: null},
-    {label:'핸들링비용',                            amt: handling,   vat: null},
-    {label:'용역 부가세 (작업비+운송비+증명원+BL+핸들링)', amt: null, vat: serviceVat},
-    {label:'통관수수료',                            amt: customs,    vat: customsVat, vatNote:'관세사 별도'},
-    ...extraItems.map(x=>({label: x.label + ' (기타)', amt: x.amt, vat: null})),
-  ];
-
-  const rowsHtml = rows.map((r,i)=>{
-    const bg = i%2===0 ? '' : 'background:#faf9ff;';
-    const amtTd  = r.amt  != null ? `<td style="text-align:right;padding:9px 12px;font-weight:700;color:var(--text);">${fmt(r.amt)}</td>`  : `<td></td>`;
-    const vatTd  = r.vat  != null ? `<td style="text-align:right;padding:9px 12px;font-weight:700;color:var(--accent);">+${fmt(r.vat)}${r.vatNote?'<div style=\"font-size:9px;color:var(--text3);font-weight:600;margin-top:1px\">'+r.vatNote+'</div>':''}</td>` : `<td style="text-align:right;padding:9px 12px;color:var(--text3);font-size:11px;">-</td>`;
-    return `<tr style="${bg}"><td style="padding:9px 12px;color:var(--text2);font-size:12px;">${r.label}</td>${amtTd}${vatTd}</tr>`;
-  }).join('');
-
-  document.getElementById('cc-rows').innerHTML = rowsHtml;
-  document.getElementById('cc-vat-total').textContent  = '+' + fmt(totalVat);
-  document.getElementById('cc-cost-total').textContent = fmt(logisticsCost);
-  document.getElementById('cc-grand-total').textContent = fmt(grandTotal);
-  document.getElementById('cc-prod-krw').textContent   = fmt(prodKrw);
-  document.getElementById('cc-logistics').textContent  = fmt(logisticsCost);
-  document.getElementById('cc-vat-sum').textContent    = fmt(totalVat);
-
-  if(resultEl) resultEl.style.display='block';
-  if(emptyEl)  emptyEl.style.display='none';
-};
-// ── 절감금액 탭: 누적 절감액 렌더 ────────────────────────────────────────────
-function renderSavingsSummary(){
-  const orders = DATA.orders || [];
-  const products = DATA.products || [];
-  const fmt = n => n.toLocaleString('ko-KR') + '원';
-
-  // savedAmount가 없는 발주도 pid+oldPrice로 소급 계산
-  const calcSaved = (o) => {
-    if(Number(o.savedAmount) > 0) return Number(o.savedAmount);
-    // oldPrice가 발주에 기록된 경우
-    if(o.oldPrice && o.price && o.oldPrice > o.price) return (o.oldPrice - o.price) * (o.qty||0);
-    // 현재 품목의 oldPrice로 계산
-    if(o.pid){
-      const prod = products.find(p=>p.id===o.pid);
-      if(prod && prod.oldPrice){
-        const unitPrice = o.qty ? Math.round((Number(o.amount)||0)/Number(o.qty)) : 0;
-        if(prod.oldPrice > unitPrice && unitPrice > 0) return (prod.oldPrice - unitPrice) * (o.qty||0);
-      }
-    }
-    return 0;
-  };
-
-  const totalSaved = orders.reduce((s, o) => s + calcSaved(o), 0);
-  const savedOrders = orders.filter(o => calcSaved(o) > 0);
-  // 총 발주금액 대비 절감률 계산 → 계산기에 자동 입력
-  const totalOrderAmt = orders.reduce((s, o) => s + (Number(o.amount)||0), 0);
-  const autoRate = (totalOrderAmt > 0 && totalSaved > 0)
-    ? Math.round((totalSaved / (totalOrderAmt + totalSaved)) * 1000) / 10
-    : 0;
-  const rateInput = document.getElementById('pc-rate-input');
-  if(rateInput && autoRate > 0) {
-    rateInput.value = autoRate;
-    if(typeof calcRateCmp === 'function') calcRateCmp();
-  }
-
-  const totalEl = document.getElementById('pc-total-saved');
-  const subEl   = document.getElementById('pc-total-saved-sub');
-  if(totalEl) totalEl.textContent = totalSaved > 0 ? fmt(totalSaved) : '0원';
-  if(subEl){
-    subEl.textContent = totalSaved > 0
-      ? `총 ${savedOrders.length}건 발주에서 절감 · 품목 단가 인하 효과`
-      : '품목에 기존단가를 입력하면 발주할 때마다 쌓여요';
-  }
-
-  // 품목별 절감 집계
-  const byProd = {};
-  orders.forEach(o => {
-    const saved = calcSaved(o);
-    if(saved <= 0) return;
-    const key = o.productName || o.product || '-';
-    byProd[key] = (byProd[key]||0) + saved;
-  });
-  const prodList = Object.entries(byProd).sort((a,b) => b[1]-a[1]).slice(0,6);
-  const prodBarsEl = document.getElementById('pc-prod-bars');
-  if(prodBarsEl){
-    if(prodList.length === 0){
-      prodBarsEl.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">품목에 기존단가를 설정하고 발주를 등록하면<br>여기에 자동으로 표시돼요</div>';
-    } else {
-      const maxVal = prodList[0][1];
-      prodBarsEl.innerHTML = prodList.map(([name, val]) => {
-        const pct = Math.round(val / maxVal * 100);
-        return `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-              <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;">${name}</span>
-              <span style="font-size:13px;font-weight:900;color:var(--green);">${fmt(val)}</span>
-            </div>
-            <div style="height:10px;background:#f3f1fd;border-radius:6px;overflow:hidden;">
-              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:6px;transition:width .4s ease;"></div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-  }
-
-  // 월별 절감 추이 — 배송완료(delivered) 시점 기준
-  const monthMap = {};
-  orders.forEach(o => {
-    const saved = calcSaved(o);
-    if(saved <= 0) return;
-    // hist에서 delivered 날짜 찾기, 없으면 status가 delivered여도 date로 폴백
-    const deliveredHist = (o.hist||[]).find(h => h.s === 'delivered' || h.s === 'tracking_delivered_confirmed');
-    const deliveredDate = deliveredHist ? deliveredHist.d : (o.status === 'delivered' ? o.date : null);
-    if(!deliveredDate) return;
-    const ym = String(deliveredDate).slice(0,7);
-    if(ym && ym.length === 7) monthMap[ym] = (monthMap[ym]||0) + saved;
-  });
-
-  // 데이터 있는 달 중 가장 오래된 달부터 이번 달까지 표시 (최소 6개월)
-  const now = new Date();
-  const thisYm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const dataYms = Object.keys(monthMap).sort();
-  const oldestYm = dataYms.length > 0 ? dataYms[0] : thisYm;
-
-  // oldestYm ~ thisYm 사이 모든 달 생성
-  const allMonths = [];
-  let cur = new Date(oldestYm + '-01');
-  const end = new Date(thisYm + '-01');
-  while(cur <= end){
-    const ym = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
-    allMonths.push({ym, label:`${cur.getMonth()+1}월`, val: monthMap[ym]||0});
-    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
-  }
-  // 최소 6개월 보장 (앞에 빈달 채우기)
-  while(allMonths.length < 6){
-    const first = allMonths[0];
-    const d = new Date(first.ym + '-01');
-    const prev = new Date(d.getFullYear(), d.getMonth()-1, 1);
-    const ym = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
-    allMonths.unshift({ym, label:`${prev.getMonth()+1}월`, val: monthMap[ym]||0});
-  }
-
-  const maxMonth = Math.max(...allMonths.map(m=>m.val), 1);
-  const barsEl   = document.getElementById('pc-monthly-bars');
-  const labelsEl = document.getElementById('pc-monthly-labels');
-  if(barsEl){
-    barsEl.innerHTML = allMonths.map(m => {
-      const h = Math.max(Math.round(m.val / maxMonth * 72), m.val>0?6:2);
-      const color = m.val > 0 ? 'linear-gradient(180deg,#34d399,#10b981)' : '#f0eeff';
-      const valLabel = m.val > 0 ? `<div style="font-size:9px;font-weight:800;color:var(--green);">${(m.val/10000).toFixed(0)}만</div>` : '';
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;">
-        ${valLabel}
-        <div style="width:100%;height:${h}px;background:${color};border-radius:6px 6px 3px 3px;"></div>
-      </div>`;
-    }).join('');
-  }
-  if(labelsEl){
-    labelsEl.innerHTML = allMonths.map(m =>
-      `<div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--text3);">${m.label}</div>`
-    ).join('');
-  }
-}
-
-// ── 단가 비교 (Price Comparison) ─────────────────────────────────────────────
-
-window.setPcAnnual = function(n) {
-  document.getElementById('pc-annual-input').value = n;
-  calcRateCmp();
-};
-
-window.resetPriceCmp = function() {
-  ['pc-rate-input','pc-annual-input'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = '';
-  });
-  document.getElementById('pc-result').style.display = 'none';
-  document.getElementById('pc-empty').style.display = 'block';
-};
-
-window.calcRateCmp = function() {
-  const rate   = parseFloat(document.getElementById('pc-rate-input').value) || 0;
-  const annual = parseFloat(document.getElementById('pc-annual-input').value) || 0;
-
-  const resultEl = document.getElementById('pc-result');
-  const emptyEl  = document.getElementById('pc-empty');
-
-  if(!rate || !annual) {
-    resultEl.style.display = 'none';
-    emptyEl.style.display  = 'block';
-    return;
-  }
-
-  resultEl.style.display = 'block';
-  emptyEl.style.display  = 'none';
-
-  const saved  = Math.round(annual * rate / 100);
-  const actual = annual - saved;
-  const monthly = Math.round(saved / 12);
-
-  const fmt = n => n.toLocaleString('ko-KR') + '원';
-  const fmtShort = n => {
-    if(n >= 100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'') + '억원';
-    if(n >= 10000000)  return (n/10000000).toFixed(1).replace(/\.0$/,'')  + '천만원';
-    if(n >= 10000)     return (n/10000).toFixed(0) + '만원';
-    return fmt(n);
-  };
-
-  document.getElementById('pc-result-main').textContent  = fmtShort(saved);
-  document.getElementById('pc-result-badge').textContent = rate + '% 절감';
-  document.getElementById('pc-result-month').textContent = fmtShort(monthly);
-  document.getElementById('pc-result-actual').textContent = fmtShort(actual);
-  document.getElementById('pc-result-actual-sub').textContent = `연간 ${fmtShort(annual)} 중`;
-  document.getElementById('pc-result-pct-lbl').textContent = rate + '%';
-  document.getElementById('pc-total-lbl').textContent = fmtShort(annual);
-
-  const barPct = Math.min(rate, 100);
-  document.getElementById('pc-result-bar').style.width = barPct + '%';
-  document.getElementById('pc-bar-label').textContent = barPct >= 8 ? fmtShort(saved) : '';
-};
-
-window.update1688Preview = function() {
-  const qty = document.getElementById('po1688-qty').value;
-  const wrap = document.getElementById('po1688-preview-wrap');
-  if (!qty || !_po1688.zh) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
-  document.getElementById('po1688-preview').textContent =
-    `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
-};
-
-window.copy1688Text = function() {
-  const qty = document.getElementById('po1688-qty').value;
-  if (!qty) { toast('수량을 입력해주세요'); return; }
-  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
-  const text = `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
-  navigator.clipboard.writeText(text).then(() => {
-    const msg = document.getElementById('po1688-copy-msg');
-    msg.style.display = 'block';
-    setTimeout(() => msg.style.display = 'none', 3000);
-  });
-};
-
-
 </script>
 
-
-    <div style="font-size:13px;color:var(--text3)">품목을 입력하면 자동으로 중국어 발주서를 생성해요</div>
-  </div>
-
-  <!-- 품목 입력 -->
-  <div id="po-items" style="display:grid;gap:10px;margin-bottom:16px"></div>
-
-  <button type="button" onclick="addPoItem()" style="width:100%;padding:14px;border:2px dashed var(--border2);border-radius:16px;background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:20px">
-    + 품목 추가
-  </button>
-
-  <!-- 발주서 미리보기 -->
-  <div id="po-preview-wrap" style="display:none">
-    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.5px">발주서 미리보기</div>
-    <div id="po-preview" style="background:#fff;border:1px solid var(--border2);border-radius:16px;padding:20px;font-size:15px;line-height:2;white-space:pre-wrap;color:var(--text);margin-bottom:12px"></div>
-    <button type="button" onclick="copyPoText()" style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:-.2px">
-      📋 텍스트 복사
-    </button>
-    <div id="po-copy-msg" style="text-align:center;font-size:13px;color:var(--green);font-weight:600;margin-top:10px;display:none">✅ 복사됐어요! 1688 채팅창에 붙여넣으세요</div>
-  </div>
-</div>
-
-<!-- 1688 발주 시트 -->
-<div id="po1688-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center" onclick="if(event.target===this)close1688Sheet()">
-  <div id="po1688-sheet" style="background:#fff;border-radius:24px 24px 0 0;padding:20px 20px 40px;width:100%;max-height:85vh;overflow-y:auto;animation:sheetUp .25s ease">
-    <div style="width:40px;height:4px;background:#E0E0E0;border-radius:2px;margin:0 auto 20px"></div>
-    <div id="po1688-title" style="font-size:18px;font-weight:900;letter-spacing:-.4px;margin-bottom:4px"></div>
-    <div id="po1688-spec" style="font-size:13px;color:var(--text3);margin-bottom:20px"></div>
-
-    <!-- 번역 미리보기 -->
-    <div style="background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:16px;padding:16px;margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;color:#9a3412;letter-spacing:.5px;margin-bottom:6px">🇨🇳 중국어 번역</div>
-      <div id="po1688-zh" style="font-size:16px;font-weight:700;color:#1c1917">번역 중...</div>
-    </div>
-
-    <!-- 수량 입력 -->
-    <div style="margin-bottom:20px">
-      <label style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.5px;display:block;margin-bottom:8px">수량</label>
-      <input type="number" id="po1688-qty" placeholder="수량 입력" style="width:100%;padding:16px;border:1.5px solid var(--border2);border-radius:14px;font-size:18px;font-weight:700;font-family:inherit;outline:none;color:var(--text);background:#fafafa" oninput="update1688Preview()">
-    </div>
-
-    <!-- 발주서 미리보기 -->
-    <div id="po1688-preview-wrap" style="display:none;margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:8px">발주서 미리보기</div>
-      <div id="po1688-preview" style="background:#f8f7ff;border:1px solid var(--border2);border-radius:14px;padding:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
-    </div>
-
-    <!-- 버튼들 -->
-    <button type="button" onclick="copy1688Text()" style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">
-      📋 발주서 복사
-    </button>
-    <a id="po1688-link" href="#" target="_blank" style="display:block;width:100%;padding:16px;background:#fff7ed;color:#ea580c;border:1.5px solid #fed7aa;border-radius:14px;font-size:16px;font-weight:700;text-align:center;text-decoration:none">
-      🔗 1688 링크 열기
-    </a>
-    <div id="po1688-copy-msg" style="text-align:center;font-size:13px;color:var(--green);font-weight:600;margin-top:12px;display:none">✅ 복사됐어요! 1688 채팅창에 붙여넣으세요</div>
-  </div>
-</div>
 </body>
 </html>
