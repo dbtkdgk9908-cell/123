@@ -6306,165 +6306,399 @@ function resetPriceCmp(){
 }
 
 // ── 수입 원가 계산기 ──────────────────────────────────────────────────────────
-var cc_pallet=false;
-var cc_extra_items=[];
-
-function togglePallet(){
-  cc_pallet=!cc_pallet;
-  var check=document.getElementById('cc-pallet-check');
-  var badge=document.getElementById('cc-pallet-badge');
-  if(check){
-    check.style.background=cc_pallet?'var(--accent)':'#fff';
-    check.style.borderColor=cc_pallet?'var(--accent)':'rgba(94,75,196,.3)';
-    check.innerHTML=cc_pallet?'<span style="color:#fff;font-size:13px;font-weight:900">&#10003;</span>':'';
-  }
-  if(badge) badge.style.display=cc_pallet?'block':'none';
-  calcImportCost();
+// ── 수입 원가 계산기 (어드민 전용) ──────────────────────────────────────────
+function initCostCalcVisibility(){
+  const wrap = document.getElementById('pc-cost-calc-wrap');
+  if(wrap) wrap.style.display = (me && me.role==='admin') ? 'block' : 'none';
 }
 
-function calcCbmFromDims(){
-  var w=parseFloat((document.getElementById('cc-dim-w')&&document.getElementById('cc-dim-w').value)||0)||0;
-  var d=parseFloat((document.getElementById('cc-dim-d')&&document.getElementById('cc-dim-d').value)||0)||0;
-  var h=parseFloat((document.getElementById('cc-dim-h')&&document.getElementById('cc-dim-h').value)||0)||0;
-  var qty=parseInt((document.getElementById('cc-dim-qty')&&document.getElementById('cc-dim-qty').value)||1)||1;
-  var resultEl=document.getElementById('cc-dim-result');
-  var applyBtn=document.getElementById('cc-dim-apply-btn');
-  if(!w||!d||!h){
-    if(resultEl) resultEl.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
-    if(applyBtn) applyBtn.style.display='none';
+window.setCcCbm = function(v){
+  const el = document.getElementById('cc-cbm');
+  if(el){ el.value = v; calcImportCost(); }
+};
+
+window.resetImportCost = function(){
+  ['cc-cbm','cc-cny','cc-rate','cc-dim-w','cc-dim-d','cc-dim-h','cc-dim-qty'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  _ccPallet=false; updatePalletUI();
+  const _dr=document.getElementById('cc-dim-result'); if(_dr) _dr.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
+  const _ab=document.getElementById('cc-dim-apply-btn'); if(_ab) _ab.style.display='none';
+  document.getElementById('cc-result').style.display='none';
+  document.getElementById('cc-empty').style.display='block';
+};
+
+
+// 기타비용 항목 추가/제거
+let _ccExtraId = 0;
+window.addCcExtraItem = function(){
+  _ccExtraId++;
+  const id = _ccExtraId;
+  const wrap = document.getElementById('cc-extra-items');
+  if(!wrap) return;
+  const div = document.createElement('div');
+  div.id = 'cc-extra-' + id;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;';
+  div.innerHTML = `
+    <input class="fi" type="text" placeholder="항목명 (예: 지게차비용)" id="cc-extra-label-${id}"
+      oninput="calcImportCost()" style="min-height:44px;font-size:13px;font-weight:700;">
+    <input class="fi" type="number" placeholder="금액" id="cc-extra-amt-${id}"
+      oninput="calcImportCost()" style="min-height:44px;font-size:13px;font-weight:700;width:110px;">
+    <button type="button" onclick="removeCcExtraItem(${id})"
+      style="width:36px;height:44px;background:#fff1f1;border:1.5px solid rgba(239,68,68,.2);border-radius:12px;color:#ef4444;font-size:18px;cursor:pointer;flex-shrink:0;">×</button>
+  `;
+  wrap.appendChild(div);
+};
+window.removeCcExtraItem = function(id){
+  const el = document.getElementById('cc-extra-' + id);
+  if(el) el.remove();
+  calcImportCost();
+};
+function getCcExtraItems(){
+  const wrap = document.getElementById('cc-extra-items');
+  if(!wrap) return [];
+  return Array.from(wrap.querySelectorAll('[id^="cc-extra-label-"]')).map(el=>{
+    const id = el.id.replace('cc-extra-label-','');
+    const label = el.value.trim() || '기타비용';
+    const amt = parseFloat(document.getElementById('cc-extra-amt-'+id)?.value) || 0;
+    return {label, amt};
+  }).filter(x=>x.amt > 0);
+}
+
+
+// CBM 계산기 (가로×세로×높이×수량 + 파렛트)
+let _ccPallet = false;
+window.togglePallet = function(){
+  _ccPallet = !_ccPallet;
+  updatePalletUI();
+  calcCbmFromDims();
+};
+function updatePalletUI(){
+  const chk = document.getElementById('cc-pallet-check');
+  const badge = document.getElementById('cc-pallet-badge');
+  if(chk){
+    chk.style.background = _ccPallet ? 'var(--accent)' : '#fff';
+    chk.style.borderColor = _ccPallet ? 'var(--accent)' : 'rgba(94,75,196,.3)';
+    chk.innerHTML = _ccPallet ? '<svg width="13" height="13" viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+  }
+  if(badge) badge.style.display = _ccPallet ? 'block' : 'none';
+}
+window.calcCbmFromDims = function(){
+  const w   = parseFloat(document.getElementById('cc-dim-w')?.value) || 0;
+  const d   = parseFloat(document.getElementById('cc-dim-d')?.value) || 0;
+  const h   = parseFloat(document.getElementById('cc-dim-h')?.value) || 0;
+  const qty = parseFloat(document.getElementById('cc-dim-qty')?.value) || 1;
+  const resultEl = document.getElementById('cc-dim-result');
+  const applyBtn = document.getElementById('cc-dim-apply-btn');
+  if(!w || !d || !h){
+    if(resultEl) resultEl.textContent = '가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
+    if(applyBtn) applyBtn.style.display = 'none';
     return;
   }
-  var cbm=(w/100)*(d/100)*(h/100)*qty;
-  if(resultEl) resultEl.textContent=cbm.toFixed(4)+' CBM (수량 '+qty+'개 기준)';
-  if(applyBtn) applyBtn.style.display='block';
-}
+  const boxCbm    = Math.round(w * d * h / 1000000 * 100000) / 100000;
+  const totalBox  = Math.round(boxCbm * qty * 100000) / 100000;
+  const palletCbm = _ccPallet ? 0.2 : 0;
+  const totalCbm  = Math.round((totalBox + palletCbm) * 10000) / 10000;
+  if(resultEl){
+    let txt = '<span style="color:var(--text2);">박스 '+boxCbm+' CBM × '+qty+'개 = '+totalBox+' CBM</span>';
+    if(_ccPallet) txt += '<span style="color:var(--accent);"> + 파렛트 0.2</span>';
+    txt += ' → <span style="color:var(--accent);font-size:15px;font-weight:900;"> '+totalCbm+' CBM</span>';
+    resultEl.innerHTML = txt;
+  }
+  if(applyBtn) applyBtn.style.display = 'block';
+};
+window.applyCbmFromDims = function(){
+  const w   = parseFloat(document.getElementById('cc-dim-w')?.value) || 0;
+  const d   = parseFloat(document.getElementById('cc-dim-d')?.value) || 0;
+  const h   = parseFloat(document.getElementById('cc-dim-h')?.value) || 0;
+  const qty = parseFloat(document.getElementById('cc-dim-qty')?.value) || 1;
+  const boxCbm   = Math.round(w * d * h / 1000000 * 100000) / 100000;
+  const totalBox = Math.round(boxCbm * qty * 100000) / 100000;
+  const palletCbm= _ccPallet ? 0.2 : 0;
+  const totalCbm = Math.round((totalBox + palletCbm) * 10000) / 10000;
+  const cbmEl = document.getElementById('cc-cbm');
+  if(cbmEl){ cbmEl.value = totalCbm; calcImportCost(); }
+};
 
-function applyCbmFromDims(){
-  var w=parseFloat((document.getElementById('cc-dim-w')&&document.getElementById('cc-dim-w').value)||0)||0;
-  var d=parseFloat((document.getElementById('cc-dim-d')&&document.getElementById('cc-dim-d').value)||0)||0;
-  var h=parseFloat((document.getElementById('cc-dim-h')&&document.getElementById('cc-dim-h').value)||0)||0;
-  var qty=parseInt((document.getElementById('cc-dim-qty')&&document.getElementById('cc-dim-qty').value)||1)||1;
-  if(!w||!d||!h) return;
-  var cbm=(w/100)*(d/100)*(h/100)*qty+(cc_pallet?0.2:0);
-  var cbmInput=document.getElementById('cc-cbm');
-  if(cbmInput){ cbmInput.value=cbm.toFixed(4); calcImportCost(); }
-}
+window.calcImportCost = function(){
+  const cbm  = parseFloat(document.getElementById('cc-cbm')?.value) || 0;
+  const cny  = parseFloat(document.getElementById('cc-cny')?.value) || 0;
+  const rate = parseFloat(document.getElementById('cc-rate')?.value) || 0;
 
-function setCcCbm(v){
-  var el=document.getElementById('cc-cbm');
-  if(el){ el.value=v; calcImportCost(); }
-}
-
-function addCcExtraItem(){
-  cc_extra_items.push({name:'',amount:0});
-  renderCcExtraItems();
-}
-
-function removeCcExtraItem(i){
-  cc_extra_items.splice(i,1);
-  renderCcExtraItems();
-  calcImportCost();
-}
-
-function renderCcExtraItems(){
-  var box=document.getElementById('cc-extra-items');
-  if(!box) return;
-  box.innerHTML=cc_extra_items.map(function(item,i){
-    return '<div style="display:flex;gap:8px;align-items:center">'
-      +'<input class="fi" style="flex:1;min-height:44px;font-size:13px;" placeholder="항목명" value="'+(item.name||'')+'" oninput="cc_extra_items['+i+'].name=this.value">'
-      +'<input class="fi" type="number" style="width:120px;min-height:44px;font-size:13px;" placeholder="금액(원)" value="'+(item.amount||'')+'" oninput="cc_extra_items['+i+'].amount=Number(this.value)||0;calcImportCost()">'
-      +'<button type="button" onclick="removeCcExtraItem('+i+')" style="flex-shrink:0;padding:0 12px;height:44px;background:rgba(239,93,103,.1);border:1px solid rgba(239,93,103,.28);border-radius:12px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">&#10005;</button>'
-      +'</div>';
-  }).join('');
-}
-
-function calcImportCost(){
-  var cbm=parseFloat((document.getElementById('cc-cbm')&&document.getElementById('cc-cbm').value)||0)||0;
-  var cny=parseFloat((document.getElementById('cc-cny')&&document.getElementById('cc-cny').value)||0)||0;
-  var rate=parseFloat((document.getElementById('cc-rate')&&document.getElementById('cc-rate').value)||0)||0;
-  var result=document.getElementById('cc-result');
-  var empty=document.getElementById('cc-empty');
-
-  if(!cbm||!cny||!rate){
-    if(result) result.style.display='none';
-    if(empty) empty.style.display='block';
+  const resultEl = document.getElementById('cc-result');
+  const emptyEl  = document.getElementById('cc-empty');
+  if(!cbm || !cny || !rate){
+    if(resultEl) resultEl.style.display='none';
+    if(emptyEl)  emptyEl.style.display='block';
     return;
   }
-  if(result) result.style.display='block';
-  if(empty) empty.style.display='none';
 
-  var logisticPerCbm;
-  if(cbm<=1) logisticPerCbm=260000;
-  else if(cbm<=2) logisticPerCbm=240000;
-  else if(cbm<=5) logisticPerCbm=220000;
-  else logisticPerCbm=200000;
+  const fmt = n => Math.round(n).toLocaleString('ko-KR') + '원';
 
-  var logisticBase=Math.round(cbm*logisticPerCbm);
-  var logisticVat=Math.round(logisticBase*0.1);
-  var customsFee=Math.round(logisticBase*0.02);
-  var customsVat=Math.round(customsFee*0.1);
-  var prodKrw=Math.round(cny*rate);
-  var prodVat=Math.round(prodKrw*0.1);
-  var extraTotal=cc_extra_items.reduce(function(s,it){return s+(Number(it.amount)||0);},0);
-  var extraVat=Math.round(extraTotal*0.1);
-  var vatTotal=logisticVat+customsVat+prodVat+extraVat;
-  var costTotal=logisticBase+customsFee+prodKrw+extraTotal;
-  var grandTotal=costTotal+vatTotal;
+  // ── 비용 항목 ──
+  const prodKrw     = Math.round(cny * rate);           // 제품비(원화)
+  const workCost    = Math.max(10000, Math.round(cbm * 10000));  // 컨테이너 작업비
+  const shipCost    = Math.round(cbm * 60000);           // 운송비
+  const originCert  = 33000;                             // 원산지증명원
+  const blCharge    = 20000;                             // BL차지비
+  const handling    = 11000;                             // 핸들링비용
+  const customs     = 33000;                             // 통관수수료
 
-  var rows=[
-    {name:'제품비 (위안화)',amount:prodKrw,vat:prodVat},
-    {name:'물류비 ('+cbm+'CBM × '+logisticPerCbm.toLocaleString()+'원)',amount:logisticBase,vat:logisticVat},
-    {name:'통관/기타비용 (물류비 2%)',amount:customsFee,vat:customsVat},
+  // ── 부가세 ──
+  const importVat   = Math.round(prodKrw * 0.1);        // 수입부가세 (관세 0원)
+  const serviceVat  = Math.round((workCost + shipCost + originCert + blCharge + handling) * 0.1);
+  const customsVat  = Math.round(customs * 0.1);         // 통관수수료 부가세 (별도)
+  const totalVat    = importVat + serviceVat + customsVat;
+
+  // 기타비용
+  const extraItems = getCcExtraItems();
+  const extraTotal = extraItems.reduce((s,x)=>s+x.amt, 0);
+
+  const logisticsCost = workCost + shipCost + originCert + blCharge + handling + customs + extraTotal;
+  const grandTotal    = prodKrw + logisticsCost + totalVat;
+
+  // ── 테이블 행 렌더 ──
+  const rows = [
+    {label:'제품비 ('+cny+'위안 × '+rate+'원)', amt: prodKrw,    vat: importVat,  vatNote:'수입부가세'},
+    {label:'컨테이너 작업비 ('+cbm+'CBM, 최소 1만원)', amt: workCost,   vat: null},
+    {label:'운송비 ('+cbm+'CBM × 60,000원)',     amt: shipCost,   vat: null},
+    {label:'원산지증명원',                          amt: originCert, vat: null},
+    {label:'BL차지비',                              amt: blCharge,   vat: null},
+    {label:'핸들링비용',                            amt: handling,   vat: null},
+    {label:'용역 부가세 (작업비+운송비+증명원+BL+핸들링)', amt: null, vat: serviceVat},
+    {label:'통관수수료',                            amt: customs,    vat: customsVat, vatNote:'관세사 별도'},
+    ...extraItems.map(x=>({label: x.label + ' (기타)', amt: x.amt, vat: null})),
   ];
-  cc_extra_items.forEach(function(it){
-    if(it.name||it.amount) rows.push({name:it.name||'기타',amount:Number(it.amount)||0,vat:Math.round((Number(it.amount)||0)*0.1)});
+
+  const rowsHtml = rows.map((r,i)=>{
+    const bg = i%2===0 ? '' : 'background:#faf9ff;';
+    const amtTd  = r.amt  != null ? `<td style="text-align:right;padding:9px 12px;font-weight:700;color:var(--text);">${fmt(r.amt)}</td>`  : `<td></td>`;
+    const vatTd  = r.vat  != null ? `<td style="text-align:right;padding:9px 12px;font-weight:700;color:var(--accent);">+${fmt(r.vat)}${r.vatNote?'<div style=\"font-size:9px;color:var(--text3);font-weight:600;margin-top:1px\">'+r.vatNote+'</div>':''}</td>` : `<td style="text-align:right;padding:9px 12px;color:var(--text3);font-size:11px;">-</td>`;
+    return `<tr style="${bg}"><td style="padding:9px 12px;color:var(--text2);font-size:12px;">${r.label}</td>${amtTd}${vatTd}</tr>`;
+  }).join('');
+
+  document.getElementById('cc-rows').innerHTML = rowsHtml;
+  document.getElementById('cc-vat-total').textContent  = '+' + fmt(totalVat);
+  document.getElementById('cc-cost-total').textContent = fmt(logisticsCost);
+  document.getElementById('cc-grand-total').textContent = fmt(grandTotal);
+  document.getElementById('cc-prod-krw').textContent   = fmt(prodKrw);
+  document.getElementById('cc-logistics').textContent  = fmt(logisticsCost);
+  document.getElementById('cc-vat-sum').textContent    = fmt(totalVat);
+
+  if(resultEl) resultEl.style.display='block';
+  if(emptyEl)  emptyEl.style.display='none';
+};
+// ── 절감금액 탭: 누적 절감액 렌더 ────────────────────────────────────────────
+function renderSavingsSummary(){
+  const orders = DATA.orders || [];
+  const products = DATA.products || [];
+  const fmt = n => n.toLocaleString('ko-KR') + '원';
+
+  // savedAmount가 없는 발주도 pid+oldPrice로 소급 계산
+  const calcSaved = (o) => {
+    if(Number(o.savedAmount) > 0) return Number(o.savedAmount);
+    // oldPrice가 발주에 기록된 경우
+    if(o.oldPrice && o.price && o.oldPrice > o.price) return (o.oldPrice - o.price) * (o.qty||0);
+    // 현재 품목의 oldPrice로 계산
+    if(o.pid){
+      const prod = products.find(p=>p.id===o.pid);
+      if(prod && prod.oldPrice){
+        const unitPrice = o.qty ? Math.round((Number(o.amount)||0)/Number(o.qty)) : 0;
+        if(prod.oldPrice > unitPrice && unitPrice > 0) return (prod.oldPrice - unitPrice) * (o.qty||0);
+      }
+    }
+    return 0;
+  };
+
+  const totalSaved = orders.reduce((s, o) => s + calcSaved(o), 0);
+  const savedOrders = orders.filter(o => calcSaved(o) > 0);
+  // 총 발주금액 대비 절감률 계산 → 계산기에 자동 입력
+  const totalOrderAmt = orders.reduce((s, o) => s + (Number(o.amount)||0), 0);
+  const autoRate = (totalOrderAmt > 0 && totalSaved > 0)
+    ? Math.round((totalSaved / (totalOrderAmt + totalSaved)) * 1000) / 10
+    : 0;
+  const rateInput = document.getElementById('pc-rate-input');
+  if(rateInput && autoRate > 0) {
+    rateInput.value = autoRate;
+    if(typeof calcRateCmp === 'function') calcRateCmp();
+  }
+
+  const totalEl = document.getElementById('pc-total-saved');
+  const subEl   = document.getElementById('pc-total-saved-sub');
+  if(totalEl) totalEl.textContent = totalSaved > 0 ? fmt(totalSaved) : '0원';
+  if(subEl){
+    subEl.textContent = totalSaved > 0
+      ? `총 ${savedOrders.length}건 발주에서 절감 · 품목 단가 인하 효과`
+      : '품목에 기존단가를 입력하면 발주할 때마다 쌓여요';
+  }
+
+  // 품목별 절감 집계
+  const byProd = {};
+  orders.forEach(o => {
+    const saved = calcSaved(o);
+    if(saved <= 0) return;
+    const key = o.productName || o.product || '-';
+    byProd[key] = (byProd[key]||0) + saved;
+  });
+  const prodList = Object.entries(byProd).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const prodBarsEl = document.getElementById('pc-prod-bars');
+  if(prodBarsEl){
+    if(prodList.length === 0){
+      prodBarsEl.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">품목에 기존단가를 설정하고 발주를 등록하면<br>여기에 자동으로 표시돼요</div>';
+    } else {
+      const maxVal = prodList[0][1];
+      prodBarsEl.innerHTML = prodList.map(([name, val]) => {
+        const pct = Math.round(val / maxVal * 100);
+        return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;">${name}</span>
+              <span style="font-size:13px;font-weight:900;color:var(--green);">${fmt(val)}</span>
+            </div>
+            <div style="height:10px;background:#f3f1fd;border-radius:6px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:6px;transition:width .4s ease;"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // 월별 절감 추이 — 배송완료(delivered) 시점 기준
+  const monthMap = {};
+  orders.forEach(o => {
+    const saved = calcSaved(o);
+    if(saved <= 0) return;
+    // hist에서 delivered 날짜 찾기, 없으면 status가 delivered여도 date로 폴백
+    const deliveredHist = (o.hist||[]).find(h => h.s === 'delivered' || h.s === 'tracking_delivered_confirmed');
+    const deliveredDate = deliveredHist ? deliveredHist.d : (o.status === 'delivered' ? o.date : null);
+    if(!deliveredDate) return;
+    const ym = String(deliveredDate).slice(0,7);
+    if(ym && ym.length === 7) monthMap[ym] = (monthMap[ym]||0) + saved;
   });
 
-  var tbodyEl=document.getElementById('cc-rows');
-  if(tbodyEl){
-    tbodyEl.innerHTML=rows.map(function(r){
-      return '<tr>'
-        +'<td style="padding:10px 12px;font-size:13px;color:var(--text)">'+r.name+'</td>'
-        +'<td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--text)">'+r.amount.toLocaleString()+'원</td>'
-        +'<td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--yellow)">'+r.vat.toLocaleString()+'원</td>'
-        +'</tr>';
+  // 데이터 있는 달 중 가장 오래된 달부터 이번 달까지 표시 (최소 6개월)
+  const now = new Date();
+  const thisYm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const dataYms = Object.keys(monthMap).sort();
+  const oldestYm = dataYms.length > 0 ? dataYms[0] : thisYm;
+
+  // oldestYm ~ thisYm 사이 모든 달 생성
+  const allMonths = [];
+  let cur = new Date(oldestYm + '-01');
+  const end = new Date(thisYm + '-01');
+  while(cur <= end){
+    const ym = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
+    allMonths.push({ym, label:`${cur.getMonth()+1}월`, val: monthMap[ym]||0});
+    cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+  }
+  // 최소 6개월 보장 (앞에 빈달 채우기)
+  while(allMonths.length < 6){
+    const first = allMonths[0];
+    const d = new Date(first.ym + '-01');
+    const prev = new Date(d.getFullYear(), d.getMonth()-1, 1);
+    const ym = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
+    allMonths.unshift({ym, label:`${prev.getMonth()+1}월`, val: monthMap[ym]||0});
+  }
+
+  const maxMonth = Math.max(...allMonths.map(m=>m.val), 1);
+  const barsEl   = document.getElementById('pc-monthly-bars');
+  const labelsEl = document.getElementById('pc-monthly-labels');
+  if(barsEl){
+    barsEl.innerHTML = allMonths.map(m => {
+      const h = Math.max(Math.round(m.val / maxMonth * 72), m.val>0?6:2);
+      const color = m.val > 0 ? 'linear-gradient(180deg,#34d399,#10b981)' : '#f0eeff';
+      const valLabel = m.val > 0 ? `<div style="font-size:9px;font-weight:800;color:var(--green);">${(m.val/10000).toFixed(0)}만</div>` : '';
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;">
+        ${valLabel}
+        <div style="width:100%;height:${h}px;background:${color};border-radius:6px 6px 3px 3px;"></div>
+      </div>`;
     }).join('');
   }
-
-  var vtEl=document.getElementById('cc-vat-total');
-  var ctEl=document.getElementById('cc-cost-total');
-  var gEl=document.getElementById('cc-grand-total');
-  var pkEl=document.getElementById('cc-prod-krw');
-  var lgEl=document.getElementById('cc-logistics');
-  var vsEl=document.getElementById('cc-vat-sum');
-  if(vtEl) vtEl.textContent=vatTotal.toLocaleString()+'원';
-  if(ctEl) ctEl.textContent=costTotal.toLocaleString()+'원';
-  if(gEl) gEl.textContent=grandTotal.toLocaleString()+'원';
-  if(pkEl) pkEl.textContent=prodKrw.toLocaleString()+'원';
-  if(lgEl) lgEl.textContent=(logisticBase+customsFee).toLocaleString()+'원';
-  if(vsEl) vsEl.textContent=vatTotal.toLocaleString()+'원';
+  if(labelsEl){
+    labelsEl.innerHTML = allMonths.map(m =>
+      `<div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--text3);">${m.label}</div>`
+    ).join('');
+  }
 }
 
-function resetImportCost(){
-  ['cc-cbm','cc-cny','cc-rate','cc-dim-w','cc-dim-d','cc-dim-h','cc-dim-qty'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
+// ── 단가 비교 (Price Comparison) ─────────────────────────────────────────────
+
+window.setPcAnnual = function(n) {
+  document.getElementById('pc-annual-input').value = n;
+  calcRateCmp();
+};
+
+window.resetPriceCmp = function() {
+  ['pc-rate-input','pc-annual-input'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
   });
-  cc_pallet=false;
-  cc_extra_items=[];
-  renderCcExtraItems();
-  var check=document.getElementById('cc-pallet-check');
-  var badge=document.getElementById('cc-pallet-badge');
-  if(check){check.style.background='#fff';check.style.borderColor='rgba(94,75,196,.3)';check.innerHTML='';}
-  if(badge) badge.style.display='none';
-  var result=document.getElementById('cc-result');
-  var empty=document.getElementById('cc-empty');
-  if(result) result.style.display='none';
-  if(empty) empty.style.display='block';
-  var dimResult=document.getElementById('cc-dim-result');
-  var applyBtn=document.getElementById('cc-dim-apply-btn');
-  if(dimResult) dimResult.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
-  if(applyBtn) applyBtn.style.display='none';
-}
+  document.getElementById('pc-result').style.display = 'none';
+  document.getElementById('pc-empty').style.display = 'block';
+};
+
+window.calcRateCmp = function() {
+  const rate   = parseFloat(document.getElementById('pc-rate-input').value) || 0;
+  const annual = parseFloat(document.getElementById('pc-annual-input').value) || 0;
+
+  const resultEl = document.getElementById('pc-result');
+  const emptyEl  = document.getElementById('pc-empty');
+
+  if(!rate || !annual) {
+    resultEl.style.display = 'none';
+    emptyEl.style.display  = 'block';
+    return;
+  }
+
+  resultEl.style.display = 'block';
+  emptyEl.style.display  = 'none';
+
+  const saved  = Math.round(annual * rate / 100);
+  const actual = annual - saved;
+  const monthly = Math.round(saved / 12);
+
+  const fmt = n => n.toLocaleString('ko-KR') + '원';
+  const fmtShort = n => {
+    if(n >= 100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'') + '억원';
+    if(n >= 10000000)  return (n/10000000).toFixed(1).replace(/\.0$/,'')  + '천만원';
+    if(n >= 10000)     return (n/10000).toFixed(0) + '만원';
+    return fmt(n);
+  };
+
+  document.getElementById('pc-result-main').textContent  = fmtShort(saved);
+  document.getElementById('pc-result-badge').textContent = rate + '% 절감';
+  document.getElementById('pc-result-month').textContent = fmtShort(monthly);
+  document.getElementById('pc-result-actual').textContent = fmtShort(actual);
+  document.getElementById('pc-result-actual-sub').textContent = `연간 ${fmtShort(annual)} 중`;
+  document.getElementById('pc-result-pct-lbl').textContent = rate + '%';
+  document.getElementById('pc-total-lbl').textContent = fmtShort(annual);
+
+  const barPct = Math.min(rate, 100);
+  document.getElementById('pc-result-bar').style.width = barPct + '%';
+  document.getElementById('pc-bar-label').textContent = barPct >= 8 ? fmtShort(saved) : '';
+};
+
+window.update1688Preview = function() {
+  const qty = document.getElementById('po1688-qty').value;
+  const wrap = document.getElementById('po1688-preview-wrap');
+  if (!qty || !_po1688.zh) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
+  document.getElementById('po1688-preview').textContent =
+    `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+};
+
+window.copy1688Text = function() {
+  const qty = document.getElementById('po1688-qty').value;
+  if (!qty) { toast('수량을 입력해주세요'); return; }
+  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
+  const text = `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('po1688-copy-msg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  });
+};
 
 function open1688Sheet(pid,name,spec,buyLink,zhName){
   if(buyLink) window.open(buyLink,'_blank');
