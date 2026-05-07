@@ -119,7 +119,7 @@ input,select,textarea,button{font-family:inherit;letter-spacing:inherit;-webkit-
 .dash-bar.count{background:linear-gradient(180deg,#38bdf8,#2563eb);}
 .dash-bar.amount{background:linear-gradient(180deg,#2dd4bf,#0f766e);}
 .dash-col.current .dash-x{color:var(--text);font-weight:800;}
-.dash-col.current .dash-bar{transform:translateY(-2px);}
+.dash-col.current .dash-bar{transform:none;}
 .dash-x{font-size:10px;color:var(--text3);line-height:1.2;white-space:nowrap;}
 @media (max-width:640px){.dash-chart-grid{grid-template-columns:1fr;}}
 .dash-pie-wrap{margin-top:12px;background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:16px;box-shadow:0 2px 12px rgba(124,92,252,.05);}
@@ -2227,7 +2227,10 @@ function buildDashboardMonths(orders, monthsBack=6){
   const map={};
   months.forEach(m=>map[m]={month:m,count:0,amount:0});
   (orders||[]).forEach(o=>{
-    const ym=monthKey(o.expectedDate||o.date||'');
+    // 거래건수 + 금액 모두 배송완료(delivered) 시점 기준
+    const deliveredHist=(o.hist||[]).find(h=>normalizeOrderStatusKey(h.s)==='delivered');
+    if(!deliveredHist) return; // 배송완료 안 된 건 제외
+    const ym=monthKey(deliveredHist.d||'');
     if(map[ym]){
       map[ym].count+=1;
       map[ym].amount+=orderTotal(o);
@@ -2341,7 +2344,12 @@ function renderDash(){
       }).length;
   const inProg=orders.filter(o=>o.status!=='delivered').length;
   const curMonth=monthKey(today());
-  const monthOrders=orders.filter(o=>monthKey(o.expectedDate||o.date)===curMonth);
+  // 이번달 금액: 배송완료 시점 기준
+  const monthOrders=orders.filter(o=>{
+    const deliveredHist=(o.hist||[]).find(h=>normalizeOrderStatusKey(h.s)==='delivered');
+    const baseDate=deliveredHist?(deliveredHist.d||''):(o.expectedDate||o.date||'');
+    return monthKey(baseDate)===curMonth;
+  });
   const monthAmount=monthOrders.reduce((s,o)=>s+orderTotal(o),0);
   const shippingCount=orders.filter(o=>['domestic_ship','warehouse_in','sea_ship','arrived'].includes(o.status)).length;
   const monthlySeries=buildDashboardMonths(orders,6);
@@ -6102,5 +6110,402 @@ function renderProducts(){
 })();
 </script>
 
+
+<script>
+// ── 절감금액 탭 누락 함수 패치 ────────────────────────────────────────────────
+function initCostCalcVisibility(){
+  var wrap=document.getElementById('pc-cost-calc-wrap');
+  if(wrap) wrap.style.display=(me&&me.role==='admin')?'block':'none';
+}
+
+function renderSavingsSummary(){
+  var orders=DATA.orders||[];
+  var totalSaved=0;
+  var prodMap={};
+  var monthMap={};
+
+  // 소급 계산 포함: savedAmount가 없으면 품목 oldPrice로 계산
+  orders.forEach(function(o){
+    var saved=Number(o.savedAmount)||0;
+    if(saved<=0){
+      var prod=null;
+      if(o.pid) prod=(DATA.products||[]).find(function(p){return String(p.id||'')===String(o.pid);});
+      if(!prod && o.productName) prod=(DATA.products||[]).find(function(p){return (p.name||'')===(o.productName||'');});
+      if(!prod && o.product){
+        var raw=String(o.product||'').replace(/^\s*\[[^\]]+\]\s*/,'').trim();
+        prod=(DATA.products||[]).find(function(p){return (p.name||'')===raw;});
+      }
+      if(prod && prod.oldPrice && prod.oldPrice>(prod.price||0)){
+        saved=(prod.oldPrice-prod.price)*(Number(o.qty)||0);
+      }
+    }
+    if(saved<=0) return;
+    totalSaved+=saved;
+    var key=o.pid||o.product||'';
+    if(!prodMap[key]) prodMap[key]={name:getOrderDisplayProduct(o),saved:0};
+    prodMap[key].saved+=saved;
+    // 배송완료 시점 기준으로 월별 집계
+    var deliveredHistSav=(o.hist||[]).find(function(h){return normalizeOrderStatusKey(h.s)==='delivered';});
+    var ymSav=deliveredHistSav ? (deliveredHistSav.d||'').slice(0,7) : '';
+    if(ymSav) monthMap[ymSav]=(monthMap[ymSav]||0)+saved;
+  });
+
+  var totalAmount=orders.reduce(function(s,o){return s+(Number(o.amount)||0);},0);
+  var rate=totalAmount>0?(totalSaved/totalAmount*100):0;
+
+  var totalEl=document.getElementById('pc-total-saved');
+  var subEl=document.getElementById('pc-total-saved-sub');
+  if(totalEl) totalEl.textContent=totalSaved>0?fmt(totalSaved):'0원';
+  if(subEl) subEl.textContent=totalSaved>0
+    ?('총 '+orders.filter(function(o){return (Number(o.savedAmount)||0)>0;}).length+'건의 발주에서 절감됨')
+    :'품목에 기존단가를 입력하면 발주할 때마다 쌓여요';
+
+  var rateInput=document.getElementById('pc-rate-input');
+  if(rateInput) rateInput.value=rate.toFixed(1);
+
+  // 품목별 가로 바
+  var barsEl=document.getElementById('pc-prod-bars');
+  if(barsEl){
+    var sorted=Object.values(prodMap).sort(function(a,b){return b.saved-a.saved;}).slice(0,8);
+    if(sorted.length){
+      var maxS=sorted[0].saved||1;
+      barsEl.innerHTML=sorted.map(function(item){
+        var w=Math.max(6,Math.round(item.saved/maxS*100));
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:4px">'
+          +'<span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%">'+item.name+'</span>'
+          +'<span style="color:var(--green);flex-shrink:0">'+fmt(item.saved)+'</span>'
+          +'</div>'
+          +'<div style="height:10px;background:#e0f5ed;border-radius:6px;overflow:hidden">'
+          +'<div style="height:100%;width:'+w+'%;background:linear-gradient(90deg,#18b67a,#0d9160);border-radius:6px;transition:width .45s ease"></div>'
+          +'</div></div>';
+      }).join('');
+    }else{
+      barsEl.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;">품목에 기존단가를 설정하고 발주를 등록하면<br>여기에 자동으로 표시돼요</div>';
+    }
+  }
+
+  // 월별 세로 바: 현재달 포함 6개월 고정, px 단위
+  var monthBarsEl=document.getElementById('pc-monthly-bars');
+  var monthLabelsEl=document.getElementById('pc-monthly-labels');
+  if(monthBarsEl&&monthLabelsEl){
+    // 현재달 포함 최근 6개월 목록
+    var now=new Date();
+    var months=[];
+    for(var i=5;i>=0;i--){
+      var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+    }
+    var BAR_MAX=90; // px, 컨테이너의 약 2/3 이상 차도록
+    var hasAny=months.some(function(m){return (monthMap[m]||0)>0;});
+    var maxM=hasAny?Math.max.apply(null,months.map(function(m){return monthMap[m]||0;})):1;
+    var thisMonth=months[months.length-1];
+
+    monthBarsEl.style.cssText='display:flex;align-items:flex-end;gap:8px;height:'+BAR_MAX+'px;padding:0 4px;';
+    monthBarsEl.innerHTML=months.map(function(ym){
+      var val=monthMap[ym]||0;
+      var px=val>0?Math.max(12,Math.round(val/maxM*BAR_MAX)):4;
+      var isThis=(ym===thisMonth);
+      var label=val>0?(val>=10000?Math.round(val/10000)+'만':comma(val)):'';
+      var barBg=val>0?'background:linear-gradient(180deg,#34d399,#059669);':'background:#e5e7eb;opacity:0.4;';
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:'+BAR_MAX+'px;gap:4px;">'
+        +'<div style="font-size:10px;font-weight:800;color:var(--green);line-height:1;min-height:14px;text-align:center;">'+label+'</div>'
+        +'<div style="width:min(100%,44px);height:'+px+'px;'+barBg+'border-radius:6px 6px 3px 3px;flex-shrink:0;transition:height .3s ease;"></div>'
+        +'</div>';
+    }).join('');
+
+    monthLabelsEl.style.cssText='display:flex;gap:8px;padding:0 4px;margin-top:6px;';
+    monthLabelsEl.innerHTML=months.map(function(ym){
+      var isThis=(ym===thisMonth);
+      return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(isThis?'900':'700')+';color:'+(isThis?'var(--accent)':'var(--text3)')+';">'+ym.slice(5)+'월</div>';
+    }).join('');
+  }
+
+  calcRateCmp();
+
+  // 어드민 소급적용 버튼
+  if(me&&me.role==='admin'){
+    var btnWrap=document.getElementById('pc-backfill-wrap');
+    if(!btnWrap){
+      var hasUnapplied=(DATA.orders||[]).some(function(o){
+        if(Number(o.savedAmount)>0) return false;
+        var prod=null;
+        if(o.pid) prod=(DATA.products||[]).find(function(p){return String(p.id||'')===String(o.pid);});
+        if(!prod&&o.productName) prod=(DATA.products||[]).find(function(p){return (p.name||'')===(o.productName||'');});
+        if(prod&&prod.oldPrice&&prod.oldPrice>(prod.price||0)&&(Number(o.qty)||0)>0) return true;
+        return false;
+      });
+      if(hasUnapplied){
+        var cumul=document.getElementById('pc-cumul-section');
+        if(cumul){
+          var div=document.createElement('div');
+          div.id='pc-backfill-wrap';
+          div.style.cssText='margin-bottom:14px;';
+          div.innerHTML='<button type="button" onclick="backfillSavedAmounts()" style="width:100%;padding:13px;background:rgba(24,182,122,.12);border:1.5px solid rgba(24,182,122,.3);border-radius:16px;color:#0d9160;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🔄 기존 발주에 절감액 소급 적용</button>'
+            +'<div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center;">품목에 기존단가가 있는 발주를 찾아 절감액을 자동으로 채워드려요</div>';
+          cumul.insertBefore(div,cumul.firstChild);
+        }
+      }
+    }
+  }
+}
+
+function calcRateCmp(){
+  var rateInput=document.getElementById('pc-rate-input');
+  var annualInput=document.getElementById('pc-annual-input');
+  var result=document.getElementById('pc-result');
+  var empty=document.getElementById('pc-empty');
+  var rate=parseFloat((rateInput&&rateInput.value)||0)||0;
+  var annual=parseFloat((annualInput&&annualInput.value)||0)||0;
+
+  if(!rate||!annual){
+    if(result) result.style.display='none';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(result) result.style.display='block';
+  if(empty) empty.style.display='none';
+
+  var saved=Math.round(annual*(rate/100));
+  var actual=annual-saved;
+  var pct=Math.min(rate,100);
+
+  var mainEl=document.getElementById('pc-result-main');
+  var badgeEl=document.getElementById('pc-result-badge');
+  var monthEl=document.getElementById('pc-result-month');
+  var actualEl=document.getElementById('pc-result-actual');
+  var barEl=document.getElementById('pc-result-bar');
+  var barLbl=document.getElementById('pc-bar-label');
+  var pctLbl=document.getElementById('pc-result-pct-lbl');
+  var totalLbl=document.getElementById('pc-total-lbl');
+
+  if(mainEl) mainEl.textContent=fmt(saved);
+  if(badgeEl) badgeEl.textContent=rate.toFixed(1)+'% 절감';
+  if(monthEl) monthEl.textContent=fmt(Math.round(saved/12));
+  if(actualEl) actualEl.textContent=fmt(actual);
+  if(pctLbl) pctLbl.textContent=rate.toFixed(1)+'%';
+  if(totalLbl) totalLbl.textContent=fmt(annual);
+  if(barEl){
+    barEl.style.width=pct+'%';
+    if(barLbl) barLbl.textContent=pct>=8?rate.toFixed(1)+'%':'';
+  }
+}
+
+function setPcAnnual(val){
+  var el=document.getElementById('pc-annual-input');
+  if(el){ el.value=val; calcRateCmp(); }
+}
+
+function resetPriceCmp(){
+  var el=document.getElementById('pc-annual-input');
+  if(el) el.value='';
+  var result=document.getElementById('pc-result');
+  var empty=document.getElementById('pc-empty');
+  if(result) result.style.display='none';
+  if(empty) empty.style.display='block';
+}
+
+// ── 수입 원가 계산기 ──────────────────────────────────────────────────────────
+var cc_pallet=false;
+var cc_extra_items=[];
+
+function togglePallet(){
+  cc_pallet=!cc_pallet;
+  var check=document.getElementById('cc-pallet-check');
+  var badge=document.getElementById('cc-pallet-badge');
+  if(check){
+    check.style.background=cc_pallet?'var(--accent)':'#fff';
+    check.style.borderColor=cc_pallet?'var(--accent)':'rgba(94,75,196,.3)';
+    check.innerHTML=cc_pallet?'<span style="color:#fff;font-size:13px;font-weight:900">&#10003;</span>':'';
+  }
+  if(badge) badge.style.display=cc_pallet?'block':'none';
+  calcImportCost();
+}
+
+function calcCbmFromDims(){
+  var w=parseFloat((document.getElementById('cc-dim-w')&&document.getElementById('cc-dim-w').value)||0)||0;
+  var d=parseFloat((document.getElementById('cc-dim-d')&&document.getElementById('cc-dim-d').value)||0)||0;
+  var h=parseFloat((document.getElementById('cc-dim-h')&&document.getElementById('cc-dim-h').value)||0)||0;
+  var qty=parseInt((document.getElementById('cc-dim-qty')&&document.getElementById('cc-dim-qty').value)||1)||1;
+  var resultEl=document.getElementById('cc-dim-result');
+  var applyBtn=document.getElementById('cc-dim-apply-btn');
+  if(!w||!d||!h){
+    if(resultEl) resultEl.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
+    if(applyBtn) applyBtn.style.display='none';
+    return;
+  }
+  var cbm=(w/100)*(d/100)*(h/100)*qty;
+  if(resultEl) resultEl.textContent=cbm.toFixed(4)+' CBM (수량 '+qty+'개 기준)';
+  if(applyBtn) applyBtn.style.display='block';
+}
+
+function applyCbmFromDims(){
+  var w=parseFloat((document.getElementById('cc-dim-w')&&document.getElementById('cc-dim-w').value)||0)||0;
+  var d=parseFloat((document.getElementById('cc-dim-d')&&document.getElementById('cc-dim-d').value)||0)||0;
+  var h=parseFloat((document.getElementById('cc-dim-h')&&document.getElementById('cc-dim-h').value)||0)||0;
+  var qty=parseInt((document.getElementById('cc-dim-qty')&&document.getElementById('cc-dim-qty').value)||1)||1;
+  if(!w||!d||!h) return;
+  var cbm=(w/100)*(d/100)*(h/100)*qty+(cc_pallet?0.2:0);
+  var cbmInput=document.getElementById('cc-cbm');
+  if(cbmInput){ cbmInput.value=cbm.toFixed(4); calcImportCost(); }
+}
+
+function setCcCbm(v){
+  var el=document.getElementById('cc-cbm');
+  if(el){ el.value=v; calcImportCost(); }
+}
+
+function addCcExtraItem(){
+  cc_extra_items.push({name:'',amount:0});
+  renderCcExtraItems();
+}
+
+function removeCcExtraItem(i){
+  cc_extra_items.splice(i,1);
+  renderCcExtraItems();
+  calcImportCost();
+}
+
+function renderCcExtraItems(){
+  var box=document.getElementById('cc-extra-items');
+  if(!box) return;
+  box.innerHTML=cc_extra_items.map(function(item,i){
+    return '<div style="display:flex;gap:8px;align-items:center">'
+      +'<input class="fi" style="flex:1;min-height:44px;font-size:13px;" placeholder="항목명" value="'+(item.name||'')+'" oninput="cc_extra_items['+i+'].name=this.value">'
+      +'<input class="fi" type="number" style="width:120px;min-height:44px;font-size:13px;" placeholder="금액(원)" value="'+(item.amount||'')+'" oninput="cc_extra_items['+i+'].amount=Number(this.value)||0;calcImportCost()">'
+      +'<button type="button" onclick="removeCcExtraItem('+i+')" style="flex-shrink:0;padding:0 12px;height:44px;background:rgba(239,93,103,.1);border:1px solid rgba(239,93,103,.28);border-radius:12px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">&#10005;</button>'
+      +'</div>';
+  }).join('');
+}
+
+function calcImportCost(){
+  var cbm=parseFloat((document.getElementById('cc-cbm')&&document.getElementById('cc-cbm').value)||0)||0;
+  var cny=parseFloat((document.getElementById('cc-cny')&&document.getElementById('cc-cny').value)||0)||0;
+  var rate=parseFloat((document.getElementById('cc-rate')&&document.getElementById('cc-rate').value)||0)||0;
+  var result=document.getElementById('cc-result');
+  var empty=document.getElementById('cc-empty');
+
+  if(!cbm||!cny||!rate){
+    if(result) result.style.display='none';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(result) result.style.display='block';
+  if(empty) empty.style.display='none';
+
+  var logisticPerCbm;
+  if(cbm<=1) logisticPerCbm=260000;
+  else if(cbm<=2) logisticPerCbm=240000;
+  else if(cbm<=5) logisticPerCbm=220000;
+  else logisticPerCbm=200000;
+
+  var logisticBase=Math.round(cbm*logisticPerCbm);
+  var logisticVat=Math.round(logisticBase*0.1);
+  var customsFee=Math.round(logisticBase*0.02);
+  var customsVat=Math.round(customsFee*0.1);
+  var prodKrw=Math.round(cny*rate);
+  var prodVat=Math.round(prodKrw*0.1);
+  var extraTotal=cc_extra_items.reduce(function(s,it){return s+(Number(it.amount)||0);},0);
+  var extraVat=Math.round(extraTotal*0.1);
+  var vatTotal=logisticVat+customsVat+prodVat+extraVat;
+  var costTotal=logisticBase+customsFee+prodKrw+extraTotal;
+  var grandTotal=costTotal+vatTotal;
+
+  var rows=[
+    {name:'제품비 (위안화)',amount:prodKrw,vat:prodVat},
+    {name:'물류비 ('+cbm+'CBM × '+logisticPerCbm.toLocaleString()+'원)',amount:logisticBase,vat:logisticVat},
+    {name:'통관/기타비용 (물류비 2%)',amount:customsFee,vat:customsVat},
+  ];
+  cc_extra_items.forEach(function(it){
+    if(it.name||it.amount) rows.push({name:it.name||'기타',amount:Number(it.amount)||0,vat:Math.round((Number(it.amount)||0)*0.1)});
+  });
+
+  var tbodyEl=document.getElementById('cc-rows');
+  if(tbodyEl){
+    tbodyEl.innerHTML=rows.map(function(r){
+      return '<tr>'
+        +'<td style="padding:10px 12px;font-size:13px;color:var(--text)">'+r.name+'</td>'
+        +'<td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--text)">'+r.amount.toLocaleString()+'원</td>'
+        +'<td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--yellow)">'+r.vat.toLocaleString()+'원</td>'
+        +'</tr>';
+    }).join('');
+  }
+
+  var vtEl=document.getElementById('cc-vat-total');
+  var ctEl=document.getElementById('cc-cost-total');
+  var gEl=document.getElementById('cc-grand-total');
+  var pkEl=document.getElementById('cc-prod-krw');
+  var lgEl=document.getElementById('cc-logistics');
+  var vsEl=document.getElementById('cc-vat-sum');
+  if(vtEl) vtEl.textContent=vatTotal.toLocaleString()+'원';
+  if(ctEl) ctEl.textContent=costTotal.toLocaleString()+'원';
+  if(gEl) gEl.textContent=grandTotal.toLocaleString()+'원';
+  if(pkEl) pkEl.textContent=prodKrw.toLocaleString()+'원';
+  if(lgEl) lgEl.textContent=(logisticBase+customsFee).toLocaleString()+'원';
+  if(vsEl) vsEl.textContent=vatTotal.toLocaleString()+'원';
+}
+
+function resetImportCost(){
+  ['cc-cbm','cc-cny','cc-rate','cc-dim-w','cc-dim-d','cc-dim-h','cc-dim-qty'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  cc_pallet=false;
+  cc_extra_items=[];
+  renderCcExtraItems();
+  var check=document.getElementById('cc-pallet-check');
+  var badge=document.getElementById('cc-pallet-badge');
+  if(check){check.style.background='#fff';check.style.borderColor='rgba(94,75,196,.3)';check.innerHTML='';}
+  if(badge) badge.style.display='none';
+  var result=document.getElementById('cc-result');
+  var empty=document.getElementById('cc-empty');
+  if(result) result.style.display='none';
+  if(empty) empty.style.display='block';
+  var dimResult=document.getElementById('cc-dim-result');
+  var applyBtn=document.getElementById('cc-dim-apply-btn');
+  if(dimResult) dimResult.textContent='가로 × 세로 × 높이 × 수량 입력 시 자동 계산';
+  if(applyBtn) applyBtn.style.display='none';
+}
+
+function open1688Sheet(pid,name,spec,buyLink,zhName){
+  if(buyLink) window.open(buyLink,'_blank');
+  else toast('1688 링크가 없습니다. 품목 수정에서 구매링크를 추가해 주세요.');
+}
+</script>
+
+<script>
+window.backfillSavedAmounts = async function(){
+  if(!me||me.role!=='admin'){toast('관리자만 사용할 수 있습니다.');return;}
+  var orders=DATA.orders||[];
+  var targets=orders.filter(function(o){
+    if(Number(o.savedAmount)>0) return false;
+    var prod=null;
+    if(o.pid) prod=(DATA.products||[]).find(function(p){return String(p.id||'')===String(o.pid);});
+    if(!prod&&o.productName) prod=(DATA.products||[]).find(function(p){return (p.name||'')===(o.productName||'');});
+    if(!prod&&o.product){
+      var raw=String(o.product||'').replace(/^\s*\[[^\]]+\]\s*/,'').trim();
+      prod=(DATA.products||[]).find(function(p){return (p.name||'')===raw;});
+    }
+    return !!(prod&&prod.oldPrice&&prod.oldPrice>(prod.price||0)&&(Number(o.qty)||0)>0);
+  });
+  if(!targets.length){toast('소급 적용할 발주가 없습니다. 품목에 기존단가를 먼저 입력해 주세요.');return;}
+  var ok=await openAppDialog({type:'confirm',title:'절감액 소급 적용',message:targets.length+'건의 발주에 절감액을 소급 적용할까요?',okText:'적용',cancelText:'취소'});
+  if(!ok) return;
+  var count=0;
+  for(var i=0;i<targets.length;i++){
+    var o=targets[i];
+    var prod=null;
+    if(o.pid) prod=(DATA.products||[]).find(function(p){return String(p.id||'')===String(o.pid);});
+    if(!prod&&o.productName) prod=(DATA.products||[]).find(function(p){return (p.name||'')===(o.productName||'');});
+    if(prod&&prod.oldPrice&&prod.oldPrice>(prod.price||0)){
+      var saved=(prod.oldPrice-prod.price)*(Number(o.qty)||0);
+      await fbUpdate('orders/'+o.id,{savedAmount:saved});
+      count++;
+    }
+  }
+  toast('✅ '+count+'건에 절감액을 적용했습니다!');
+  var btnWrap=document.getElementById('pc-backfill-wrap');
+  if(btnWrap) btnWrap.remove();
+  setTimeout(function(){renderSavingsSummary();},300);
+};
+</script>
 </body>
-</html>
