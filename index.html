@@ -6438,7 +6438,7 @@ window.calcImportCost = function(){
   // ── 비용 항목 ──
   const prodKrw     = Math.round(cny * rate);           // 제품비(원화)
   const workCost    = Math.max(10000, Math.round(cbm * 10000));  // 컨테이너 작업비
-  const shipCost    = Math.round(cbm * 60000);           // 운송비
+  const shipCost    = Math.round(cbm * 65000);           // 운송비
   const originCert  = 33000;                             // 원산지증명원
   const blCharge    = 20000;                             // BL차지비
   const handling    = 11000;                             // 핸들링비용
@@ -6461,7 +6461,7 @@ window.calcImportCost = function(){
   const rows = [
     {label:'제품비 ('+cny+'위안 × '+rate+'원)', amt: prodKrw,    vat: importVat,  vatNote:'수입부가세'},
     {label:'컨테이너 작업비 ('+cbm+'CBM, 최소 1만원)', amt: workCost,   vat: null},
-    {label:'운송비 ('+cbm+'CBM × 60,000원)',     amt: shipCost,   vat: null},
+    {label:'운송비 ('+cbm+'CBM × 65,000원)',     amt: shipCost,   vat: null},
     {label:'원산지증명원',                          amt: originCert, vat: null},
     {label:'BL차지비',                              amt: blCharge,   vat: null},
     {label:'핸들링비용',                            amt: handling,   vat: null},
