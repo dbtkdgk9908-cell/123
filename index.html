@@ -2356,7 +2356,21 @@ function renderDash(){
         if(ref) return String(ref.cid||'')===String(me.cid||'');
         return String(s.cid||'')===String(me.cid||'');
       }).length;
-  const inProg=orders.filter(o=>o.status!=='delivered').length;
+  // 합배송 그룹 실효 상태 맵: 합배송 소속 발주는 그룹 대표 상태로 오버라이드
+  const _shipStatusMap = {};
+  (DATA.shipments||[]).forEach(function(sh){
+    if(!sh||!sh.id) return;
+    const _ids = Array.isArray(sh.orderIds) ? sh.orderIds
+      : (sh.orderIds && typeof sh.orderIds==='object') ? Object.values(sh.orderIds) : [];
+    const _go = _ids.map(function(id){ return (adminAllOrders).find(function(o){ return o&&String(o.id)===String(id); }); }).filter(Boolean);
+    if(!_go.length) return;
+    _go.sort(function(a,b){ return stepIdx(b.status)-stepIdx(a.status); });
+    const _rs = _go[0].status || 'payment_pending';
+    _ids.forEach(function(id){ _shipStatusMap[String(id)] = _rs; });
+  });
+  const effectiveStatus = function(o){ return _shipStatusMap[String(o.id)] || o.status || 'payment_pending'; };
+
+  const inProg=orders.filter(function(o){ return effectiveStatus(o)!=='delivered'; }).length;
   const curMonth=monthKey(today());
   // 이번달 금액: 배송완료 시점 기준
   const monthOrders=orders.filter(o=>{
@@ -2365,7 +2379,9 @@ function renderDash(){
     return monthKey(baseDate)===curMonth;
   });
   const monthAmount=monthOrders.reduce((s,o)=>s+orderTotal(o),0);
-  const shippingCount=orders.filter(o=>['domestic_ship','warehouse_in','sea_ship','arrived'].includes(o.status)).length;
+  const shippingCount=orders.filter(function(o){ return ['domestic_ship','sea_ship'].includes(effectiveStatus(o)); }).length;
+  const arrivedCount=orders.filter(function(o){ return ['warehouse_in','arrived'].includes(effectiveStatus(o)); }).length;
+  const deliveredCount=orders.filter(function(o){ return effectiveStatus(o)==='delivered'; }).length;
   const monthlySeries=buildDashboardMonths(orders,6);
   const scopeLabel=me.role==='admin' ? (selectedClient ? `${selectedClient.name} 기준` : '전체 거래처 기준') : '내 거래처 기준';
   document.getElementById('dash-stats').innerHTML=`
@@ -2377,9 +2393,10 @@ function renderDash(){
     <div class="sc" style="--c:#7c5cfc"><div class="sl">전체 발주</div><div class="sv">${orders.length}</div><div class="ss">누적 건수</div></div>
     <div class="sc" style="--c:var(--red)"><div class="sl">입금 대기</div><div class="sv">${orders.filter(o=>o.status==='payment_pending').length}</div><div class="ss">확인 필요</div></div>
     <div class="sc" style="--c:var(--yellow)"><div class="sl">생산중</div><div class="sv">${orders.filter(o=>o.status==='production').length}</div><div class="ss">제작 진행</div></div>
-    <div class="sc" style="--c:#38bdf8"><div class="sl">배송/입고중</div><div class="sv">${shippingCount}</div><div class="ss">물류 이동</div></div>
-    <div class="sc" style="--c:var(--green)"><div class="sl">배송 완료</div><div class="sv">${orders.filter(o=>o.status==='delivered').length}</div><div class="ss">완료 건수</div></div>
-    <div class="sc" style="--c:#a78bfa"><div class="sl">거래명세서</div><div class="sv">${statementCount}</div><div class="ss">발행 건수</div></div>
+    <div class="sc" style="--c:#38bdf8"><div class="sl">배송중</div><div class="sv">${shippingCount}</div><div class="ss">물류 이동중</div></div>
+    <div class="sc" style="--c:#22d3ee"><div class="sl">입고완료</div><div class="sv">${arrivedCount}</div><div class="ss">센터 입고됨</div></div>
+    <div class="sc" style="--c:var(--green)"><div class="sl">배송 완료</div><div class="sv">${deliveredCount}</div><div class="ss">완료 건수</div></div>
+    <div class="sc" style="--c:#a78bfa;grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:12px;"><div><div class="sl">거래명세서</div><div class="ss">발행 건수</div></div><div class="sv">${statementCount}</div></div>
     <div class="dash-chart-wrap">
       <div class="dash-chart-head">
         <div>
@@ -4912,12 +4929,217 @@ function renderProducts(){
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
           <button type="button" class="bfull bprim" style="flex:1;min-width:160px;position:relative;z-index:3" onclick="openAddProd()">＋ 신규 품목 등록</button>
           <button type="button" class="bfull" style="flex:1;min-width:160px;background:#f7f6ff;color:var(--text2);border:1.5px solid var(--border2)" onclick="openExcelProductUpload()">엑셀 업로드</button>
-        </div>`;
+        </div>
+        <button type="button" class="bfull" id="product-pdf-btn" style="margin-bottom:12px;background:linear-gradient(135deg,#ef5d67,#e11d48);color:#fff;border:none;box-shadow:0 8px 20px rgba(239,93,103,.28);font-weight:800;position:relative;z-index:3" onclick="exportProductsPDF()">📄 카테고리별 품목 PDF 다운로드</button>`;
     }else{
-      box.innerHTML=`<button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openProductReqSheet()">＋ 신규 품목 요청</button>`;
+      box.innerHTML=`
+        <button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openProductReqSheet()">＋ 신규 품목 요청</button>
+        <button type="button" class="bfull" id="product-pdf-btn" style="margin-bottom:12px;background:linear-gradient(135deg,#ef5d67,#e11d48);color:#fff;border:none;box-shadow:0 8px 20px rgba(239,93,103,.28);font-weight:800;position:relative;z-index:3" onclick="exportProductsPDF()">📄 카테고리별 품목 PDF 다운로드</button>`;
     }
   };
 })();
+
+/* ─── 품목 PDF 내보내기 ──────────────────────────────────────────────── */
+window.exportProductsPDF = async function(){
+  const btn = document.getElementById('product-pdf-btn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ PDF 생성 중...'; }
+
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const PW = 210, PH = 297;
+    const ML = 12, MR = 12, MT = 14, MB = 14;
+    const CW = PW - ML - MR;
+
+    const SCALE = 3;
+
+    // 품목 데이터 수집
+    let products = [...(DATA.products||[])];
+    if(typeof window.normalizeListForRole==='function') products = window.normalizeListForRole(products);
+
+    const categoryFilter = (document.getElementById('product-category-filter')?.value||'').trim();
+    if(categoryFilter) products = products.filter(p=>(p.cat||'').trim()===categoryFilter);
+
+    const getCategories = ()=>{
+      if(typeof window.getAllProductCategories==='function') return window.getAllProductCategories();
+      return ['캡(속캡, 마개 등)','유리병','플라스틱병','섬유스틱','나무봉','조화','섬유심지','스프레이','스프레이건','스포이드'];
+    };
+
+    const displayName = (p)=>{
+      if(typeof window.displayProductName==='function') return window.displayProductName(p)||'-';
+      return [p.name||'-', p.spec||''].filter(Boolean).join(' / ');
+    };
+
+    const fmt = n => Number(n||0).toLocaleString('ko-KR')+'원';
+    const fmtMoq = n => Number(n||0).toLocaleString('ko-KR');
+
+    // 카테고리별 그룹핑
+    const categories = getCategories();
+    const grouped = {};
+    categories.forEach(c=>grouped[c]=[]);
+    const uncategorized = [];
+    products.forEach(p=>{
+      const c=(p.cat||'').trim();
+      if(c && grouped[c]) grouped[c].push(p);
+      else uncategorized.push(p);
+    });
+
+    // A4 = 210×297mm. 96dpi 기준 1mm = 3.7795px → 794px × 1123px
+    // SCALE배 캡처하므로 CSS 너비는 794px 고정, 여백은 A4mm 비율 그대로
+    const A4_W_PX = 794;   // CSS px (96dpi A4 너비)
+    const A4_H_PX = 1123;  // CSS px (96dpi A4 높이)
+    const PAD_H = 52, PAD_V = 48; // 좌우, 상하 내부 여백 px
+
+    const container = document.createElement('div');
+    container.style.cssText=`
+      position:fixed;left:-9999px;top:0;
+      width:${A4_W_PX}px;
+      background:#fff;
+      font-family:'Pretendard Variable','Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+      font-size:20px;color:#17162b;
+      padding:${PAD_V}px ${PAD_H}px;
+      box-sizing:border-box;
+    `;
+
+    const companyName = (DATA.supplier&&DATA.supplier.name) ? DATA.supplier.name : '허브앤리빙';
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}. ${String(today.getMonth()+1).padStart(2,'0')}. ${String(today.getDate()).padStart(2,'0')}.`;
+
+    let html = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;padding-bottom:22px;border-bottom:3px solid #6d5df6;">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#6d5df6;letter-spacing:-0.3px;margin-bottom:6px;">${companyName}</div>
+          <div style="font-size:44px;font-weight:900;color:#17162b;letter-spacing:-1.5px;line-height:1.1;">품목 가격표</div>
+          <div style="font-size:17px;color:#9893b3;margin-top:10px;">단가는 VAT 포함 기준입니다.</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;color:#c4c0d8;margin-bottom:4px;letter-spacing:.4px;">기준일</div>
+          <div style="font-size:20px;font-weight:700;color:#5f5a7a;">${dateStr}</div>
+        </div>
+      </div>
+    `;
+
+    // 이전단가가 있는 품목이 카테고리 내에 하나라도 있는지 확인
+    const hasOldPrice = (items) => items.some(p => p.oldPrice && Number(p.oldPrice) > 0 && Number(p.oldPrice) !== Number(p.price||0));
+
+    const renderGroup = (catName, items) => {
+      if(!items.length) return '';
+      const showOld = hasOldPrice(items);
+      let rows = items.map((p,i)=>{
+        const curPrice = Number(p.price||0);
+        const oldPrice = Number(p.oldPrice||0);
+        const hasPriceChange = showOld && oldPrice > 0 && oldPrice !== curPrice;
+        const isRise = hasPriceChange && curPrice > oldPrice;
+        const changeRate = hasPriceChange ? Math.abs(Math.round((curPrice - oldPrice) / oldPrice * 100)) : 0;
+        const rowBg = i%2===0 ? '#fff' : '#faf9ff';
+
+        const oldCell = showOld ? `
+          <td style="padding:17px 18px;text-align:right;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:160px;">
+            ${hasPriceChange ? `
+              <div style="font-size:17px;color:#b8b2d0;text-decoration:line-through;line-height:1.3;">${fmt(oldPrice)}</div>
+              <div style="display:inline-flex;align-items:center;gap:2px;margin-top:5px;padding:4px 13px;border-radius:999px;
+                background:${isRise ? 'rgba(220,38,38,.12)' : 'rgba(22,163,74,.11)'};
+                color:${isRise ? '#dc2626' : '#16a34a'};
+                font-size:16px;font-weight:800;letter-spacing:-.2px;">
+                ${isRise ? '▲' : '▼'} ${changeRate}%
+              </div>
+            ` : `<span style="color:#ddd8ee;font-size:17px;">—</span>`}
+          </td>` : '';
+
+        return `
+        <tr style="background:${rowBg}">
+          <td style="padding:20px 18px;font-size:18px;font-weight:700;color:#17162b;line-height:1.45;border-bottom:1px solid #ece9fb;">${displayName(p)}</td>
+          ${oldCell}
+          <td style="padding:20px 18px;text-align:right;font-size:20px;font-weight:900;color:#6d5df6;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:140px;">${fmt(curPrice)}</td>
+          <td style="padding:20px 18px;text-align:right;font-size:18px;font-weight:700;color:#7a7496;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:80px;">${fmtMoq(p.moq)}</td>
+        </tr>`;
+      }).join('');
+
+      const oldHeader = showOld
+        ? `<th style="padding:18px 14px;text-align:right;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:160px;">이전단가 / 변동률</th>`
+        : '';
+
+      return `
+        <div style="margin-bottom:36px;">
+          <div style="display:inline-flex;align-items:center;padding:8px 23px;border-radius:999px;background:rgba(109,93,246,.10);color:#6d5df6;font-size:17px;font-weight:800;border:1.5px solid rgba(109,93,246,.22);margin-bottom:12px;letter-spacing:-.1px;">${catName}</div>
+          <table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;">
+            <thead>
+              <tr style="background:#f0eeff;">
+                <th style="padding:18px 14px;text-align:left;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;">품목명</th>
+                ${oldHeader}
+                <th style="padding:18px 14px;text-align:right;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:140px;">현재단가 (VAT)</th>
+                <th style="padding:18px 14px;text-align:right;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:80px;">MOQ</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    };
+
+    categories.forEach(cat=>{
+      if(grouped[cat]&&grouped[cat].length) html += renderGroup(cat, grouped[cat]);
+    });
+    if(uncategorized.length) html += renderGroup('기타', uncategorized);
+
+    if(!categories.some(c=>grouped[c]&&grouped[c].length) && !uncategorized.length){
+      if(btn){ btn.disabled=false; btn.innerHTML='📄 카테고리별 품목 PDF 다운로드'; }
+      toast('표시할 품목이 없습니다.');
+      return;
+    }
+
+    html += `
+      <div style="margin-top:40px;padding-top:16px;border-top:1.5px solid #ece9fb;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:16px;color:#c4c0d8;">단가는 VAT 포함 기준이며, 사전 통보 없이 변경될 수 있습니다.</div>
+        <div style="font-size:16px;color:#c4c0d8;">TradeFlow</div>
+      </div>`;
+
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    // A4 한 페이지 높이(px) = A4_H_PX
+    // 컨테이너가 여러 페이지면 A4_H_PX 단위로 슬라이스
+    const totalH = container.scrollHeight;
+    const pageCount = Math.ceil(totalH / A4_H_PX);
+
+    let firstPage = true;
+    for(let pg=0; pg<pageCount; pg++){
+      const clipTop = pg * A4_H_PX;
+      const clipH = Math.min(A4_H_PX, totalH - clipTop);
+
+      const canvas = await html2canvas(container, {
+        scale: SCALE,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        x: 0,
+        y: clipTop,
+        width: A4_W_PX,
+        height: clipH,
+        windowWidth: A4_W_PX,
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.97);
+      if(!firstPage) doc.addPage();
+      firstPage = false;
+
+      // 이미지를 A4 전체에 꽉 채워 삽입 (여백 0)
+      const imgHmm = (clipH / A4_H_PX) * PH;  // 잘린 비율만큼만 높이 사용
+      doc.addImage(imgData, 'JPEG', 0, 0, PW, imgHmm, '', 'FAST');
+    }
+
+    document.body.removeChild(container);
+
+    const fileName = `품목가격표_${companyName}_${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}.pdf`;
+    doc.save(fileName);
+    toast('✅ PDF 다운로드 완료');
+  }catch(err){
+    console.error('exportProductsPDF error', err);
+    toast('PDF 생성 중 오류가 발생했습니다.');
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML='📄 카테고리별 품목 PDF 다운로드'; }
+  }
+};
 </script>
 
 
