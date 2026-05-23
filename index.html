@@ -6939,31 +6939,161 @@ window.calcRateCmp = function() {
   document.getElementById('pc-bar-label').textContent = barPct >= 8 ? fmtShort(saved) : '';
 };
 
-window.update1688Preview = function() {
-  const qty = document.getElementById('po1688-qty').value;
+
+// 1688 발주 문구 복사 시트
+// 품목의 1688 버튼을 눌러도 바로 사이트로 이동하지 않고,
+// 중국어 발주 문구를 확인/복사한 뒤 필요할 때만 원문 링크를 열 수 있게 한다.
+window._po1688 = window._po1688 || { pid:'', name:'', spec:'', buyLink:'', zh:'' };
+
+function po1688EscapeHtml(v){
+  return String(v == null ? '' : v).replace(/[&<>'"]/g, function(ch){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[ch];
+  });
+}
+
+function formatPo1688Name(spec, zhName, fallbackName){
+  const zh = String(zhName || '').trim();
+  const sp = String(spec || '').trim();
+  const fb = String(fallbackName || '').trim();
+  if(zh && sp && !zh.includes(sp)) return sp + ' ' + zh;
+  if(zh) return zh;
+  if(sp && fb) return sp + ' ' + fb;
+  return fb || sp || '产品';
+}
+
+function ensure1688Sheet(){
+  if(document.getElementById('po1688ov')) return;
+  const div = document.createElement('div');
+  div.className = 'sov';
+  div.id = 'po1688ov';
+  div.innerHTML = `
+    <div class="sh-box">
+      <div class="sh-han"></div>
+      <div class="sh-hd">
+        <div class="sh-ttl">🛒 1688 발주 문구</div>
+        <button type="button" class="sh-cl" onclick="close1688Sheet()">✕</button>
+      </div>
+      <div class="sh-bd">
+        <div style="background:linear-gradient(180deg,#ffffff 0%,#fcfbff 100%);border:1px solid rgba(94,75,196,.10);border-radius:20px;padding:15px 16px;margin-bottom:14px;box-shadow:var(--shadow-sm);">
+          <div style="font-size:11px;color:var(--text3);font-weight:800;margin-bottom:5px;">선택 품목</div>
+          <div id="po1688-title" style="font-size:15px;font-weight:900;color:var(--text);line-height:1.45;"></div>
+          <div id="po1688-sub" style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.5;"></div>
+        </div>
+
+        <div id="po1688-warn" style="display:none;background:rgba(245,158,11,.10);border:1.5px solid rgba(245,158,11,.24);border-radius:16px;padding:12px 13px;margin-bottom:14px;font-size:12px;color:#92400e;line-height:1.6;font-weight:700;">
+          중국어 품목명이 비어 있어서 한글 품목명으로 문구가 생성됩니다. 품목 수정에서 🇨🇳 중국어 품목명을 넣으면 더 정확해요.
+        </div>
+
+        <div class="fg">
+          <label class="fl">발주 수량 *</label>
+          <input class="fi" id="po1688-qty" type="number" inputmode="numeric" placeholder="예: 5000" oninput="update1688Preview()">
+        </div>
+
+        <div class="fg" id="po1688-preview-wrap" style="display:none">
+          <label class="fl">복사될 중국어 문구</label>
+          <pre id="po1688-preview" style="white-space:pre-wrap;background:#f7f6ff;border:1px solid rgba(94,75,196,.10);border-radius:16px;padding:14px 15px;font-size:13px;color:var(--text);line-height:1.7;font-family:inherit;font-weight:700;"></pre>
+        </div>
+
+        <div id="po1688-copy-msg" style="display:none;background:rgba(24,182,122,.10);border:1.5px solid rgba(24,182,122,.20);border-radius:14px;padding:11px 12px;margin-bottom:12px;font-size:12px;color:#0d9160;font-weight:800;text-align:center;">
+          ✅ 중국어 발주 문구가 복사되었습니다.
+        </div>
+
+        <button type="button" class="bfull bprim" onclick="copy1688Text()">중국어 문구 복사</button>
+        <button type="button" class="bfull bghost" id="po1688-link-btn" onclick="open1688Original()" style="margin-top:10px;display:none;background:rgba(249,115,22,.10);color:#ea580c;border:1.5px solid rgba(249,115,22,.24);">1688 원문 링크 열기</button>
+        <button type="button" class="bfull bghost" onclick="close1688Sheet()" style="margin-top:10px">닫기</button>
+      </div>
+    </div>`;
+  div.addEventListener('click', function(e){ if(e.target === div) close1688Sheet(); });
+  document.body.appendChild(div);
+}
+
+function build1688Text(){
+  const qtyEl = document.getElementById('po1688-qty');
+  const qty = qtyEl ? String(qtyEl.value || '').trim() : '';
+  if(!qty) return '';
+  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh, _po1688.name);
+  return `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+}
+
+window.update1688Preview = function(){
+  ensure1688Sheet();
+  const text = build1688Text();
   const wrap = document.getElementById('po1688-preview-wrap');
-  if (!qty || !_po1688.zh) { wrap.style.display = 'none'; return; }
+  const preview = document.getElementById('po1688-preview');
+  if(!wrap || !preview) return;
+  if(!text){ wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
-  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
-  document.getElementById('po1688-preview').textContent =
-    `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
+  preview.textContent = text;
 };
 
-window.copy1688Text = function() {
-  const qty = document.getElementById('po1688-qty').value;
-  if (!qty) { toast('수량을 입력해주세요'); return; }
-  const orderName = formatPo1688Name(_po1688.spec, _po1688.zh);
-  const text = `您好！请帮我确认以下订单：\n\n1. ${orderName} - ${qty}个\n\n请确认库存及价格，谢谢！`;
-  navigator.clipboard.writeText(text).then(() => {
+window.copy1688Text = function(){
+  ensure1688Sheet();
+  const text = build1688Text();
+  if(!text){ toast('수량을 입력해주세요'); return; }
+  const done = function(){
     const msg = document.getElementById('po1688-copy-msg');
-    msg.style.display = 'block';
-    setTimeout(() => msg.style.display = 'none', 3000);
-  });
+    if(msg){
+      msg.style.display = 'block';
+      setTimeout(function(){ msg.style.display = 'none'; }, 3000);
+    }
+    toast('✅ 중국어 문구가 복사되었습니다.');
+  };
+  const fallbackCopy = function(){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try{ document.execCommand('copy'); done(); }
+    catch(e){ toast('복사에 실패했습니다. 문구를 길게 눌러 직접 복사해주세요.'); }
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallbackCopy);
+  }else{
+    fallbackCopy();
+  }
 };
+
+function close1688Sheet(){
+  const ov = document.getElementById('po1688ov');
+  if(ov) ov.classList.remove('open');
+}
+
+function open1688Original(){
+  if(_po1688 && _po1688.buyLink) window.open(_po1688.buyLink, '_blank');
+  else toast('1688 링크가 없습니다. 품목 수정에서 구매링크를 추가해 주세요.');
+}
 
 function open1688Sheet(pid,name,spec,buyLink,zhName){
-  if(buyLink) window.open(buyLink,'_blank');
-  else toast('1688 링크가 없습니다. 품목 수정에서 구매링크를 추가해 주세요.');
+  ensure1688Sheet();
+  _po1688 = {
+    pid: String(pid || ''),
+    name: String(name || ''),
+    spec: String(spec || ''),
+    buyLink: String(buyLink || ''),
+    zh: String(zhName || '')
+  };
+
+  const title = document.getElementById('po1688-title');
+  const sub = document.getElementById('po1688-sub');
+  const warn = document.getElementById('po1688-warn');
+  const qty = document.getElementById('po1688-qty');
+  const linkBtn = document.getElementById('po1688-link-btn');
+  const msg = document.getElementById('po1688-copy-msg');
+
+  if(title) title.textContent = formatPo1688Name(_po1688.spec, _po1688.zh, _po1688.name);
+  if(sub) sub.textContent = (_po1688.name ? '국문: ' + _po1688.name : '') + (_po1688.buyLink ? ' · 1688 링크 등록됨' : ' · 1688 링크 없음');
+  if(warn) warn.style.display = _po1688.zh ? 'none' : 'block';
+  if(qty){ qty.value = ''; setTimeout(function(){ qty.focus(); }, 120); }
+  if(linkBtn) linkBtn.style.display = _po1688.buyLink ? 'block' : 'none';
+  if(msg) msg.style.display = 'none';
+  update1688Preview();
+
+  const ov = document.getElementById('po1688ov');
+  if(ov) ov.classList.add('open');
 }
 </script>
 
