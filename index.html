@@ -4757,7 +4757,9 @@ function renderProducts(){
     const cardHTML = (p)=>`
       <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          ${p.photoUrl?`<div style="flex-shrink:0;width:52px;height:52px;border-radius:10px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
+          <div style="flex-shrink:0;width:52px;height:52px;border-radius:10px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            ${p.photoUrl?`<img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy">`:''}
+          </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;font-weight:800;line-height:1.35;word-break:break-all;margin-bottom:5px;">${displayProductName(p)||'-'}</div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -5184,15 +5186,41 @@ window.exportProductsPDF = async function(){
       ));
     }
 
-    // A4 한 페이지 높이(px) = A4_H_PX
-    // 컨테이너가 여러 페이지면 A4_H_PX 단위로 슬라이스
+    // 행 단위 페이지 나누기 - tr이 잘리지 않도록
     const totalH = container.scrollHeight;
-    const pageCount = Math.ceil(totalH / A4_H_PX);
+    const containerTop = container.getBoundingClientRect().top + window.scrollY;
+
+    const allRows = [...container.querySelectorAll('tr')];
+    const rowBounds = allRows.map(tr => {
+      const r = tr.getBoundingClientRect();
+      return {
+        top:    r.top    + window.scrollY - containerTop,
+        bottom: r.bottom + window.scrollY - containerTop
+      };
+    });
+
+    // 페이지 경계에서 행이 잘리지 않는 지점 계산
+    const slices = [];
+    let pageStart = 0;
+    while(pageStart < totalH){
+      const pageEnd = pageStart + A4_H_PX;
+      if(pageEnd >= totalH){ slices.push({start:pageStart, end:totalH}); break; }
+
+      let cutAt = pageEnd;
+      for(const rb of rowBounds){
+        if(rb.top < pageEnd && rb.bottom > pageEnd){
+          cutAt = rb.top > pageStart + 10 ? rb.top : pageEnd;
+          break;
+        }
+      }
+      slices.push({start:pageStart, end:cutAt});
+      pageStart = cutAt;
+    }
 
     let firstPage = true;
-    for(let pg=0; pg<pageCount; pg++){
-      const clipTop = pg * A4_H_PX;
-      const clipH = Math.min(A4_H_PX, totalH - clipTop);
+    for(const slice of slices){
+      const clipH = slice.end - slice.start;
+      if(clipH <= 0) continue;
 
       const canvas = await html2canvas(container, {
         scale: SCALE,
@@ -5200,7 +5228,7 @@ window.exportProductsPDF = async function(){
         allowTaint: true,
         backgroundColor: '#ffffff',
         x: 0,
-        y: clipTop,
+        y: slice.start,
         width: A4_W_PX,
         height: clipH,
         windowWidth: A4_W_PX,
@@ -5211,8 +5239,7 @@ window.exportProductsPDF = async function(){
       if(!firstPage) doc.addPage();
       firstPage = false;
 
-      // 이미지를 A4 전체에 꽉 채워 삽입 (여백 0)
-      const imgHmm = (clipH / A4_H_PX) * PH;  // 잘린 비율만큼만 높이 사용
+      const imgHmm = (clipH / A4_H_PX) * PH;
       doc.addImage(imgData, 'JPEG', 0, 0, PW, imgHmm, '', 'FAST');
     }
 
