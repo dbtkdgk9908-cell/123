@@ -3443,9 +3443,10 @@ function submitProduct(){
     const id=editPid||('p'+Date.now());
     const existing=(DATA.products||[]).find(x=>x.id===id)||{};
     const oldPriceEl=document.getElementById('p-oldprice');
-    const oldPrice=(oldPriceEl && oldPriceEl.value!=='') ? parseInt(oldPriceEl.value)||null : (existing.oldPrice??null);
+    const oldPriceVal=oldPriceEl?oldPriceEl.value.trim():'';
+    const oldPrice=oldPriceVal!=='' ? Number(oldPriceVal) : null;
     const payload={id,name,spec,unit,price,moq,lead,cat,clientIds,createdAt:existing.createdAt||nowIso,updatedAt:nowIso};
-    if(oldPrice!=null) payload.oldPrice=oldPrice;
+    payload.oldPrice=oldPrice;
 
     if(me&&me.role==='admin'){
       payload.buyLink=buyLink;
@@ -4092,9 +4093,10 @@ function submitProduct(){
   const id=editPid||('p'+Date.now());
   const nowIso=new Date().toISOString();
   const oldPriceEl2=document.getElementById('p-oldprice');
-  const oldPrice2=(oldPriceEl2 && oldPriceEl2.value!=='') ? parseInt(oldPriceEl2.value)||null : (existing.oldPrice??null);
+  const oldPrice2Val=oldPriceEl2?oldPriceEl2.value.trim():'';
+  const oldPrice2=oldPrice2Val!=='' ? Number(oldPrice2Val) : null;
   const payload={id,name,spec,unit,price,moq,lead,cat,clientIds,createdAt:existing.createdAt||nowIso,updatedAt:nowIso};
-  if(oldPrice2!=null) payload.oldPrice=oldPrice2;
+  payload.oldPrice=oldPrice2;
   // 기존 필드 보존
   if(existing.lastOrderDate) payload.lastOrderDate=existing.lastOrderDate;
   if(existing.lastBuyCny!=null) payload.lastBuyCny=existing.lastBuyCny;
@@ -4656,11 +4658,11 @@ function renderProducts(){
         updatedAt: nowIso,
         memo: note
       };
-      // oldPrice 보존: 입력값 우선, 없으면 기존 DB값 유지
+      // oldPrice: 비워두면 null, 값 있으면 그 값으로 저장
       const oldPriceElB=document.getElementById('p-oldprice');
       const oldPriceInputVal = oldPriceElB ? oldPriceElB.value.trim() : '';
-      const oldPriceB = oldPriceInputVal !== '' ? (parseInt(oldPriceInputVal)||null) : (existingById.oldPrice ?? null);
-      if(oldPriceB != null) payload.oldPrice = oldPriceB;
+      const oldPriceB = oldPriceInputVal !== '' ? Number(oldPriceInputVal) : null;
+      payload.oldPrice = oldPriceB;
 
       if(me&&me.role==='admin'){
         payload.buyLink=(document.getElementById('p-buylink')?.value||'').trim();
@@ -4757,8 +4759,9 @@ function renderProducts(){
     const cardHTML = (p)=>`
       <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="flex-shrink:0;width:52px;height:52px;border-radius:10px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-            ${p.photoUrl?`<img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy">`:''}
+          <div style="flex-shrink:0;width:68px;height:68px;border-radius:12px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            ${p.photoUrl?`<img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in;" loading="lazy" onclick="event.stopPropagation();openLightbox('${p.photoUrl}')">`:''}
+
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;font-weight:800;line-height:1.35;word-break:break-all;margin-bottom:5px;">${displayProductName(p)||'-'}</div>
@@ -7260,7 +7263,7 @@ function handleProductPhotoSelect(input){
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = function(){
-    const MAX = 600;
+    const MAX = 1200;
     let w = img.width, h = img.height;
     if(w > MAX || h > MAX){
       if(w >= h){ h = Math.round(h * MAX / w); w = MAX; }
@@ -7273,7 +7276,7 @@ function handleProductPhotoSelect(input){
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(url);
-    setProductPhotoPreview(canvas.toDataURL('image/jpeg', 0.88));
+    setProductPhotoPreview(canvas.toDataURL('image/jpeg', 0.93));
   };
   img.src = url;
 }
@@ -7326,5 +7329,27 @@ window.resetProductPhotoUI = function(photoUrl){
     window.closePSheet._photoPatched = true;
   } else if(!orig) { setTimeout(patch, 100); }
 })();
+</script>
+
+<!-- 이미지 라이트박스 -->
+<div id="img-lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="img-lightbox-img" src="" style="max-width:92vw;max-height:88vh;object-fit:contain;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.5);">
+  <button onclick="event.stopPropagation();closeLightbox()" style="position:fixed;top:18px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+</div>
+<script>
+function openLightbox(src){
+  const lb=document.getElementById('img-lightbox');
+  const img=document.getElementById('img-lightbox-img');
+  if(!lb||!img||!src) return;
+  img.src=src;
+  lb.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  const lb=document.getElementById('img-lightbox');
+  if(lb) lb.style.display='none';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeLightbox(); });
 </script>
 </body>
