@@ -1527,6 +1527,27 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         <div style="font-size:12px;color:var(--text2);line-height:1.7" id="p-req-fill-text"></div>
       </div>
 
+      <!-- 상품 사진 -->
+      <div class="fg" id="p-photo-wrap">
+        <label class="fl">상품 사진</label>
+
+        <!-- 미리보기 -->
+        <div id="p-photo-preview" style="display:none;position:relative;margin-bottom:10px;border-radius:14px;border:1.5px solid rgba(109,93,246,.14);background:#ffffff;overflow:hidden;min-height:80px;display:none;align-items:center;justify-content:center;">
+          <img id="p-photo-img" src="" style="max-width:100%;max-height:200px;object-fit:contain;display:block;margin:0 auto;">
+          <button type="button" onclick="clearProductPhoto()" style="position:absolute;top:7px;right:7px;width:28px;height:28px;border-radius:50%;background:rgba(23,22,43,.62);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+        </div>
+
+        <!-- 업로드 버튼 -->
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <label id="p-photo-label" for="p-photo-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;border:1.5px dashed rgba(109,93,246,.28);border-radius:14px;background:#f8f7ff;cursor:pointer;color:var(--text3);font-size:13px;font-weight:700;transition:border-color .18s,background .18s;">
+            <span style="font-size:18px;">📷</span> 사진 선택 (JPG/PNG)
+          </label>
+        </div>
+        <input type="file" id="p-photo-input" accept="image/*" style="display:none" onchange="handleProductPhotoSelect(this)">
+
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">품목 목록 왼쪽에 썸네일로 표시됩니다.</div>
+      </div>
+
       <div class="fg"><label class="fl">품목명 *</label><input class="fi" id="p-name" placeholder="품목 이름"></div>
       <div class="fg"><label class="fl">규격</label><input class="fi" id="p-spec" placeholder="예: 500ml / 28파이 / 4mm×280mm"></div>
 
@@ -3231,7 +3252,7 @@ function renderProducts(){
   }
 
   document.getElementById('products-list').innerHTML=list.map(p=>`
-    <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
+    <div class="lc" style="padding:6px 10px;margin-bottom:6px;border-radius:10px;">
       <div style="display:grid;grid-template-columns:1.7fr 1.05fr .85fr auto;gap:6px;align-items:center;">
         <div style="min-width:0">
           <div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayProductName(p)||'-'}</div>
@@ -4103,7 +4124,7 @@ function submitProduct(){
 function renderProducts(){
   renderProductActions();
   document.getElementById('products-list').innerHTML=(DATA.products||[]).map(p=>`
-    <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
+    <div class="lc" style="padding:6px 10px;margin-bottom:6px;border-radius:10px;">
       <div style="display:grid;grid-template-columns:1.7fr 1.05fr .85fr auto;gap:6px;align-items:center;">
         <div style="min-width:0">
           <div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayProductName(p)||'-'}</div>
@@ -4323,7 +4344,7 @@ function submitProduct(){
 function renderProducts(){
   renderProductActions();
   document.getElementById('products-list').innerHTML=(DATA.products||[]).map(p=>`
-    <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
+    <div class="lc" style="padding:6px 10px;margin-bottom:6px;border-radius:10px;">
       <div style="display:grid;grid-template-columns:1.7fr 1.05fr .85fr auto;gap:6px;align-items:center;">
         <div style="min-width:0">
           <div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayProductName(p)||'-'}</div>
@@ -4489,6 +4510,18 @@ function renderProducts(){
       }
 
       document.getElementById('pov').classList.add('open');
+
+      /* 신규 등록 시 사진 UI 초기화 */
+      window._pendingProductPhoto = undefined;
+      (function(){
+        const prev = document.getElementById('p-photo-preview');
+        const pimg = document.getElementById('p-photo-img');
+        const lbl  = document.getElementById('p-photo-label');
+        if(pimg) pimg.src = '';
+        if(prev) prev.style.display = 'none';
+        if(lbl)  lbl.style.display  = 'flex';
+      })();
+
     }catch(err){
       console.error('openAddProd error', err);
       toast('품목 등록창 오류');
@@ -4558,6 +4591,24 @@ function renderProducts(){
       }
 
       document.getElementById('pov').classList.add('open');
+
+      /* 사진 로드 */
+      window._pendingProductPhoto = undefined;
+      (function(){
+        const prev = document.getElementById('p-photo-preview');
+        const pimg = document.getElementById('p-photo-img');
+        const lbl  = document.getElementById('p-photo-label');
+        if(p.photoUrl){
+          if(pimg) pimg.src = p.photoUrl;
+          if(prev) prev.style.display = 'flex';
+          if(lbl)  lbl.style.display  = 'none';
+        } else {
+          if(pimg) pimg.src = '';
+          if(prev) prev.style.display = 'none';
+          if(lbl)  lbl.style.display  = 'flex';
+        }
+      })();
+
     }catch(err){
       console.error('editProd error', err);
       toast('품목 수정창 오류');
@@ -4627,6 +4678,18 @@ function renderProducts(){
       if(existingById.lastOrderDate) payload.lastOrderDate=existingById.lastOrderDate;
       if(existingById.lastBuyCny!=null) payload.lastBuyCny=existingById.lastBuyCny;
 
+      // 사진: 새로 선택된 경우 저장, 삭제된 경우 null, 변경 없으면 기존값 보존
+      const pendingPhoto = window._pendingProductPhoto;
+      if(pendingPhoto === null){
+        payload.photoUrl = null; // 삭제
+      } else if(pendingPhoto){
+        payload.photoUrl = pendingPhoto; // 새 base64
+      } else {
+        // 변경 없음 → 기존값 유지
+        if(existingById.photoUrl) payload.photoUrl = existingById.photoUrl;
+      }
+      window._pendingProductPhoto = undefined;
+
       fbSet(`products/${id}`, payload);
 
       if(currentRequestToConvert){
@@ -4692,8 +4755,9 @@ function renderProducts(){
     if(!box) return;
 
     const cardHTML = (p)=>`
-      <div class="lc" style="padding:8px 10px;margin-bottom:6px;border-radius:10px;">
-        <div style="display:grid;grid-template-columns:minmax(0,2.8fr) .85fr .75fr auto;gap:8px;align-items:center;">
+      <div class="lc" style="padding:6px 10px;margin-bottom:6px;border-radius:10px;">
+        <div style="display:grid;grid-template-columns:${p.photoUrl?'62px ':''}minmax(0,2.8fr) .85fr .75fr auto;gap:8px;align-items:center;">
+          ${p.photoUrl?`<div style="flex-shrink:0;width:56px;height:56px;border-radius:11px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
           <div style="min-width:0;padding-right:4px;">
             <div style="font-size:12px;font-weight:800;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;">${displayProductName(p)||'-'}</div>
           </div>
@@ -5025,6 +5089,8 @@ window.exportProductsPDF = async function(){
     const renderGroup = (catName, items) => {
       if(!items.length) return '';
       const showOld = hasOldPrice(items);
+      // 카테고리 내 사진 있는 품목이 하나라도 있으면 사진 열 표시
+      const hasPhoto = items.some(p => p.photoUrl);
       let rows = items.map((p,i)=>{
         const curPrice = Number(p.price||0);
         const oldPrice = Number(p.oldPrice||0);
@@ -5032,6 +5098,16 @@ window.exportProductsPDF = async function(){
         const isRise = hasPriceChange && curPrice > oldPrice;
         const changeRate = hasPriceChange ? Math.abs(Math.round((curPrice - oldPrice) / oldPrice * 100)) : 0;
         const rowBg = i%2===0 ? '#fff' : '#faf9ff';
+
+        const photoCell = hasPhoto ? `
+          <td style="padding:10px 14px;border-bottom:1px solid #ece9fb;vertical-align:middle;width:76px;text-align:center;">
+            ${p.photoUrl
+              ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                   <img src="${p.photoUrl}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">
+                 </div>`
+              : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid #ece9fb;background:#f8f7ff;display:inline-block;"></div>`
+            }
+          </td>` : '';
 
         const oldCell = showOld ? `
           <td style="padding:17px 18px;text-align:right;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:160px;">
@@ -5048,12 +5124,17 @@ window.exportProductsPDF = async function(){
 
         return `
         <tr style="background:${rowBg}">
+          ${photoCell}
           <td style="padding:20px 18px;font-size:18px;font-weight:700;color:#17162b;line-height:1.45;border-bottom:1px solid #ece9fb;">${displayName(p)}</td>
           ${oldCell}
           <td style="padding:20px 18px;text-align:right;font-size:20px;font-weight:900;color:#6d5df6;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:140px;">${fmt(curPrice)}</td>
           <td style="padding:20px 18px;text-align:right;font-size:18px;font-weight:700;color:#7a7496;white-space:nowrap;border-bottom:1px solid #ece9fb;vertical-align:middle;width:80px;">${fmtMoq(p.moq)}</td>
         </tr>`;
       }).join('');
+
+      const photoHeader = hasPhoto
+        ? `<th style="padding:18px 14px;text-align:center;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:76px;">사진</th>`
+        : '';
 
       const oldHeader = showOld
         ? `<th style="padding:18px 14px;text-align:right;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:160px;">이전단가 / 변동률</th>`
@@ -5065,6 +5146,7 @@ window.exportProductsPDF = async function(){
           <table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;">
             <thead>
               <tr style="background:#f0eeff;">
+                ${photoHeader}
                 <th style="padding:18px 14px;text-align:left;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;">품목명</th>
                 ${oldHeader}
                 <th style="padding:18px 14px;text-align:right;font-size:14px;font-weight:800;color:#a09ac0;letter-spacing:.3px;width:140px;">현재단가 (VAT)</th>
@@ -5095,6 +5177,14 @@ window.exportProductsPDF = async function(){
 
     container.innerHTML = html;
     document.body.appendChild(container);
+
+    // 이미지 로딩 완료 대기
+    const imgs = container.querySelectorAll('img');
+    if(imgs.length){
+      await Promise.all([...imgs].map(img =>
+        img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; })
+      ));
+    }
 
     // A4 한 페이지 높이(px) = A4_H_PX
     // 컨테이너가 여러 페이지면 A4_H_PX 단위로 슬라이스
@@ -7132,5 +7222,84 @@ window.backfillSavedAmounts = async function(){
   if(btnWrap) btnWrap.remove();
   setTimeout(function(){renderSavingsSummary();},300);
 };
+</script>
+
+<script>
+/* ── 품목 사진 업로드 헬퍼 ── */
+window._pendingProductPhoto = undefined;
+
+function handleProductPhotoSelect(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  input.value = '';
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = function(){
+    const MAX = 600;
+    let w = img.width, h = img.height;
+    if(w > MAX || h > MAX){
+      if(w >= h){ h = Math.round(h * MAX / w); w = MAX; }
+      else       { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    setProductPhotoPreview(canvas.toDataURL('image/jpeg', 0.88));
+  };
+  img.src = url;
+}
+
+function setProductPhotoPreview(dataUrl){
+  window._pendingProductPhoto = dataUrl;
+  const preview = document.getElementById('p-photo-preview');
+  const img     = document.getElementById('p-photo-img');
+  const label   = document.getElementById('p-photo-label');
+  if(preview && img && label){
+    img.src = dataUrl;
+    preview.style.display = 'flex';
+    label.style.display   = 'none';
+  }
+}
+
+window.clearProductPhoto = function(){
+  window._pendingProductPhoto = null;
+  const preview = document.getElementById('p-photo-preview');
+  const img     = document.getElementById('p-photo-img');
+  const label   = document.getElementById('p-photo-label');
+  if(img) img.src = '';
+  if(preview) preview.style.display = 'none';
+  if(label) label.style.display = 'flex';
+  if(typeof toast === 'function') toast('사진이 삭제됩니다. 저장 버튼을 눌러주세요.');
+};
+
+window.resetProductPhotoUI = function(photoUrl){
+  window._pendingProductPhoto = undefined;
+  const preview = document.getElementById('p-photo-preview');
+  const img     = document.getElementById('p-photo-img');
+  const label   = document.getElementById('p-photo-label');
+  if(!preview || !img || !label) return;
+  if(photoUrl){
+    img.src = photoUrl;
+    preview.style.display = 'flex';
+    label.style.display   = 'none';
+  } else {
+    img.src = '';
+    preview.style.display = 'none';
+    label.style.display   = 'flex';
+  }
+};
+
+/* closePSheet 패치 - 시트 닫을 때 사진 UI 리셋 */
+(function patch(){
+  const orig = window.closePSheet;
+  if(typeof orig === 'function' && !orig._photoPatched){
+    window.closePSheet = function(){ orig(); window.resetProductPhotoUI(null); };
+    window.closePSheet._photoPatched = true;
+  } else if(!orig) { setTimeout(patch, 100); }
+})();
 </script>
 </body>
