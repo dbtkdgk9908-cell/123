@@ -7263,7 +7263,7 @@ function handleProductPhotoSelect(input){
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = function(){
-    const MAX = 1200;
+    const MAX = 1600;
     let w = img.width, h = img.height;
     if(w > MAX || h > MAX){
       if(w >= h){ h = Math.round(h * MAX / w); w = MAX; }
@@ -7276,7 +7276,7 @@ function handleProductPhotoSelect(input){
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(url);
-    setProductPhotoPreview(canvas.toDataURL('image/jpeg', 0.93));
+    setProductPhotoPreview(canvas.toDataURL('image/jpeg', 0.95));
   };
   img.src = url;
 }
