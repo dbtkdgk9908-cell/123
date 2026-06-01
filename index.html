@@ -3265,7 +3265,7 @@ function renderProducts(){
           <div style="font-size:9px;color:var(--text3)">MOQ</div>
           <div style="font-size:12px;font-weight:800;color:var(--text2);line-height:1.15">${(p.moq||0).toLocaleString()}</div>
         </div>
-        <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;flex-wrap:nowrap;">
           ${(me&&me.role==='admin'&&(p.buyLink||p.zhName)) ? (p.buyLink
             ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
             : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
@@ -4756,7 +4756,7 @@ function renderProducts(){
 
     const cardHTML = (p)=>`
       <div class="lc" style="padding:6px 10px;margin-bottom:6px;border-radius:10px;">
-        <div style="display:grid;grid-template-columns:${p.photoUrl?'62px ':''}minmax(0,2.8fr) .85fr .75fr auto;gap:8px;align-items:center;">
+        <div style="display:grid;grid-template-columns:${p.photoUrl?'62px ':''}minmax(0,1fr) 110px 100px 130px;gap:8px;align-items:center;">
           ${p.photoUrl?`<div style="flex-shrink:0;width:56px;height:56px;border-radius:11px;border:1px solid rgba(109,93,246,.12);background:#ffffff;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="${p.photoUrl}" style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
           <div style="min-width:0;padding-right:4px;">
             <div style="font-size:12px;font-weight:800;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;">${displayProductName(p)||'-'}</div>
