@@ -848,10 +848,10 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 .ship-mini-date:empty{display:none;}
 
 /* 합배송 진행현황 가독성 보정 */
-#ship-progress .ps{min-width:78px}
-#ship-progress .pdot{font-size:12px}
-#ship-progress .pdot.active{font-size:14px}
-#ship-progress .plbl{
+#ship-progress .ps,.ship-child .ptrack .ps{min-width:78px}
+#ship-progress .pdot,.ship-child .ptrack .pdot{font-size:12px}
+#ship-progress .pdot.active,.ship-child .ptrack .pdot.active{font-size:14px}
+#ship-progress .plbl,.ship-child .ptrack .plbl{
   margin-top:7px;
   font-size:11px;
   line-height:1.45;
@@ -864,8 +864,8 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
   -webkit-font-smoothing:antialiased;
   transform:translateZ(0);
 }
-#ship-progress .plbl.on{color:var(--sc)}
-#ship-progress .pdate{
+#ship-progress .plbl.on,.ship-child .ptrack .plbl.on{color:var(--sc)}
+#ship-progress .pdate,.ship-child .ptrack .pdate{
   font-size:10px;
   line-height:1.35;
   margin-top:3px;
@@ -875,17 +875,9 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
   -webkit-font-smoothing:antialiased;
   transform:translateZ(0);
 }
-
-
-.order-card-accent{position:absolute;inset:0 0 auto 0;height:4px;border-radius:24px 24px 0 0;background:linear-gradient(90deg,rgba(109,93,246,.9),rgba(96,165,250,.7));opacity:.0;transition:opacity .18s ease}
-.oc:hover .order-card-accent{opacity:1}
-.oc .oms .mi{min-width:72px}
-.oc .omr{align-items:flex-end}
-.oc .badge{margin-left:auto}
-.sh-box .sec-lbl{font-size:10px;color:#9a95b6;letter-spacing:.08em;margin-bottom:12px}
-#d-progress .pdot,#ship-progress .pdot{width:34px;height:34px;border-width:3px}
-#d-progress .pline,#ship-progress .pline{top:16px;height:4px;border-radius:999px}
-#d-progress .ps,#ship-progress .ps{padding-inline:2px}
+#d-progress .pdot,#ship-progress .pdot,.ship-child .ptrack .pdot{width:34px;height:34px;border-width:3px}
+#d-progress .pline,#ship-progress .pline,.ship-child .ptrack .pline{top:16px;height:4px;border-radius:999px}
+#d-progress .ps,#ship-progress .ps,.ship-child .ptrack .ps{padding-inline:2px}
 #dash-orders .oc:first-child,.ship-child:first-child,.stmt-card:first-child{margin-top:2px}
 
 
@@ -1469,6 +1461,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         <div class="fg"><label class="fl">수량</label><input class="fi" type="number" id="no-qty" placeholder="0" oninput="calcAmt()"></div>
         <div class="fg"><label class="fl">발주일</label><input class="fi" type="date" id="no-date"></div>
       </div>
+      <div class="fg"><label class="fl">단가(VAT 포함) <span style="font-size:10px;color:var(--text3);font-weight:600">— 품목 선택 시 자동 입력, 수정 가능</span></label><input class="fi" type="number" id="no-unitprice" placeholder="0" oninput="calcAmt()" style="border-color:rgba(109,93,246,.22);"></div>
       <div class="fg" id="no-buycny-wrap" style="display:none"><label class="fl">매입단가(위안)</label><input class="fi" type="number" step="0.01" id="no-buycny" placeholder="최근 매입단가 기록용"></div>
       <div class="amtbox" id="amtbox"><div class="amtlbl">예상 금액</div><div class="amtval" id="amtval"></div></div>
       <div class="fg"><label class="fl">1688 주문번호 (선택)</label><input class="fi" id="no-order1688" placeholder="예: 3296368056781228691" style="font-family:monospace;letter-spacing:0.02em"></div>
@@ -2532,8 +2525,40 @@ function renderOrders(){
   const normalList=(me.role==='admin') ? list.filter(o=>!(o.requestOnly && (o.requestStatus||'requested')==='requested')) : list;
   const bulkBox=document.getElementById('orders-bulk-toolbar');
   if(bulkBox) bulkBox.innerHTML=(typeof buildShipToolbar==='function' ? buildShipToolbar() : '');
-  listBox.innerHTML=normalList.map(o=>ocHTML(o,me.role==='admin')).join('')||'<div class="empty"><div class="eico">📭</div><div class="etxt">발주가 없습니다.</div></div>';
+
+  const inProgressList=normalList.filter(o=>effectiveStatusForOrder(o)!=='delivered');
+  const deliveredList=normalList.filter(o=>effectiveStatusForOrder(o)==='delivered');
+
+  let html='';
+  if(inProgressList.length===0 && deliveredList.length===0){
+    html='<div class="empty"><div class="eico">📭</div><div class="etxt">발주가 없습니다.</div></div>';
+  } else {
+    if(inProgressList.length>0){
+      html+=`<div style="margin:0 0 10px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+        <div style="font-size:12px;font-weight:800;color:var(--text3);white-space:nowrap">진행 중 (${inProgressList.length}건)</div>
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+      </div>`;
+    }
+    html+=inProgressList.map(o=>ocHTML(o,me.role==='admin')).join('');
+    if(deliveredList.length>0){
+      html+=`<div style="margin:18px 0 10px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+        <div style="font-size:12px;font-weight:800;color:var(--text3);white-space:nowrap">배송 완료 (${deliveredList.length}건)</div>
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+      </div>`;
+      html+=deliveredList.map(o=>ocHTML(o,me.role==='admin')).join('');
+    }
+  }
+  listBox.innerHTML=html;
   updBadge();
+}
+
+function effectiveStatusForOrder(o){
+  // 합배송 소속이면 합배송 대표 상태 사용
+  const shipment=(DATA.shipments||[]).find(sh=>(sh.orderIds||[]).map(String).includes(String(o.id)));
+  if(shipment) return normalizeOrderStatusKey(shipment.status||o.status||'payment_pending');
+  return normalizeOrderStatusKey(o.status||'payment_pending');
 }
 function renderMyOrders(){
   let list=(DATA.orders||[]).filter(o=>o.cid===me.cid);
@@ -2542,7 +2567,32 @@ function renderMyOrders(){
   if(sf) list=list.filter(o=>normalizeOrderStatusKey(o.status)===sf);
   if(s) list=list.filter(o=>(o.id||'').toLowerCase().includes(s)||(o.product||'').toLowerCase().includes(s));
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  document.getElementById('my-orders').innerHTML=list.map(o=>ocHTML(o,false)).join('')||'<div class="empty"><div class="eico">📭</div><div class="etxt">발주가 없습니다.<br>＋ 버튼으로 발주하세요.</div></div>';
+
+  const myInProgress=list.filter(o=>effectiveStatusForOrder(o)!=='delivered');
+  const myDelivered=list.filter(o=>effectiveStatusForOrder(o)==='delivered');
+
+  let myHtml='';
+  if(myInProgress.length===0 && myDelivered.length===0){
+    myHtml='<div class="empty"><div class="eico">📭</div><div class="etxt">발주가 없습니다.<br>＋ 버튼으로 발주하세요.</div></div>';
+  } else {
+    if(myInProgress.length>0){
+      myHtml+=`<div style="margin:0 0 10px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+        <div style="font-size:12px;font-weight:800;color:var(--text3);white-space:nowrap">진행 중 (${myInProgress.length}건)</div>
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+      </div>`;
+    }
+    myHtml+=myInProgress.map(o=>ocHTML(o,false)).join('');
+    if(myDelivered.length>0){
+      myHtml+=`<div style="margin:18px 0 10px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+        <div style="font-size:12px;font-weight:800;color:var(--text3);white-space:nowrap">배송 완료 (${myDelivered.length}건)</div>
+        <div style="flex:1;height:1px;background:rgba(94,75,196,.1)"></div>
+      </div>`;
+      myHtml+=myDelivered.map(o=>ocHTML(o,false)).join('');
+    }
+  }
+  document.getElementById('my-orders').innerHTML=myHtml;
   updBadge();
 }
 function updBadge(){
@@ -2614,6 +2664,7 @@ function openDetail(id){
   }).join('');
   document.getElementById('d-cells').innerHTML=`
     <div class="dc"><div class="dcl">수량</div><div class="dcv">${(o.qty||0).toLocaleString()}개</div></div>
+    <div class="dc"><div class="dcl">단가(VAT 포함)</div><div class="dcv">${fmt(o.qty?(Math.round((o.amount||0)/(o.qty||1))):0)}</div></div>
     <div class="dc"><div class="dcl">공급가액</div><div class="dcv">${fmt(orderSupply(o))}</div></div>
     <div class="dc"><div class="dcl">VAT</div><div class="dcv">${fmt(orderVat(o))}</div></div>
     <div class="dc"><div class="dcl">합계</div><div class="dcv">${fmt(orderTotal(o))}</div></div>
@@ -3102,7 +3153,10 @@ function calcAmt(){
   const qty=parseInt(document.getElementById('no-qty').value)||0;
   const prod=(DATA.products||[]).find(p=>p.id===pid);
   const box=document.getElementById('amtbox');
-  if(prod&&qty>0){ const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total); document.getElementById('amtval').innerHTML=`합계 ${fmt(total)} <span style="font-size:14px;color:var(--yellow);font-weight:700">(공급가액 ${fmt(supply)} / VAT ${fmt(vat)})</span>`; box.classList.add('show');}
+  const manualPriceEl=document.getElementById('no-unitprice');
+  const manualPrice=manualPriceEl&&manualPriceEl.value!==''?Number(manualPriceEl.value):null;
+  const unitPrice=manualPrice!=null?manualPrice:(prod?prod.price||0:0);
+  if((prod||manualPrice!=null)&&qty>0){ const total=unitPrice*qty, supply=includedToSupply(total), vat=includedToVat(total); document.getElementById('amtval').innerHTML=`합계 ${fmt(total)} <span style="font-size:14px;color:var(--yellow);font-weight:700">(공급가액 ${fmt(supply)} / VAT ${fmt(vat)})</span>`; box.classList.add('show');}
   else box.classList.remove('show');
 }
 function updateOrderProductNote(){
@@ -3113,6 +3167,9 @@ function updateOrderProductNote(){
   const memo=(prod?.memo||'').trim();
   if(wrap) wrap.style.display=memo?'block':'none';
   if(box) box.textContent=memo||'-';
+  // 단가 자동 채움
+  const priceEl=document.getElementById('no-unitprice');
+  if(priceEl) priceEl.value=prod&&prod.price?prod.price:'';
 }
 function submitOrder(){
   if(!me || me.role!=='admin'){
@@ -3134,10 +3191,13 @@ function submitOrder(){
   if(!qty||qty<=0){toast('❌ 수량을 입력하세요.');return;}
   const prod=(DATA.products||[]).find(p=>p.id===pid);
   const newId='ORD-'+Date.now();
-  const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
+  const manualPriceEl2=document.getElementById('no-unitprice');
+  const manualPrice2=manualPriceEl2&&manualPriceEl2.value!==''?Number(manualPriceEl2.value):null;
+  const unitPrice2=manualPrice2!=null?manualPrice2:(prod?prod.price||0:0);
+  const total=unitPrice2*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
   const displayName=typeof displayProductName==='function' ? displayProductName(prod) : (prod.name||'');
   const oldPrice0=prod.oldPrice||null;
-  const savedPerOrder0=(oldPrice0!=null && oldPrice0>prod.price) ? (oldPrice0 - prod.price)*qty : 0;
+  const savedPerOrder0=(oldPrice0!=null && oldPrice0>unitPrice2) ? (oldPrice0 - unitPrice2)*qty : 0;
   fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',status:'payment_pending',date,memo,order1688:order1688||'',hist:[{s:'payment_pending',d:date}],savedAmount:savedPerOrder0,oldPrice:oldPrice0||null});
   addNotif('🆕 신규 발주',`${prod.name} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
@@ -3966,6 +4026,7 @@ function openNewOrder(){
   document.getElementById('no-memo').value='';
   document.getElementById('no-date').value=today();
   const el1688=document.getElementById('no-order1688'); if(el1688) el1688.value='';
+  const upEl=document.getElementById('no-unitprice'); if(upEl) upEl.value='';
   const cnyWrap=document.getElementById('no-buycny-wrap');
   if(cnyWrap) cnyWrap.style.display=me.role==='admin'?'block':'none';
   const cny=document.getElementById('no-buycny');
@@ -3986,13 +4047,16 @@ function submitOrder(){
   if(!qty||qty<=0){toast('❌ 수량을 입력하세요.');return;}
   const prod=(DATA.products||[]).find(p=>p.id===pid);
   const newId='ORD-'+Date.now();
-  const total=(prod.price||0)*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
+  const manualPriceEl=document.getElementById('no-unitprice');
+  const manualPrice=manualPriceEl&&manualPriceEl.value!==''?Number(manualPriceEl.value):null;
+  const unitPrice=manualPrice!=null?manualPrice:(prod?prod.price||0:0);
+  const total=unitPrice*qty, supply=includedToSupply(total), vat=includedToVat(total), amount=total;
   const buyCnyInput=document.getElementById('no-buycny');
   const buyCny=(isA&&buyCnyInput&&buyCnyInput.value!=='')?Number(buyCnyInput.value):null;
   const displayName=displayProductName(prod);
   // 절감액 계산: 기존단가가 있고 현재단가보다 높으면 절감
   const oldPrice=prod.oldPrice||null;
-  const savedPerOrder=(oldPrice!=null && oldPrice>prod.price) ? (oldPrice - prod.price)*qty : 0;
+  const savedPerOrder=(oldPrice!=null && oldPrice>unitPrice) ? (oldPrice - unitPrice)*qty : 0;
   fbSet(`orders/${newId}`,{id:newId,cid,product:displayName,productName:prod.name,pid:prod.id||'',spec:(prod.spec||''),qty,amount,total,supply,vat,currency:'KRW',buyCny,status:'payment_pending',date,memo,hist:[{s:'payment_pending',d:date}],savedAmount:savedPerOrder,oldPrice:oldPrice||null});
   addNotif('🆕 신규 발주',`${displayName} ${qty.toLocaleString()}개 발주 접수`);
   toast('✅ 발주가 등록됐습니다!');
@@ -5493,7 +5557,7 @@ window.exportProductsPDF = async function(){
       const progressBar = `
         <div class="sec-lbl" style="margin-top:4px">진행 현황${isAdmin ? ' <span style="font-size:10px;color:var(--text3);font-weight:600">(단계 클릭 시 변경)</span>' : ''}</div>
         <div class="pscroll" style="margin-bottom:14px">
-          <div class="ptrack">
+          <div class="ptrack" style="min-width:540px">
             ${STEPS.map((s,i)=>{
               const done=i<=ci, active=i===ci;
               const hist=(o.hist||[]).find(h=>normalizeOrderStatusKey(h.s)===s.key);
@@ -5517,11 +5581,11 @@ window.exportProductsPDF = async function(){
           ${progressBar}
           <div class="ship-grid">
             <div class="ship-cell"><div class="lbl">수량</div><div class="val">${(o.qty||0).toLocaleString()}개</div></div>
+            <div class="ship-cell"><div class="lbl">단가(VAT 포함)</div><div class="val">${fmt(o.qty?(Math.round((o.amount||0)/(o.qty||1))):0)}</div></div>
             <div class="ship-cell"><div class="lbl">공급가액</div><div class="val">${fmt(orderSupply(o))}</div></div>
             <div class="ship-cell"><div class="lbl">VAT</div><div class="val">${fmt(orderVat(o))}</div></div>
             <div class="ship-cell"><div class="lbl">합계</div><div class="val">${fmt(orderTotal(o))}</div></div>
             <div class="ship-cell"><div class="lbl">발주일</div><div class="val">${o.date||'-'}</div></div>
-            <div class="ship-cell"><div class="lbl">현재상태</div><div class="val" style="color:${stepOf(statusKey).color};font-weight:800">${stepOf(statusKey).icon} ${stepOf(statusKey).label}</div></div>
           </div>
           ${getProductMemoForOrder(o) ? `<div class="memobox" style="display:block"><strong>중요</strong><span>${String(getProductMemoForOrder(o)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></div>` : ''}
           ${isAdmin ? `
