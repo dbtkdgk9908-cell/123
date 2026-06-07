@@ -8546,7 +8546,8 @@ function renderLayoutDetail(ctnKey, layout) {
         <div style="margin-bottom:14px;">
           <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">4. 요청사항</div>
           <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            <tr><td style="padding:10px;border:1px solid #e8e4f8;min-height:50px;">${remarks.replace(/\n/g,'<br>')}</td></tr>
+            <tr><td style="padding:10px;border:1px solid #e8e4f8;min-height:50px;">${remarks.replace(/
+/g,'<br>')}</td></tr>
           </table>
         </div>
 
@@ -8601,26 +8602,48 @@ function renderLayoutDetail(ctnKey, layout) {
 
 // ── 물류 탭 섹션 열기/닫기 ──────────────────────────────────────
 const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",quote:"📋 포워딩 견적 요청서",save:"💾 저장 목록"};
-function cbmModalClose(e,force){if(force||(e&&e.target===document.getElementById('cbm-modal'))){document.getElementById('cbm-modal').style.display='none';document.body.style.overflow='';}}
+// cbmModalClose는 아래 cbmOpenSection 블록에서 정의됨
+var _cbmSecContainer=null; // 섹션 원래 부모(pg-cbm 내 컨테이너)
+var _cbmSecCurrent=null;  // 현재 모달에 올려진 sec 노드
 window.cbmOpenSection=function(id){
   var titles={calc:'📐 CBM 계산',import:'🚢 수입원가 계산기',quote:'📋 포워딩 견적 요청서',save:'💾 저장 목록'};
   var modal=document.getElementById('cbm-modal');
   var title=document.getElementById('cbm-modal-title');
   var body=document.getElementById('cbm-modal-body');
-  if(!modal){alert('모달없음');return;}
-  if(!body){alert('바디없음');return;}
+  if(!modal||!body)return;
+  // 이전 sec 원위치 복구
+  if(_cbmSecCurrent&&_cbmSecContainer){
+    _cbmSecCurrent.style.display='none';
+    _cbmSecContainer.appendChild(_cbmSecCurrent);
+  }
   var sec=document.getElementById('cbm-sec-'+id);
-  if(!sec){alert('섹션없음:cbm-sec-'+id);return;}
+  if(!sec)return;
+  // 원래 부모 저장
+  _cbmSecContainer=sec.parentNode;
+  _cbmSecCurrent=sec;
   if(title) title.textContent=titles[id]||id;
-  body.innerHTML='';
+  // body 비우기(텍스트노드 등 정리)
+  while(body.firstChild)body.removeChild(body.firstChild);
   body.appendChild(sec);
   sec.style.display='block';
-  if(id==='import'){var w=document.getElementById('pc-cost-calc-wrap');if(w)sec.appendChild(w);if(w)w.style.display='block';}
+  if(id==='import'){var w=document.getElementById('pc-cost-calc-wrap');if(w){sec.appendChild(w);w.style.display='block';}}
   if(id==='save'&&typeof renderCbmSavedList==='function')renderCbmSavedList();
   if(id==='calc'){if(typeof renderCbmRows==='function')renderCbmRows();if(typeof cbmCalc==='function')cbmCalc();}
   modal.style.display='block';
   document.body.style.overflow='hidden';
 };
+function cbmModalClose(e,force){
+  if(force||(e&&e.target===document.getElementById('cbm-modal'))){
+    // sec 원위치 복구
+    if(_cbmSecCurrent&&_cbmSecContainer){
+      _cbmSecCurrent.style.display='none';
+      _cbmSecContainer.appendChild(_cbmSecCurrent);
+      _cbmSecCurrent=null;
+    }
+    document.getElementById('cbm-modal').style.display='none';
+    document.body.style.overflow='';
+  }
+}
 window.cbmCloseSection=function(){cbmModalClose(null,true);};
 
 // ── 물류 카드 버튼 바인딩 ────────────────────────────────────────────────────
