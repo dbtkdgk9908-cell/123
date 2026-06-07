@@ -1241,13 +1241,39 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         <div style="font-size:12px;line-height:1.7;">절감률(%)과 연간 구매금액을 입력하면<br>연간 · 월별 절감액을 바로 계산해드려요</div>
       </div>
 
-      <!-- 어드민 전용: 수입 원가 계산기 -->
-      <div id="pc-cost-calc-wrap" style="display:none;margin-top:8px;">
-        <div style="border-top:2px dashed rgba(94,75,196,.12);margin-bottom:20px;"></div>
-        <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:20px;padding:18px 16px 14px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;">
+
+    </div>
+    <div class="page pp" id="pg-myorders"><button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openOrderRequestSheet()">＋ 신규 발주 요청</button><div class="fw" style="margin-top:0;margin-bottom:12px"><input class="si" id="myosearch" placeholder="🔍 발주번호, 품목 검색..." oninput="renderMyOrders()"><div class="fr"><select class="fs" id="myostatus" onchange="renderMyOrders()"><option value="">전체 상태</option></select></div></div><div id="my-orders"></div></div>
+    <!-- ── CBM 계산기 탭 ──────────────────────────────────────────────────────── -->
+    <div class="page" id="pg-cbm" style="padding:16px 14px 32px;">
+
+      <!-- 수입 원가 계산기 → CBM 탭으로 이동됨 -->
+      <div id="pc-cost-calc-wrap">
+        <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:20px;padding:18px 16px 14px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden;">
           <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;background:rgba(255,255,255,.07);border-radius:50%;"></div>
           <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🚢 수입 원가 계산기</div>
           <div style="font-size:12px;opacity:.8;">사업자해운 기준 · CBM / 제품가격 / 환율 입력</div>
+        </div>
+
+        <!-- 실시간 환율 위젯 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:13px 14px;box-shadow:0 2px 10px rgba(37,30,84,.05);">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">🇺🇸 USD / KRW</div>
+            <div id="ex-usd" style="font-size:20px;font-weight:900;color:var(--text);letter-spacing:-0.5px;">—</div>
+            <div id="ex-usd-change" style="font-size:10px;margin-top:2px;color:var(--text3);">로딩중...</div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:13px 14px;box-shadow:0 2px 10px rgba(37,30,84,.05);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">🇨🇳 CNY / KRW</div>
+              <button onclick="applyExRate()" style="font-size:10px;font-weight:700;color:var(--accent);background:rgba(109,93,246,.1);border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-family:inherit;">자동입력</button>
+            </div>
+            <div id="ex-cny" style="font-size:20px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;">—</div>
+            <div id="ex-cny-change" style="font-size:10px;margin-top:2px;color:var(--text3);">로딩중...</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div id="ex-updated" style="font-size:10px;color:var(--text3);">환율 업데이트 중...</div>
+          <button onclick="fetchExchangeRates(true)" style="font-size:11px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;">↻ 새로고침</button>
         </div>
 
         <!-- 센터 선택 -->
@@ -1392,8 +1418,139 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         </div>
       </div>
 
+      <!-- 컨테이너 선택 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📦 컨테이너 선택</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="cbm-container-btns">
+          <div class="cbm-ctn-btn active" data-ctn="20ft" onclick="setCbmContainer('20ft')" style="padding:10px 6px;border-radius:14px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));cursor:pointer;text-align:center;transition:all .2s;">
+            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
+            <div style="font-size:12px;font-weight:800;color:var(--accent);">20ft</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:2px;">25.5 CBM</div>
+          </div>
+          <div class="cbm-ctn-btn" data-ctn="40ft" onclick="setCbmContainer('40ft')" style="padding:10px 6px;border-radius:14px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;transition:all .2s;">
+            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
+            <div style="font-size:12px;font-weight:800;color:var(--text2);">40ft</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:2px;">55.0 CBM</div>
+          </div>
+          <div class="cbm-ctn-btn" data-ctn="40hc" onclick="setCbmContainer('40hc')" style="padding:10px 6px;border-radius:14px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;transition:all .2s;">
+            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
+            <div style="font-size:12px;font-weight:800;color:var(--text2);">40HC</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:2px;">67.0 CBM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 품목 입력 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);">📋 품목 입력</div>
+          <button onclick="cbmAddRow()" style="padding:6px 14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 추가</button>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;padding:0 2px;margin-bottom:5px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);">품명</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">가로(cm)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">세로(cm)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">높이(cm)</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">수량</div>
+          <div></div>
+        </div>
+        <div id="cbm-rows"></div>
+        <div id="cbm-empty-hint" style="text-align:center;padding:18px 0;color:var(--text3);font-size:12px;font-weight:600;">＋ 추가 버튼으로 품목을 입력하세요</div>
+      </div>
+
+      <!-- 3D 시뮬레이션 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:800;color:var(--text2);">🧱 3D 적재 시뮬레이션</div>
+          <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:6px 14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
+        </div>
+        <div id="cbm-3d-wrap" style="position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#1a1040,#24243e);aspect-ratio:4/3;">
+          <canvas id="cbm-3d-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
+          <div id="cbm-3d-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+            <div style="font-size:32px;margin-bottom:8px;">📦</div>
+            <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.7);">품목 입력 후 ▶ 실행</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;">드래그로 회전 · 핀치로 확대</div>
+          </div>
+          <div id="cbm-3d-legend" style="position:absolute;bottom:10px;left:10px;display:none;"></div>
+          <div id="cbm-3d-info" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;color:#fff;display:none;text-align:right;backdrop-filter:blur(6px);"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center;">드래그 회전 · 두 손가락 핀치 확대/축소</div>
+      </div>
+
+      <!-- 적재 상세 정보 -->
+      <div id="cbm-layout-detail" style="display:none;background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📐 적재 상세 정보</div>
+
+        <!-- 컨테이너 치수 -->
+        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">🚢 컨테이너 내부 치수</div>
+          <div id="cbm-detail-ctn" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
+        </div>
+
+        <!-- 박스 치수 + 여유 -->
+        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 적재 물품 치수 · 여유</div>
+          <div id="cbm-detail-box" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;"></div>
+          <div id="cbm-detail-margin" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
+        </div>
+
+        <!-- 줄별 배치 -->
+        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 줄별 배치 방식</div>
+          <div id="cbm-detail-rows"></div>
+        </div>
+
+        <!-- 폭 여유 시각화 -->
+        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">↔ 폭 사용 현황</div>
+          <div id="cbm-detail-width-bar" style="margin-bottom:6px;"></div>
+          <div id="cbm-detail-width-txt" style="font-size:11px;font-weight:700;color:var(--text2);"></div>
+        </div>
+
+        <!-- 층/총계 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="cbm-detail-summary"></div>
+      </div>
+
+      <!-- 계산 결과 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);" id="cbm-result-box">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📊 계산 결과</div>
+
+        <div style="background:linear-gradient(135deg,#7c5cfc,#6344e8);border-radius:16px;padding:16px;margin-bottom:12px;color:#fff;">
+          <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;">총 CBM</div>
+          <div id="cbm-total-val" style="font-size:36px;font-weight:900;letter-spacing:-1px;">0.000</div>
+          <div id="cbm-total-sub" style="font-size:11px;opacity:.75;margin-top:2px;">품목을 입력하면 자동 계산</div>
+        </div>
+
+        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">🚢 컨테이너 적재 현황</div>
+          <div id="cbm-ctn-result" style="font-size:13px;font-weight:700;color:var(--text2);">-</div>
+          <div style="margin-top:10px;height:18px;background:#e9e6ff;border-radius:10px;overflow:hidden;">
+            <div id="cbm-gauge" style="height:100%;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;">
+            <div id="cbm-gauge-pct" style="font-size:11px;font-weight:800;color:var(--accent);">0%</div>
+            <div id="cbm-gauge-max" style="font-size:11px;font-weight:700;color:var(--text3);">/ 25.5 CBM</div>
+          </div>
+        </div>
+
+        <div id="cbm-item-breakdown" style="display:none;">
+          <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:8px;">품목별 CBM</div>
+          <div id="cbm-item-list"></div>
+        </div>
+      </div>
+
+      <!-- 저장/불러오기 -->
+      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">💾 저장 · 불러오기</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input id="cbm-save-name" class="fi" placeholder="저장 이름 (예: 7월 위해 발주)" style="flex:1;min-height:42px;font-size:13px;">
+          <button onclick="cbmSave()" style="padding:0 16px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">저장</button>
+        </div>
+        <div id="cbm-saved-list"></div>
+      </div>
+
     </div>
-    <div class="page pp" id="pg-myorders"><button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openOrderRequestSheet()">＋ 신규 발주 요청</button><div class="fw" style="margin-top:0;margin-bottom:12px"><input class="si" id="myosearch" placeholder="🔍 발주번호, 품목 검색..." oninput="renderMyOrders()"><div class="fr"><select class="fs" id="myostatus" onchange="renderMyOrders()"><option value="">전체 상태</option></select></div></div><div id="my-orders"></div></div>
+    <!-- ── /CBM 계산기 탭 ─────────────────────────────────────────────────────── -->
 
   </div>
   <div id="tabs"></div>
@@ -2143,6 +2300,7 @@ const ADMIN_TABS=[
   {id:'clients',icon:'🏢',lbl:'거래처'},
   {id:'products',icon:'📦',lbl:'품목'},
   {id:'pricecmp',icon:'💰',lbl:'절감금액'},
+  {id:'cbm',icon:'📐',lbl:'CBM'},
 ];
 const CLIENT_TABS=[
   {id:'home',icon:'📊',lbl:'현황'},
@@ -2150,6 +2308,7 @@ const CLIENT_TABS=[
   {id:'stmt',icon:'📄',lbl:'명세서'},
   {id:'products',icon:'📦',lbl:'품목'},
   {id:'pricecmp',icon:'💰',lbl:'절감금액'},
+  {id:'cbm',icon:'📐',lbl:'CBM'},
 ];
 
 function initApp(){
@@ -2224,7 +2383,7 @@ function goTab(id){
   document.querySelectorAll('.ti').forEach(t=>t.classList.remove('active'));
   const pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');
   const tb=document.getElementById('tab-'+id);if(tb)tb.classList.add('active');
-  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주',pricecmp:'절감금액'};
+  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주',pricecmp:'절감금액',cbm:'CBM 계산기'};
   document.getElementById('tbtitle').textContent=titles[id]||'';
   const fab=document.getElementById('fab');
   fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');if(id==='poform'||id==='pricecmp')fab.className='fab hidden';
@@ -6504,8 +6663,9 @@ window.exportProductsPDF = async function(){
 <script>
 // ── 절감금액 탭 누락 함수 패치 ────────────────────────────────────────────────
 function initCostCalcVisibility(){
+  // 수입원가계산기가 CBM 탭으로 이동됨 — 항상 표시
   var wrap=document.getElementById('pc-cost-calc-wrap');
-  if(wrap) wrap.style.display=(me&&me.role==='admin')?'block':'none';
+  if(wrap) wrap.style.display='block';
 }
 
 function renderSavingsSummary(){
@@ -7388,4 +7548,873 @@ function closeLightbox(){
 }
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeLightbox(); });
 </script>
+
+<script>
+// ── CBM 계산기 ────────────────────────────────────────────────────────────────
+const CBM_CONTAINERS = {
+  '20ft': { label: '20ft', cbm: 25.5 },
+  '40ft': { label: '40ft', cbm: 55.0 },
+  '40hc': { label: '40HC', cbm: 67.0 },
+};
+let cbmCurrentContainer = '20ft';
+let cbmRows = []; // [{id, name, w, d, h, qty}]
+let cbmRowId = 0;
+const CBM_STORAGE_KEY = 'tradeflow_cbm_saves_v1';
+
+function setCbmContainer(key) {
+  cbmCurrentContainer = key;
+  document.querySelectorAll('.cbm-ctn-btn').forEach(el => {
+    const active = el.dataset.ctn === key;
+    el.style.border = active ? '2px solid var(--accent)' : '2px solid rgba(94,75,196,.15)';
+    el.style.background = active ? 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))' : '#f8f7ff';
+    el.querySelector('div:nth-child(2)').style.color = active ? 'var(--accent)' : 'var(--text2)';
+  });
+  cbmCalc();
+}
+
+function cbmAddRow(data) {
+  const id = ++cbmRowId;
+  cbmRows.push({ id, name: data?.name||'', w: data?.w||'', d: data?.d||'', h: data?.h||'', qty: data?.qty||1 });
+  renderCbmRows();
+  cbmCalc();
+}
+
+function cbmDeleteRow(id) {
+  cbmRows = cbmRows.filter(r => r.id !== id);
+  renderCbmRows();
+  cbmCalc();
+}
+
+function cbmUpdateRow(id, field, val) {
+  const r = cbmRows.find(r => r.id === id);
+  if (r) { r[field] = val; cbmCalc(); }
+}
+
+function renderCbmRows() {
+  const box = document.getElementById('cbm-rows');
+  const hint = document.getElementById('cbm-empty-hint');
+  if (!box) return;
+  if (!cbmRows.length) {
+    box.innerHTML = '';
+    if (hint) hint.style.display = 'block';
+    return;
+  }
+  if (hint) hint.style.display = 'none';
+  box.innerHTML = cbmRows.map(r => `
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;margin-bottom:6px;align-items:center;">
+      <input value="${r.name}" placeholder="품명" oninput="cbmUpdateRow(${r.id},'name',this.value)"
+        style="min-height:40px;padding:0 8px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
+      <input type="number" value="${r.w}" placeholder="0" oninput="cbmUpdateRow(${r.id},'w',this.value)"
+        style="min-height:40px;padding:0 4px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;text-align:center;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
+      <input type="number" value="${r.d}" placeholder="0" oninput="cbmUpdateRow(${r.id},'d',this.value)"
+        style="min-height:40px;padding:0 4px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;text-align:center;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
+      <input type="number" value="${r.h}" placeholder="0" oninput="cbmUpdateRow(${r.id},'h',this.value)"
+        style="min-height:40px;padding:0 4px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;text-align:center;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
+      <input type="number" value="${r.qty}" min="1" oninput="cbmUpdateRow(${r.id},'qty',this.value)"
+        style="min-height:40px;padding:0 4px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;text-align:center;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
+      <button onclick="cbmDeleteRow(${r.id})" style="width:28px;height:28px;background:rgba(239,93,103,.1);border:1px solid rgba(239,93,103,.2);border-radius:8px;color:var(--red);font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+  `).join('');
+}
+
+function cbmCalc() {
+  const ctn = CBM_CONTAINERS[cbmCurrentContainer];
+  let total = 0;
+  const items = [];
+
+  cbmRows.forEach(r => {
+    const w = parseFloat(r.w) || 0;
+    const d = parseFloat(r.d) || 0;
+    const h = parseFloat(r.h) || 0;
+    const qty = parseInt(r.qty) || 1;
+    if (w > 0 && d > 0 && h > 0) {
+      const cbm = (w * d * h * qty) / 1000000;
+      total += cbm;
+      items.push({ name: r.name || '품목', cbm, qty });
+    }
+  });
+
+  // 총 CBM 표시
+  const totalEl = document.getElementById('cbm-total-val');
+  const subEl = document.getElementById('cbm-total-sub');
+  if (totalEl) totalEl.textContent = total.toFixed(3);
+
+  // 컨테이너 적재율
+  const pct = ctn ? Math.min((total / ctn.cbm) * 100, 100) : 0;
+  const rawPct = ctn ? (total / ctn.cbm) * 100 : 0;
+  const gauge = document.getElementById('cbm-gauge');
+  const gaugeMax = document.getElementById('cbm-gauge-max');
+  const gaugePct = document.getElementById('cbm-gauge-pct');
+  const ctnResult = document.getElementById('cbm-ctn-result');
+  const gaugeColor = rawPct > 100 ? '#ef5d67' : rawPct > 85 ? '#f59e0b' : '#7c5cfc,#a78bfa';
+
+  if (gauge) {
+    gauge.style.width = pct + '%';
+    gauge.style.background = rawPct > 100 ? '#ef5d67' : rawPct > 85 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#7c5cfc,#a78bfa)';
+  }
+  if (gaugePct) gaugePct.textContent = rawPct.toFixed(1) + '%';
+  if (gaugeMax && ctn) gaugeMax.textContent = '/ ' + ctn.cbm.toFixed(1) + ' CBM';
+
+  if (ctnResult && ctn) {
+    const remaining = ctn.cbm - total;
+    if (total === 0) {
+      ctnResult.textContent = '품목을 입력하면 적재 현황이 표시됩니다';
+      ctnResult.style.color = 'var(--text3)';
+    } else if (rawPct > 100) {
+      const over = total - ctn.cbm;
+      ctnResult.innerHTML = `<span style="color:var(--red);font-weight:800;">⚠️ ${ctn.label} 초과 +${over.toFixed(3)} CBM</span><br><span style="font-size:11px;color:var(--text3);">컨테이너를 추가하거나 물량을 줄이세요</span>`;
+    } else {
+      ctnResult.innerHTML = `<span style="color:var(--green);font-weight:900;">${ctn.label} 적재 가능</span> · 여유 <strong>${remaining.toFixed(3)} CBM</strong><br><span style="font-size:11px;color:var(--text3);">${rawPct.toFixed(1)}% 채워짐</span>`;
+    }
+  }
+
+  if (subEl) {
+    if (total > 0) {
+      subEl.textContent = `${cbmRows.length}개 품목 합계`;
+    } else {
+      subEl.textContent = '품목을 입력하면 자동 계산';
+    }
+  }
+
+  // 품목별 CBM
+  const breakdown = document.getElementById('cbm-item-breakdown');
+  const itemList = document.getElementById('cbm-item-list');
+  if (breakdown && itemList) {
+    if (items.length > 0) {
+      breakdown.style.display = 'block';
+      itemList.innerHTML = items.map(it => {
+        const barW = total > 0 ? Math.round((it.cbm / total) * 100) : 0;
+        return `<div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.name}</div>
+            <div style="font-size:12px;font-weight:800;color:var(--accent);">${it.cbm.toFixed(3)} CBM</div>
+          </div>
+          <div style="height:6px;background:#e9e6ff;border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${barW}%;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:4px;"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${it.qty}박스 · 전체의 ${barW}%</div>
+        </div>`;
+      }).join('');
+    } else {
+      breakdown.style.display = 'none';
+    }
+  }
+}
+
+// ── 저장/불러오기 (localStorage) ─────────────────────────────────────────────
+function cbmSave() {
+  const name = (document.getElementById('cbm-save-name')?.value || '').trim();
+  if (!name) { if(typeof toast==='function') toast('저장 이름을 입력하세요'); return; }
+  if (!cbmRows.length) { if(typeof toast==='function') toast('품목을 먼저 입력하세요'); return; }
+
+  let saves = [];
+  try { saves = JSON.parse(localStorage.getItem(CBM_STORAGE_KEY) || '[]'); } catch(e) {}
+  
+  const record = {
+    id: Date.now(),
+    name,
+    container: cbmCurrentContainer,
+    rows: cbmRows.map(r => ({...r})),
+    savedAt: new Date().toLocaleDateString('ko-KR')
+  };
+  saves.unshift(record);
+  if (saves.length > 20) saves = saves.slice(0, 20);
+  localStorage.setItem(CBM_STORAGE_KEY, JSON.stringify(saves));
+  document.getElementById('cbm-save-name').value = '';
+  renderCbmSavedList();
+  if(typeof toast==='function') toast('저장됐어요 💾');
+}
+
+function cbmLoad(id) {
+  let saves = [];
+  try { saves = JSON.parse(localStorage.getItem(CBM_STORAGE_KEY) || '[]'); } catch(e) {}
+  const rec = saves.find(s => s.id === id);
+  if (!rec) return;
+  cbmRows = rec.rows.map(r => ({...r}));
+  cbmRowId = Math.max(...cbmRows.map(r => r.id), 0);
+  setCbmContainer(rec.container || '20ft');
+  renderCbmRows();
+  cbmCalc();
+  if(typeof toast==='function') toast(`"${rec.name}" 불러왔어요`);
+}
+
+function cbmDeleteSave(id) {
+  let saves = [];
+  try { saves = JSON.parse(localStorage.getItem(CBM_STORAGE_KEY) || '[]'); } catch(e) {}
+  saves = saves.filter(s => s.id !== id);
+  localStorage.setItem(CBM_STORAGE_KEY, JSON.stringify(saves));
+  renderCbmSavedList();
+  if(typeof toast==='function') toast('삭제됐어요');
+}
+
+function renderCbmSavedList() {
+  const box = document.getElementById('cbm-saved-list');
+  if (!box) return;
+  let saves = [];
+  try { saves = JSON.parse(localStorage.getItem(CBM_STORAGE_KEY) || '[]'); } catch(e) {}
+  if (!saves.length) {
+    box.innerHTML = '<div style="text-align:center;padding:12px 0;font-size:12px;color:var(--text3);">저장된 내역이 없어요</div>';
+    return;
+  }
+  box.innerHTML = saves.map(s => {
+    const ctn = CBM_CONTAINERS[s.container] || CBM_CONTAINERS['20ft'];
+    const total = s.rows.reduce((sum, r) => {
+      const cbm = (parseFloat(r.w)||0)*(parseFloat(r.d)||0)*(parseFloat(r.h)||0)*(parseInt(r.qty)||1)/1000000;
+      return sum + cbm;
+    }, 0);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8f7ff;border:1px solid rgba(94,75,196,.1);border-radius:12px;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${ctn.label} · ${total.toFixed(3)} CBM · ${s.savedAt}</div>
+      </div>
+      <button onclick="cbmLoad(${s.id})" style="padding:6px 12px;background:rgba(109,93,246,.1);border:1px solid rgba(109,93,246,.2);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">불러오기</button>
+      <button onclick="cbmDeleteSave(${s.id})" style="width:28px;height:28px;background:rgba(239,93,103,.08);border:1px solid rgba(239,93,103,.15);border-radius:8px;color:var(--red);font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// 탭 이동 시 CBM 페이지 초기화
+(function patchGoTabForCbm(){
+  const origGoTab = window.goTab;
+  if(typeof origGoTab === 'function' && !origGoTab._cbmPatched){
+    window.goTab = function(id){
+      origGoTab(id);
+      if(id === 'cbm'){
+        renderCbmRows();
+        cbmCalc();
+        renderCbmSavedList();
+      }
+    };
+    window.goTab._cbmPatched = true;
+  } else if(!origGoTab){
+    setTimeout(patchGoTabForCbm, 100);
+  }
+})();
+</script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── CBM 3D 시뮬레이션 ────────────────────────────────────────────────────────
+(function(){
+
+// 컨테이너 내부 치수 (m) - HMM 기준
+const CTN_DIMS = {
+  '20ft': { W:5.90, H:2.35, D:2.35 },
+  '40ft': { W:12.03, H:2.35, D:2.35 },
+  '40hc': { W:12.03, H:2.69, D:2.35 },
+};
+
+// 품목별 색상 팔레트 (파스텔 계열)
+const BOX_COLORS = [
+  0x7c5cfc, 0x22d3ee, 0x34d399, 0xf59e0b,
+  0xef5d67, 0xa78bfa, 0x38bdf8, 0x4ade80,
+  0xfbbf24, 0xf87171, 0x60a5fa, 0x2dd4bf,
+];
+
+let renderer=null, scene=null, camera=null, animFrameId=null;
+let isDragging=false, lastMouse={x:0,y:0};
+let spherical={theta:0.6, phi:1.1, r:18};
+let pinchStartDist=0, pinchStartR=0;
+
+function initRenderer(){
+  const canvas = document.getElementById('cbm-3d-canvas');
+  if(!canvas) return false;
+  const wrap = document.getElementById('cbm-3d-wrap');
+  const W = wrap.clientWidth || 360;
+  const H = wrap.clientHeight || 270;
+
+  if(!renderer){
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  }
+  renderer.setSize(W, H);
+
+  if(!camera){
+    camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 500);
+  }
+  camera.aspect = W/H;
+  camera.updateProjectionMatrix();
+
+  return true;
+}
+
+function buildScene(rows, ctnKey){
+  if(scene){
+    while(scene.children.length) scene.remove(scene.children[0]);
+  } else {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x0f0c29, 40, 120);
+  }
+
+  const dims = CTN_DIMS[ctnKey] || CTN_DIMS['20ft'];
+  const cW=dims.W, cH=dims.H, cD=dims.D;
+
+  // 배경
+  scene.background = new THREE.Color(0x0f0c29);
+
+  // 조명
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  dirLight.position.set(cW*0.8, cH*2, cD*2);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
+  scene.add(dirLight);
+  const fillLight = new THREE.DirectionalLight(0xa78bfa, 0.3);
+  fillLight.position.set(-cW, cH, -cD);
+  scene.add(fillLight);
+
+  // 컨테이너 외곽 (와이어프레임)
+  const ctnGeo = new THREE.BoxGeometry(cW, cH, cD);
+  const edges = new THREE.EdgesGeometry(ctnGeo);
+  const lineMat = new THREE.LineBasicMaterial({color:0x7c5cfc, transparent:true, opacity:0.5});
+  const ctnWire = new THREE.LineSegments(edges, lineMat);
+  ctnWire.position.set(cW/2, cH/2, cD/2);
+  scene.add(ctnWire);
+
+  // 바닥면
+  const floorGeo = new THREE.PlaneGeometry(cW, cD);
+  const floorMat = new THREE.MeshStandardMaterial({color:0x1a1040, roughness:0.9, metalness:0.1, transparent:true, opacity:0.7});
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.position.set(cW/2, 0.001, cD/2);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // 그리드
+  const gridHelper = new THREE.GridHelper(Math.max(cW,cD)*1.5, 20, 0x3730a3, 0x1e1b4b);
+  gridHelper.position.set(cW/2, 0, cD/2);
+  scene.add(gridHelper);
+
+  // ── 적재 알고리즘: 혼합 방향 줄 배치 (최적 공간 활용) ─────────────────────
+  //
+  // 핵심 아이디어:
+  //   박스를 Z축(컨테이너 폭) 방향으로 여러 줄로 나누되,
+  //   각 줄마다 박스 방향을 다르게 해서 폭 낭비를 최소화.
+  //   예) 62×52×48 박스 → 52폭줄(62방향) + 62폭줄(52방향) 혼합
+  //
+  // 알고리즘:
+  //   1. 박스 치수 3개로 가능한 (길이방향, 폭방향) 조합 생성
+  //   2. 탐욕적으로 조합해서 컨테이너 폭(cD)을 최대한 채우는 줄 배열 탐색
+  //   3. 각 단(Y)마다 동일한 줄 배열 반복
+  //   4. 줄별로 박스를 X방향으로 나열
+
+  function getOrientations(w, d, h) {
+    // 높이(h) 고정 — 가로/세로만 X/Z 방향 전환 (2가지, 중복 제거)
+    const seen = new Set(), result = [];
+    [[w,d,h],[d,w,h]].forEach(o => {
+      const k = o.join(',');
+      if(!seen.has(k)){ seen.add(k); result.push(o); }
+    });
+    return result;
+  }
+
+  // 줄 배열 탐색: Z방향으로 각 줄의 폭을 쌓아가며 cD를 최대한 채우는 조합
+  // 높이(h0)는 항상 고정 — 가로/세로만 X축(길이), Z축(폭)으로 선택
+  function findBestRowLayout(w0, d0, h0) {
+    const bY = h0; // 높이 고정
+    // 후보: {bX: X방향 길이, bZ: Z방향 폭} — 가로/세로 2가지 조합
+    const candidates = [];
+    [[w0,d0],[d0,w0]].forEach(([bX,bZ]) => {
+      if(bX > cW+0.001 || bZ > cD+0.001) return;
+      // 중복 제거
+      if(!candidates.find(c=>Math.abs(c.bX-bX)<0.0001&&Math.abs(c.bZ-bZ)<0.0001))
+        candidates.push({bX, bZ, bY});
+    });
+
+    // 탐욕 탐색: 남은 폭에 맞는 후보를 골라 줄 추가
+    let bestLayout = null, bestBoxes = 0;
+
+    function search(usedZ, rows) {
+      const remaining = cD - usedZ;
+      let improved = false;
+      candidates.forEach(c => {
+        if(c.bZ > remaining + 0.001) return;
+        improved = true;
+        const newRows = [...rows, c];
+        const newUsed = usedZ + c.bZ;
+        search(newUsed, newRows);
+      });
+      // 이 배열로 한 층 박스 수 계산
+      if(rows.length > 0) {
+        // 층 높이: 항상 박스 높이(h0) 고정
+        const layerH = rows[0].bY;
+        const layers = Math.floor((cH + 0.001) / layerH);
+        const perLayer = rows.reduce((s, r) => s + Math.floor((cW+0.001)/r.bX), 0);
+        const total = perLayer * layers;
+        if(total > bestBoxes) {
+          bestBoxes = total;
+          bestLayout = {rows, layerH, perLayer, layers};
+        }
+      }
+    }
+    search(0, []);
+    return bestLayout;
+  }
+
+  const placedBoxes = [];
+
+  rows.forEach((r, rIdx) => {
+    const w0 = (parseFloat(r.w)||0)/100;
+    const d0 = (parseFloat(r.d)||0)/100;
+    const h0 = (parseFloat(r.h)||0)/100;
+    const qty = parseInt(r.qty)||1;
+    if(w0<=0||d0<=0||h0<=0) return;
+    const color = BOX_COLORS[rIdx % BOX_COLORS.length];
+    const name  = r.name||'품목'+(rIdx+1);
+
+    const layout = findBestRowLayout(w0, d0, h0);
+    if(!layout) return;
+    window._cbmLastLayout = layout; // 상세 정보용 저장
+
+    const {rows: rowDefs, layerH} = layout;
+    let placed = 0;
+
+    // 층(Y) 반복
+    let y = 0;
+    while(placed < qty && y + layerH <= cH + 0.001) {
+      let z = 0;
+      // 각 줄
+      for(let ri = 0; ri < rowDefs.length && placed < qty; ri++) {
+        const {bX, bZ, bY} = rowDefs[ri];
+        const nx = Math.floor((cW+0.001)/bX);
+        // X방향 나열
+        for(let ix = 0; ix < nx && placed < qty; ix++) {
+          placedBoxes.push({
+            x: ix * bX,
+            y: y,
+            z: z,
+            w: bX, h: bY, d: bZ,
+            color, name
+          });
+          placed++;
+        }
+        z += bZ;
+      }
+      y += layerH;
+    }
+  });
+
+  // 박스 메시 생성
+  placedBoxes.forEach(b => {
+    const geo = new THREE.BoxGeometry(b.w*0.97, b.h*0.97, b.d*0.97);
+    const mat = new THREE.MeshStandardMaterial({
+      color: b.color,
+      roughness: 0.55,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.92,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(b.x+b.w/2, b.y+b.h/2, b.z+b.d/2);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+
+    // 엣지 강조
+    const eg = new THREE.EdgesGeometry(geo);
+    const em = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.18});
+    const el = new THREE.LineSegments(eg, em);
+    el.position.copy(mesh.position);
+    scene.add(el);
+  });
+
+  // 카메라 초기 위치 - 컨테이너 중심 기준
+  const cx=cW/2, cy=cH/2, cz_=cD/2;
+  spherical.r = Math.max(cW, cH, cD) * 2.2;
+  updateCamera(cx, cy, cz_);
+
+  return {placedBoxes, dims, cx, cy, cz_, _lastLayout: window._cbmLastLayout||null};
+}
+
+function updateCamera(cx, cy, cz_){
+  if(!camera) return;
+  const x = cx + spherical.r * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+  const y = cy + spherical.r * Math.cos(spherical.phi);
+  const z = cz_ + spherical.r * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+  camera.position.set(x, y, z);
+  camera.lookAt(cx, cy, cz_);
+}
+
+let _target = {cx:0,cy:0,cz:0};
+
+function startRenderLoop(){
+  if(animFrameId) cancelAnimationFrame(animFrameId);
+  function loop(){
+    animFrameId = requestAnimationFrame(loop);
+    updateCamera(_target.cx, _target.cy, _target.cz);
+    if(renderer && scene && camera) renderer.render(scene, camera);
+  }
+  loop();
+}
+
+// 터치/마우스 조작
+function setupControls(){
+  const canvas = document.getElementById('cbm-3d-canvas');
+  if(!canvas) return;
+
+  // 마우스
+  canvas.addEventListener('mousedown', e=>{isDragging=true;lastMouse={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup', ()=>isDragging=false);
+  window.addEventListener('mousemove', e=>{
+    if(!isDragging) return;
+    const dx=(e.clientX-lastMouse.x)*0.008;
+    const dy=(e.clientY-lastMouse.y)*0.008;
+    spherical.theta -= dx;
+    spherical.phi = Math.max(0.2, Math.min(Math.PI-0.1, spherical.phi+dy));
+    lastMouse={x:e.clientX,y:e.clientY};
+  });
+  canvas.addEventListener('wheel', e=>{
+    spherical.r = Math.max(2, Math.min(80, spherical.r + e.deltaY*0.05));
+    e.preventDefault();
+  },{passive:false});
+
+  // 터치
+  canvas.addEventListener('touchstart', e=>{
+    if(e.touches.length===1){
+      isDragging=true;
+      lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    } else if(e.touches.length===2){
+      isDragging=false;
+      pinchStartDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      pinchStartR=spherical.r;
+    }
+  },{passive:true});
+  canvas.addEventListener('touchmove', e=>{
+    if(e.touches.length===1 && isDragging){
+      const dx=(e.touches[0].clientX-lastMouse.x)*0.010;
+      const dy=(e.touches[0].clientY-lastMouse.y)*0.010;
+      spherical.theta -= dx;
+      spherical.phi = Math.max(0.2, Math.min(Math.PI-0.1, spherical.phi+dy));
+      lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    } else if(e.touches.length===2){
+      const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      spherical.r = Math.max(2, Math.min(80, pinchStartR*(pinchStartDist/dist)));
+    }
+    e.preventDefault();
+  },{passive:false});
+  canvas.addEventListener('touchend', ()=>isDragging=false,{passive:true});
+}
+
+// 범례 및 정보 표시
+function renderLegend(rows, placedCount, totalCount){
+  const leg = document.getElementById('cbm-3d-legend');
+  const info = document.getElementById('cbm-3d-info');
+  if(!leg||!info) return;
+  leg.style.display='block';
+  info.style.display='block';
+  const validRows = rows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
+  leg.innerHTML = validRows.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+      <div style="width:12px;height:12px;border-radius:3px;background:#${BOX_COLORS[i%BOX_COLORS.length].toString(16).padStart(6,'0')};flex-shrink:0;"></div>
+      <div style="font-size:10px;font-weight:700;color:#fff;opacity:.85;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name||'품목'+(i+1)}</div>
+    </div>`).join('');
+  const pct = totalCount>0 ? Math.round(placedCount/totalCount*100) : 0;
+  info.innerHTML = `<div style="font-size:13px;font-weight:900;">${placedCount}<span style="font-size:10px;opacity:.7;">/${totalCount}박스</span></div><div style="font-size:10px;opacity:.7;margin-top:2px;">적재율 ${pct}%</div>`;
+}
+
+// 외부 진입점
+window.cbmRun3D = function(){
+  if(typeof cbmRows === 'undefined' || !cbmRows.length){
+    if(typeof toast==='function') toast('품목을 먼저 입력하세요');
+    return;
+  }
+  const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
+  if(!validRows.length){
+    if(typeof toast==='function') toast('가로/세로/높이를 입력하세요');
+    return;
+  }
+
+  const overlay = document.getElementById('cbm-3d-overlay');
+  if(overlay) overlay.style.display='none';
+
+  if(!initRenderer()) return;
+  setupControls();
+
+  const totalBoxCount = validRows.reduce((s,r)=>s+(parseInt(r.qty)||1),0);
+  const {placedBoxes, dims, cx, cy, cz_} = buildScene(validRows, cbmCurrentContainer);
+  _target = {cx, cy, cz: cz_};
+
+  renderLegend(validRows, placedBoxes.length, totalBoxCount);
+  renderLayoutDetail(cbmCurrentContainer, window._cbmLastLayout);
+
+  // 버튼 텍스트 변경
+  const btn = document.getElementById('cbm-3d-btn');
+  if(btn) btn.textContent='🔄 재실행';
+
+  startRenderLoop();
+};
+
+// 탭 비활성화 시 렌더 중단 (배터리 절약)
+const origGoTab2 = window.goTab;
+if(typeof origGoTab2==='function' && !origGoTab2._3dPatched){
+  window.goTab = function(id){
+    if(id!=='cbm' && animFrameId){
+      cancelAnimationFrame(animFrameId);
+      animFrameId=null;
+    }
+    origGoTab2(id);
+    if(id==='cbm' && scene && renderer){
+      startRenderLoop();
+    }
+  };
+  window.goTab._3dPatched = true;
+  window.goTab._cbmPatched = origGoTab2._cbmPatched;
+}
+
+})();
+</script>
+
+
+<script>
+// ── 적재 상세 정보 렌더링 ────────────────────────────────────────────────────
+function renderLayoutDetail(ctnKey, layout) {
+  const box = document.getElementById('cbm-layout-detail');
+  if(!box) return;
+
+  const CTN = {
+    '20ft': {label:'20ft DRY', W:590, H:239, D:235},
+    '40ft': {label:'40ft DRY', W:1203, H:239, D:235},
+    '40hc': {label:'40ft HC',  W:1203, H:269, D:235},
+  };
+  const ctn = CTN[ctnKey] || CTN['20ft'];
+  box.style.display = 'block';
+
+  // ① 컨테이너 치수
+  const ctnEl = document.getElementById('cbm-detail-ctn');
+  if(ctnEl) {
+    ctnEl.innerHTML = [
+      {lbl:'길이', val: ctn.W+'cm'},
+      {lbl:'폭',   val: ctn.D+'cm'},
+      {lbl:'높이', val: ctn.H+'cm'},
+    ].map(d=>`
+      <div style="background:#fff;border-radius:10px;padding:8px;text-align:center;border:1px solid rgba(94,75,196,.1);">
+        <div style="font-size:9px;color:var(--text3);font-weight:700;margin-bottom:3px;">${d.lbl}</div>
+        <div style="font-size:15px;font-weight:900;color:var(--accent);">${d.val}</div>
+      </div>`).join('');
+  }
+
+  // ① 박스 치수 + 여유 (layout에서 첫 줄 기준으로 원래 박스 치수 역산)
+  const boxEl  = document.getElementById('cbm-detail-box');
+  const margEl = document.getElementById('cbm-detail-margin');
+  if(boxEl && margEl && layout) {
+    // 박스 치수: layout.rows 에서 최대 bX, 최대 bZ, bY(고정 높이)
+    const allBX = layout.rows.map(r=>r.bX);
+    const allBZ = layout.rows.map(r=>r.bZ);
+    const bY = layout.rows[0].bY;
+    const boxL = Math.round(Math.max(...allBX)*100); // 가장 긴 면 = 길이
+    const boxW = Math.round(Math.max(...allBZ)*100); // 가장 넓은 면 = 폭
+    const boxH = Math.round(bY*100);                 // 높이 고정
+
+    // 컨테이너 치수
+    const cL = ctn.W, cWw = ctn.D, cH2 = ctn.H;
+
+    // 여유: 컨테이너 각 축 - 박스 1개 최대 사용 치수
+    // 길이방향: 컨테이너 길이 mod 박스길이
+    const remL = cL % boxL;
+    // 폭방향: 컨테이너 폭 - 줄들의 합계 폭
+    const usedZ = Math.round(layout.rows.reduce((s,r)=>s+r.bZ,0)*100);
+    const remW  = cWw - usedZ;
+    // 높이방향: 컨테이너 높이 - (박스높이 × 단수)
+    const layers = Math.floor((cH2/100+0.001)/bY);
+    const remH  = cH2 - boxH*layers;
+
+    const statColor = v => v <= 5 ? 'var(--green)' : v <= 20 ? 'var(--yellow)' : 'var(--text2)';
+
+    boxEl.innerHTML = [
+      {lbl:'길이(최대)', val: boxL+'cm'},
+      {lbl:'폭(최대)',   val: boxW+'cm'},
+      {lbl:'높이',       val: boxH+'cm'},
+    ].map(d=>`
+      <div style="background:#fff;border-radius:10px;padding:8px;text-align:center;border:1px solid rgba(94,75,196,.1);">
+        <div style="font-size:9px;color:var(--text3);font-weight:700;margin-bottom:3px;">${d.lbl}</div>
+        <div style="font-size:15px;font-weight:900;color:var(--text);">${d.val}</div>
+      </div>`).join('');
+
+    margEl.innerHTML = [
+      {lbl:'길이 여유', val: remL+'cm', sub:`${cL}÷${boxL}`, color: statColor(remL)},
+      {lbl:'폭 여유',   val: remW+'cm', sub:`폭합계 ${usedZ}cm`, color: statColor(remW)},
+      {lbl:'높이 여유', val: remH+'cm', sub:`${layers}단×${boxH}cm`, color: statColor(remH)},
+    ].map(d=>`
+      <div style="background:#fff;border-radius:10px;padding:8px;text-align:center;border:1px solid rgba(94,75,196,.1);">
+        <div style="font-size:9px;color:var(--text3);font-weight:700;margin-bottom:3px;">${d.lbl}</div>
+        <div style="font-size:15px;font-weight:900;color:${d.color};">${d.val}</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${d.sub}</div>
+      </div>`).join('');
+  }
+
+  if(!layout) return;
+
+  // ② 줄별 배치
+  const rowsEl = document.getElementById('cbm-detail-rows');
+  if(rowsEl) {
+    const usedZ = layout.rows.reduce((s,r)=>s+r.bZ,0);
+    rowsEl.innerHTML = layout.rows.map((r,i)=>{
+      const nx = Math.floor((ctn.W/100 + 0.001)/r.bX);
+      const bXcm = Math.round(r.bX*100);
+      const bZcm = Math.round(r.bZ*100);
+      const bYcm = Math.round(r.bY*100);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(94,75,196,.07);">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,rgba(109,93,246,.15),rgba(109,93,246,.07));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:800;color:var(--text);">폭 ${bZcm}cm 줄 — ${nx}박스</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:1px;">박스 ${bXcm}×${bYcm}×${bZcm}cm (길이×높이×폭)</div>
+        </div>
+        <div style="font-size:12px;font-weight:900;color:var(--green);flex-shrink:0;">${nx}개</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ③ 폭 사용 현황 바
+  const barEl = document.getElementById('cbm-detail-width-bar');
+  const txtEl = document.getElementById('cbm-detail-width-txt');
+  if(barEl && txtEl) {
+    const usedZ = layout.rows.reduce((s,r)=>s+r.bZ,0);
+    const usedCm = Math.round(usedZ*100);
+    const totalCm = ctn.D;
+    const leftCm = totalCm - usedCm;
+    const pct = Math.min(100, Math.round(usedCm/totalCm*100));
+
+    // 줄별 색상 바
+    const colors = ['#7c5cfc','#22d3ee','#34d399','#f59e0b','#ef5d67','#a78bfa'];
+    const segments = layout.rows.map((r,i)=>{
+      const w = Math.round(r.bZ*100/totalCm*100);
+      return `<div style="height:100%;width:${w}%;background:${colors[i%colors.length]};"></div>`;
+    }).join('');
+    const remain = 100-pct;
+
+    barEl.innerHTML = `
+      <div style="height:20px;background:#e9e6ff;border-radius:10px;overflow:hidden;display:flex;">
+        ${segments}
+        <div style="height:100%;flex:1;background:#e9e6ff;"></div>
+      </div>`;
+
+    txtEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-top:5px;">
+        <span>사용 <strong style="color:var(--accent);">${usedCm}cm</strong></span>
+        <span>여유 <strong style="color:var(--green);">${leftCm}cm</strong></span>
+        <span>전체 ${totalCm}cm</span>
+      </div>
+      <div style="margin-top:4px;font-size:10px;color:var(--text3);">
+        ${layout.rows.map((r,i)=>`<span style="margin-right:8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${colors[i%colors.length]};margin-right:3px;"></span>${Math.round(r.bZ*100)}cm</span>`).join('')}
+        <span style="color:#e9e6ff00;">|</span>
+        <span style="color:var(--text3);">여유 ${leftCm}cm</span>
+      </div>`;
+  }
+
+  // ④ 층/총계 요약
+  const sumEl = document.getElementById('cbm-detail-summary');
+  if(sumEl) {
+    const layerH = Math.round(layout.layerH*100);
+    const layers = Math.floor((ctn.H/100+0.001)/layout.layerH);
+    const usedH = layerH * layers;
+    const leftH = ctn.H - usedH;
+    sumEl.innerHTML = [
+      {lbl:'층 높이', val: layerH+'cm', sub:'박스 1단'},
+      {lbl:'적재 단수', val: layers+'단', sub:`${usedH}cm 사용`},
+      {lbl:'높이 여유', val: leftH+'cm', sub:`전체 ${ctn.H}cm`},
+    ].map(d=>`
+      <div style="background:#f8f7ff;border:1px solid rgba(94,75,196,.1);border-radius:14px;padding:12px;text-align:center;">
+        <div style="font-size:9px;color:var(--text3);font-weight:700;margin-bottom:4px;">${d.lbl}</div>
+        <div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;">${d.val}</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${d.sub}</div>
+      </div>`).join('');
+  }
+}
+</script>
+
+
+<script>
+// ── 실시간 환율 위젯 ──────────────────────────────────────────────────────────
+(function(){
+  const CACHE_KEY = 'tradeflow_exrate_cache_v1';
+  const CACHE_TTL = 5 * 60 * 1000; // 5분
+
+  let _lastCny = null;
+
+  window.fetchExchangeRates = async function(force=false) {
+    // 캐시 확인
+    if(!force) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+        if(cached && Date.now() - cached.ts < CACHE_TTL) {
+          renderRates(cached);
+          return;
+        }
+      } catch(e){}
+    }
+
+    try {
+      const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW,CNY');
+      if(!res.ok) throw new Error('API 오류');
+      const data = await res.json();
+      const usdKrw = data.rates.KRW;
+      const usdCny = data.rates.CNY;
+      const cnyKrw = usdKrw / usdCny;
+
+      const payload = { usdKrw, cnyKrw, ts: Date.now() };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      renderRates(payload);
+    } catch(e) {
+      const usdEl = document.getElementById('ex-usd-change');
+      const cnyEl = document.getElementById('ex-cny-change');
+      if(usdEl) usdEl.textContent = '조회 실패 — 수동 입력하세요';
+      if(cnyEl) cnyEl.textContent = '조회 실패';
+    }
+  };
+
+  function renderRates({usdKrw, cnyKrw, ts}) {
+    _lastCny = cnyKrw;
+
+    const usdEl = document.getElementById('ex-usd');
+    const cnyEl = document.getElementById('ex-cny');
+    const updEl = document.getElementById('ex-updated');
+    const usdChg = document.getElementById('ex-usd-change');
+    const cnyChg = document.getElementById('ex-cny-change');
+
+    if(usdEl) usdEl.textContent = Math.round(usdKrw).toLocaleString() + '원';
+    if(cnyEl) cnyEl.textContent = Math.round(cnyKrw) + '원';
+    if(usdChg) usdChg.textContent = '1달러 기준';
+    if(cnyChg) cnyChg.textContent = '1위안 기준 · 탭하면 자동입력';
+
+    if(updEl) {
+      const d = new Date(ts);
+      updEl.textContent = `Frankfurter 기준 · ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} 업데이트`;
+    }
+  }
+
+  window.applyExRate = function() {
+    if(!_lastCny) { if(typeof toast==='function') toast('환율을 먼저 불러오세요'); return; }
+    const rateEl = document.getElementById('cc-rate');
+    if(!rateEl) return;
+    const rounded = Math.round(_lastCny);
+    rateEl.value = rounded;
+    rateEl.style.borderColor = 'var(--accent)';
+    rateEl.style.background = 'rgba(109,93,246,.06)';
+    setTimeout(()=>{ rateEl.style.borderColor=''; rateEl.style.background=''; }, 1500);
+    if(typeof calcImportCost === 'function') calcImportCost();
+    if(typeof toast === 'function') toast(`CNY 환율 ${rounded}원 자동입력 완료`);
+  };
+
+  // CBM 탭 진입 시 자동 조회
+  const origGoTab3 = window.goTab;
+  if(typeof origGoTab3 === 'function' && !origGoTab3._exratePatched) {
+    window.goTab = function(id) {
+      origGoTab3(id);
+      if(id === 'cbm') fetchExchangeRates();
+    };
+    window.goTab._exratePatched = true;
+    window.goTab._cbmPatched = origGoTab3._cbmPatched;
+    window.goTab._3dPatched = origGoTab3._3dPatched;
+  }
+
+  // 페이지 로드 후 즉시 조회 시도
+  window.addEventListener('load', () => setTimeout(fetchExchangeRates, 1000));
+})();
+</script>
+
 </body>
