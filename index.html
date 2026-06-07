@@ -1522,6 +1522,13 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
         </div>
 
       </div>
+
+      <!-- 섹션 복귀용 숨김 홀더 -->
+      <div id="cbm-holder-calc" style="display:none;"></div>
+      <div id="cbm-holder-import" style="display:none;"></div>
+      <div id="cbm-holder-quote" style="display:none;"></div>
+      <div id="cbm-holder-save" style="display:none;"></div>
+    </div>
     </div>
     <!-- ── /CBM 계산기 탭 ─────────────────────────────────────────────────────── -->
 
@@ -8592,35 +8599,89 @@ function renderLayoutDetail(ctnKey, layout) {
       @media print{body{margin:0;}}
     </style></head><body>${html}
 
+
+<!-- ── 물류 탭 모달 오버레이 ─────────────────────────────────────────────── -->
+<div id="cbm-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(15,12,41,.6);backdrop-filter:blur(4px);" onclick="cbmModalClose(event)">
+  <div id="cbm-modal-inner" style="position:absolute;bottom:0;left:0;right:0;max-height:92vh;background:#f4f5fb;border-radius:24px 24px 0 0;overflow-y:auto;overscroll-behavior:contain;">
+    <!-- 핸들 -->
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+      <div style="width:40px;height:4px;background:rgba(94,75,196,.2);border-radius:2px;"></div>
+    </div>
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px 14px;">
+      <div id="cbm-modal-title" style="font-size:16px;font-weight:900;color:var(--text);"></div>
+      <button type="button" onclick="cbmModalClose(null,true)" style="width:32px;height:32px;background:#ede9ff;border:none;border-radius:10px;color:var(--accent);font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <!-- 콘텐츠 슬롯 -->
+    <div id="cbm-modal-body" style="padding:0 14px 40px;"></div>
+  </div>
+</div>
+
 <script>
-// ── CBM 탭 섹션 열기/닫기 ────────────────────────────────────────────────────
-const CBM_SECTIONS = ['calc','import','quote','save'];
+// ── 물류 탭 모달 ──────────────────────────────────────────────────────────────
+const _CBM_TITLES = {
+  calc:   '📐 CBM 계산',
+  import: '🚢 수입원가 계산기',
+  quote:  '📋 포워딩 견적 요청서',
+  save:   '💾 저장 목록',
+};
+
+function cbmModalClose(e, force) {
+  if(force || (e && e.target === document.getElementById('cbm-modal'))) {
+    document.getElementById('cbm-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
 
 window.cbmOpenSection = function(id) {
-  CBM_SECTIONS.forEach(s => {
-    const el = document.getElementById('cbm-sec-' + s);
-    if(el) el.style.display = 'none';
-  });
+  const modal = document.getElementById('cbm-modal');
+  const title = document.getElementById('cbm-modal-title');
+  const body  = document.getElementById('cbm-modal-body');
+  if(!modal || !body) return;
+
+  title.textContent = _CBM_TITLES[id] || '';
+
+  // 해당 섹션 내용을 모달 body로 이동
   const sec = document.getElementById('cbm-sec-' + id);
   if(!sec) return;
-  sec.style.display = 'block';
-  if(id === 'import') {
-    const slot = document.getElementById('pc-cost-calc-wrap');
-    const wrap = document.getElementById('cbm-sec-import');
-    if(slot && wrap && slot.parentElement !== wrap) wrap.appendChild(slot);
-    if(slot) slot.style.display = 'block';
+
+  // 이전 내용 원복
+  const prev = body.dataset.currentId;
+  if(prev && prev !== id) {
+    const prevSec = document.getElementById('cbm-sec-' + prev);
+    const prevHolder = document.getElementById('cbm-holder-' + prev);
+    if(prevSec && prevHolder) prevHolder.appendChild(prevSec);
   }
-  if(id === 'save') renderCbmSavedList();
-  setTimeout(() => sec.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+
+  // 현재 섹션을 모달 body로 이동
+  const holder = document.getElementById('cbm-holder-' + id);
+  if(holder) holder.appendChild(sec); // 복귀용 홀더에 넣었다가
+  body.innerHTML = '';
+  body.appendChild(sec);
+  body.dataset.currentId = id;
+  sec.style.display = 'block';
+
+  // 수입원가: pc-cost-calc-wrap 이동
+  if(id === 'import') {
+    const wrap = document.getElementById('pc-cost-calc-wrap');
+    if(wrap && wrap.parentElement !== sec) sec.appendChild(wrap);
+    if(wrap) wrap.style.display = 'block';
+  }
+  if(id === 'save') {
+    if(typeof renderCbmSavedList === 'function') renderCbmSavedList();
+  }
+  if(id === 'calc') {
+    if(typeof renderCbmRows === 'function') renderCbmRows();
+    if(typeof cbmCalc === 'function') cbmCalc();
+  }
+
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
 };
 
-window.cbmCloseSection = function(id) {
-  const sec = document.getElementById('cbm-sec-' + id);
-  if(sec) sec.style.display = 'none';
-  const pg = document.getElementById('content');
-  if(pg) pg.scrollTop = 0;
-};
+window.cbmCloseSection = function() { cbmModalClose(null, true); };
 </script>
+
 </body></html>`);
     doc.close();
     setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
