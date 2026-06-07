@@ -1502,7 +1502,6 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
                 <button type="button" onclick="window.resetImportCost()" style="flex:1;padding:11px;background:#f0edff;color:var(--accent);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>
               </div>
             </div>
-          </div>
         </div>
 
         <!-- 견적 요청서 섹션 -->
@@ -1602,12 +1601,6 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
       </div>
 
-      <!-- 섹션 복귀용 숨김 홀더 -->
-      <div id="cbm-holder-calc" style="display:none;"></div>
-      <div id="cbm-holder-import" style="display:none;"></div>
-      <div id="cbm-holder-quote" style="display:none;"></div>
-      <div id="cbm-holder-save" style="display:none;"></div>
-    </div>
     </div>
     <!-- ── /CBM 계산기 탭 ─────────────────────────────────────────────────────── -->
 
@@ -8745,40 +8738,13 @@ function bindCbmButtons() {
 
 
 // ── 물류 카드 바인딩: goTab 의존 없이 직접 설정 ─────────────────────────────
-(function waitAndBind() {
-  var ids = {
-    'cbmbtn-calc':   'calc',
-    'cbmbtn-import': 'import',
-    'cbmbtn-quote':  'quote',
-    'cbmbtn-save':   'save'
-  };
-  function bind() {
-    var found = 0;
-    Object.keys(ids).forEach(function(btnId) {
-      var btn = document.getElementById(btnId);
-      if(btn) {
-        btn.onclick = null;
-        btn.onclick = (function(sec){ return function(){ window.cbmOpenSection(sec); }; })(ids[btnId]);
-        found++;
-      }
-    });
-    return found;
-  }
-  // 즉시 시도
-  if(bind() < 4) {
-    // 못 찾으면 100ms마다 재시도 (최대 20번)
-    var tries = 0;
-    var t = setInterval(function() {
-      if(bind() === 4 || ++tries > 20) clearInterval(t);
-    }, 100);
-  }
-  // goTab cbm 호출 시에도 재바인딩
+// cbm 탭 진입 시 환율 자동 조회
+(function(){
   var _g = window.goTab;
   if(typeof _g === 'function') {
     window.goTab = function(id) {
       _g(id);
       if(id === 'cbm') {
-        setTimeout(bind, 100);
         if(typeof fetchExchangeRates === 'function') fetchExchangeRates();
       }
     };
