@@ -1275,26 +1275,26 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- ② 메뉴 카드 4개 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-          <div onclick="cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+          <button type="button" onclick="cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">📐</div>
             <div style="font-size:13px;font-weight:800;color:var(--text);">CBM 계산</div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px;">박스 크기 → 적재량</div>
-          </div>
-          <div onclick="cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+          </button>
+          <button type="button" onclick="cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">🚢</div>
             <div style="font-size:13px;font-weight:800;color:var(--text);">수입원가</div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px;">CBM·위안·환율 계산</div>
-          </div>
-          <div onclick="cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+          </button>
+          <button type="button" onclick="cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">📋</div>
             <div style="font-size:13px;font-weight:800;color:var(--text);">견적 요청서</div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px;">FCL/LCL PDF 출력</div>
-          </div>
-          <div onclick="cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+          </button>
+          <button type="button" onclick="cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">💾</div>
             <div style="font-size:13px;font-weight:800;color:var(--text);">저장 목록</div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px;">계산 내역 불러오기</div>
-          </div>
+          </button>
         </div>
 
         <!-- ③ 섹션들 (기본 hidden, 클릭 시 펼쳐짐) -->
