@@ -1275,25 +1275,25 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- ② 메뉴 카드 4개 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-          <button type="button" onclick="cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;">📐</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);">CBM 계산</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">박스 크기 → 적재량</div>
+          <button type="button" data-cbmsec="calc" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
+            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">📐</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">CBM 계산</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">박스 크기 → 적재량</div>
           </button>
-          <button type="button" onclick="cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;">🚢</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);">수입원가</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">CBM·위안·환율 계산</div>
+          <button type="button" data-cbmsec="import" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
+            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">🚢</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">수입원가</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">CBM·위안·환율 계산</div>
           </button>
-          <button type="button" onclick="cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;">📋</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);">견적 요청서</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">FCL/LCL PDF 출력</div>
+          <button type="button" data-cbmsec="quote" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
+            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">📋</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">견적 요청서</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">FCL/LCL PDF 출력</div>
           </button>
-          <button type="button" onclick="cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;">💾</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);">저장 목록</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">계산 내역 불러오기</div>
+          <button type="button" data-cbmsec="save" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
+            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">💾</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">저장 목록</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">계산 내역 불러오기</div>
           </button>
         </div>
 
@@ -8592,12 +8592,55 @@ function renderLayoutDetail(ctnKey, layout) {
     }
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
-    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-      *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;}
-      @page{size:A4;margin:0;}
-      @media print{body{margin:0;}}
-    </style></head><body>${html}
+    const _pdfHead = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;}@page{size:A4;margin:0;}@media print{body{margin:0;}}</style></head><body>';
+    const _pdfFoot = '</' + 'body></' + 'html>';
+    doc.write(_pdfHead + html + _pdfFoot);
+    doc.close();
+    setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
+  };
+})();
+
+// ── 물류 탭 섹션 열기/닫기 ──────────────────────────────────────
+const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",quote:"📋 포워딩 견적 요청서",save:"💾 저장 목록"};
+function cbmModalClose(e,force){if(force||(e&&e.target===document.getElementById('cbm-modal'))){document.getElementById('cbm-modal').style.display='none';document.body.style.overflow='';}}
+window.cbmOpenSection=function(id){
+  const modal=document.getElementById('cbm-modal');
+  const title=document.getElementById('cbm-modal-title');
+  const body=document.getElementById('cbm-modal-body');
+  if(!modal||!body)return;
+  title.textContent=_CBM_TITLES[id]||'';
+  const sec=document.getElementById('cbm-sec-'+id);
+  if(!sec)return;
+  body.innerHTML='';
+  body.appendChild(sec);
+  sec.style.display='block';
+  if(id==='import'){const w=document.getElementById('pc-cost-calc-wrap');if(w&&w.parentElement!==sec)sec.appendChild(w);if(w)w.style.display='block';}
+  if(id==='save'&&typeof renderCbmSavedList==='function')renderCbmSavedList();
+  if(id==='calc'){if(typeof renderCbmRows==='function')renderCbmRows();if(typeof cbmCalc==='function')cbmCalc();}
+  modal.style.display='block';
+  document.body.style.overflow='hidden';
+};
+window.cbmCloseSection=function(){cbmModalClose(null,true);};
+
+// ── 물류 카드 이벤트 리스너 (onclick 대신 안정적인 방식) ────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-cbmsec]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var sec = this.getAttribute('data-cbmsec');
+      if(typeof window.cbmOpenSection === 'function') window.cbmOpenSection(sec);
+    });
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      var sec = this.getAttribute('data-cbmsec');
+      if(typeof window.cbmOpenSection === 'function') window.cbmOpenSection(sec);
+    }, {passive: false});
+  });
+});
+</script>
+
+
+
+
 
 
 <!-- ── 물류 탭 모달 오버레이 ─────────────────────────────────────────────── -->
@@ -8617,76 +8660,5 @@ function renderLayoutDetail(ctnKey, layout) {
   </div>
 </div>
 
-<script>
-// ── 물류 탭 모달 ──────────────────────────────────────────────────────────────
-const _CBM_TITLES = {
-  calc:   '📐 CBM 계산',
-  import: '🚢 수입원가 계산기',
-  quote:  '📋 포워딩 견적 요청서',
-  save:   '💾 저장 목록',
-};
-
-function cbmModalClose(e, force) {
-  if(force || (e && e.target === document.getElementById('cbm-modal'))) {
-    document.getElementById('cbm-modal').style.display = 'none';
-    document.body.style.overflow = '';
-  }
-}
-
-window.cbmOpenSection = function(id) {
-  const modal = document.getElementById('cbm-modal');
-  const title = document.getElementById('cbm-modal-title');
-  const body  = document.getElementById('cbm-modal-body');
-  if(!modal || !body) return;
-
-  title.textContent = _CBM_TITLES[id] || '';
-
-  // 해당 섹션 내용을 모달 body로 이동
-  const sec = document.getElementById('cbm-sec-' + id);
-  if(!sec) return;
-
-  // 이전 내용 원복
-  const prev = body.dataset.currentId;
-  if(prev && prev !== id) {
-    const prevSec = document.getElementById('cbm-sec-' + prev);
-    const prevHolder = document.getElementById('cbm-holder-' + prev);
-    if(prevSec && prevHolder) prevHolder.appendChild(prevSec);
-  }
-
-  // 현재 섹션을 모달 body로 이동
-  const holder = document.getElementById('cbm-holder-' + id);
-  if(holder) holder.appendChild(sec); // 복귀용 홀더에 넣었다가
-  body.innerHTML = '';
-  body.appendChild(sec);
-  body.dataset.currentId = id;
-  sec.style.display = 'block';
-
-  // 수입원가: pc-cost-calc-wrap 이동
-  if(id === 'import') {
-    const wrap = document.getElementById('pc-cost-calc-wrap');
-    if(wrap && wrap.parentElement !== sec) sec.appendChild(wrap);
-    if(wrap) wrap.style.display = 'block';
-  }
-  if(id === 'save') {
-    if(typeof renderCbmSavedList === 'function') renderCbmSavedList();
-  }
-  if(id === 'calc') {
-    if(typeof renderCbmRows === 'function') renderCbmRows();
-    if(typeof cbmCalc === 'function') cbmCalc();
-  }
-
-  modal.style.display = 'block';
-  document.body.style.overflow = 'hidden';
-};
-
-window.cbmCloseSection = function() { cbmModalClose(null, true); };
-</script>
-
-</body></html>`);
-    doc.close();
-    setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
-  };
-})();
-</script>
 
 </body>
