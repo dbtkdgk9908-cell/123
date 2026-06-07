@@ -1275,29 +1275,29 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- ② 메뉴 카드 4개 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-          <button type="button" data-cbmsec="calc" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">📐</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">CBM 계산</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">박스 크기 → 적재량</div>
+          <button id="cbmbtn-calc" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+            <div style="font-size:26px;margin-bottom:6px;">📐</div>
+            <div style="font-size:13px;font-weight:800;color:#17162b;">CBM 계산</div>
+            <div style="font-size:10px;color:#9893b3;margin-top:3px;">박스 크기 → 적재량</div>
           </button>
-          <button type="button" data-cbmsec="import" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">🚢</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">수입원가</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">CBM·위안·환율 계산</div>
+          <button id="cbmbtn-import" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+            <div style="font-size:26px;margin-bottom:6px;">🚢</div>
+            <div style="font-size:13px;font-weight:800;color:#17162b;">수입원가</div>
+            <div style="font-size:10px;color:#9893b3;margin-top:3px;">CBM·위안·환율 계산</div>
           </button>
-          <button type="button" data-cbmsec="quote" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">📋</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">견적 요청서</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">FCL/LCL PDF 출력</div>
+          <button id="cbmbtn-quote" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+            <div style="font-size:26px;margin-bottom:6px;">📋</div>
+            <div style="font-size:13px;font-weight:800;color:#17162b;">견적 요청서</div>
+            <div style="font-size:10px;color:#9893b3;margin-top:3px;">FCL/LCL PDF 출력</div>
           </button>
-          <button type="button" data-cbmsec="save" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;touch-action:manipulation;">
-            <div style="font-size:26px;margin-bottom:6px;pointer-events:none;">💾</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text);pointer-events:none;">저장 목록</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;pointer-events:none;">계산 내역 불러오기</div>
+          <button id="cbmbtn-save" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+            <div style="font-size:26px;margin-bottom:6px;">💾</div>
+            <div style="font-size:13px;font-weight:800;color:#17162b;">저장 목록</div>
+            <div style="font-size:10px;color:#9893b3;margin-top:3px;">계산 내역 불러오기</div>
           </button>
         </div>
 
-        <!-- ③ 섹션들 (기본 hidden, 클릭 시 펼쳐짐) -->
+        <!-- ③ 섹션들  (기본 hidden, 클릭 시 펼쳐짐) -->
 
         <!-- CBM 계산 섹션 -->
         <div id="cbm-sec-calc" style="display:none;">
@@ -8622,19 +8622,32 @@ window.cbmOpenSection=function(id){
 };
 window.cbmCloseSection=function(){cbmModalClose(null,true);};
 
-// ── 물류 카드 이벤트 리스너 (onclick 대신 안정적인 방식) ────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('[data-cbmsec]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var sec = this.getAttribute('data-cbmsec');
-      if(typeof window.cbmOpenSection === 'function') window.cbmOpenSection(sec);
-    });
-    btn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      var sec = this.getAttribute('data-cbmsec');
-      if(typeof window.cbmOpenSection === 'function') window.cbmOpenSection(sec);
-    }, {passive: false});
+// ── 물류 카드 버튼 바인딩 ────────────────────────────────────────────────────
+function bindCbmButtons() {
+  var btns = {
+    'cbmbtn-calc':   'calc',
+    'cbmbtn-import': 'import',
+    'cbmbtn-quote':  'quote',
+    'cbmbtn-save':   'save'
+  };
+  Object.keys(btns).forEach(function(id) {
+    var btn = document.getElementById(id);
+    if(!btn) return;
+    var sec = btns[id];
+    btn.onclick = function() { cbmOpenSection(sec); };
   });
+}
+// goTab cbm 탭 전환 시 바인딩
+var _origGoTabFinal = window.goTab;
+window.goTab = function(id) {
+  _origGoTabFinal(id);
+  if(id === 'cbm') {
+    setTimeout(bindCbmButtons, 50);
+    if(typeof fetchExchangeRates === 'function') fetchExchangeRates();
+  }
+};
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(bindCbmButtons, 200);
 });
 </script>
 
