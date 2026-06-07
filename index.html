@@ -1245,310 +1245,283 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
     </div>
     <div class="page pp" id="pg-myorders"><button type="button" class="bfull bprim" style="margin-bottom:12px;position:relative;z-index:3" onclick="openOrderRequestSheet()">＋ 신규 발주 요청</button><div class="fw" style="margin-top:0;margin-bottom:12px"><input class="si" id="myosearch" placeholder="🔍 발주번호, 품목 검색..." oninput="renderMyOrders()"><div class="fr"><select class="fs" id="myostatus" onchange="renderMyOrders()"><option value="">전체 상태</option></select></div></div><div id="my-orders"></div></div>
     <!-- ── CBM 계산기 탭 ──────────────────────────────────────────────────────── -->
-    <div class="page" id="pg-cbm" style="padding:16px 14px 32px;">
+    <div class="page" id="pg-cbm" style="padding:0 0 32px;">
 
-      <!-- 수입 원가 계산기 → CBM 탭으로 이동됨 -->
-      <div id="pc-cost-calc-wrap">
-        <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:20px;padding:18px 16px 14px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden;">
-          <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;background:rgba(255,255,255,.07);border-radius:50%;"></div>
-          <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🚢 수입 원가 계산기</div>
-          <div style="font-size:12px;opacity:.8;">사업자해운 기준 · CBM / 제품가격 / 환율 입력</div>
+      <!-- ① 환율 바 (상단 고정) -->
+      <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);padding:14px 16px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.7);">실시간 환율</div>
+          <button onclick="fetchExchangeRates(true)" style="font-size:11px;font-weight:700;color:rgba(255,255,255,.6);background:none;border:none;cursor:pointer;font-family:inherit;">↻ 새로고침</button>
         </div>
-
-        <!-- 실시간 환율 위젯 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:13px 14px;box-shadow:0 2px 10px rgba(37,30,84,.05);">
-            <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">🇺🇸 USD / KRW</div>
-            <div id="ex-usd" style="font-size:20px;font-weight:900;color:var(--text);letter-spacing:-0.5px;">—</div>
-            <div id="ex-usd-change" style="font-size:10px;margin-top:2px;color:var(--text3);">로딩중...</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:2px;">🇺🇸 USD / KRW</div>
+            <div id="ex-usd" style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px;">—</div>
+            <div id="ex-usd-change" style="font-size:9px;color:rgba(255,255,255,.45);margin-top:1px;">로딩중...</div>
           </div>
-          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:13px 14px;box-shadow:0 2px 10px rgba(37,30,84,.05);">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">🇨🇳 CNY / KRW</div>
-              <button onclick="applyExRate()" style="font-size:10px;font-weight:700;color:var(--accent);background:rgba(109,93,246,.1);border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-family:inherit;">자동입력</button>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+              <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.5);">🇨🇳 CNY / KRW</div>
+              <button onclick="applyExRate()" style="font-size:9px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border:none;border-radius:5px;padding:2px 7px;cursor:pointer;font-family:inherit;">자동입력</button>
             </div>
-            <div id="ex-cny" style="font-size:20px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;">—</div>
-            <div id="ex-cny-change" style="font-size:10px;margin-top:2px;color:var(--text3);">로딩중...</div>
+            <div id="ex-cny" style="font-size:18px;font-weight:900;color:#a78bfa;letter-spacing:-0.5px;">—</div>
+            <div id="ex-cny-change" style="font-size:9px;color:rgba(255,255,255,.45);margin-top:1px;">로딩중...</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div id="ex-updated" style="font-size:10px;color:var(--text3);">환율 업데이트 중...</div>
-          <button onclick="fetchExchangeRates(true)" style="font-size:11px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;">↻ 새로고침</button>
+        <div id="ex-updated" style="font-size:9px;color:rgba(255,255,255,.3);margin-top:8px;">환율 업데이트 중...</div>
+      </div>
+
+      <div style="padding:14px 14px 0;">
+
+        <!-- ② 메뉴 카드 4개 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div onclick="cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+            <div style="font-size:26px;margin-bottom:6px;">📐</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);">CBM 계산</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">박스 크기 → 적재량</div>
+          </div>
+          <div onclick="cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+            <div style="font-size:26px;margin-bottom:6px;">🚢</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);">수입원가</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">CBM·위안·환율 계산</div>
+          </div>
+          <div onclick="cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+            <div style="font-size:26px;margin-bottom:6px;">📋</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);">견적 요청서</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">FCL/LCL PDF 출력</div>
+          </div>
+          <div onclick="cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,30,84,.05);transition:all .18s;text-align:center;">
+            <div style="font-size:26px;margin-bottom:6px;">💾</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text);">저장 목록</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">계산 내역 불러오기</div>
+          </div>
         </div>
 
-        <!-- 센터 선택 -->
-        <div style="display:flex;gap:10px;margin-bottom:12px;">
-          <div id="cc-center-weihai" onclick="setCcCenter('weihai')" style="flex:1;padding:14px 12px;border-radius:16px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));cursor:pointer;text-align:center;transition:all .2s;">
-            <div style="font-size:15px;margin-bottom:4px;">⚓</div>
-            <div style="font-size:13px;font-weight:800;color:var(--accent);">위해센터</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">운송비 6,500원/0.1CBM</div>
-          </div>
-          <div id="cc-center-guangzhou" onclick="setCcCenter('guangzhou')" style="flex:1;padding:14px 12px;border-radius:16px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;transition:all .2s;">
-            <div style="font-size:15px;margin-bottom:4px;">🏭</div>
-            <div style="font-size:13px;font-weight:800;color:var(--text2);">광저우센터</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">운송비 11,500원/0.1CBM</div>
-          </div>
-        </div>
+        <!-- ③ 섹션들 (기본 hidden, 클릭 시 펼쳐짐) -->
 
-        <!-- 입력 카드 -->
-        <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📥 기본 정보 입력</div>
+        <!-- CBM 계산 섹션 -->
+        <div id="cbm-sec-calc" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);">📐 CBM 계산</div>
+            <button onclick="cbmCloseSection('calc')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
 
-          <!-- CBM 계산기 -->
-          <div style="background:#f7f6ff;border:1.5px solid rgba(94,75,196,.15);border-radius:16px;padding:14px;margin-bottom:14px;">
-            <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:10px;">📐 CBM 계산기 (가로 × 세로 × 높이, cm)</div>
-            <!-- 치수 입력 -->
-            <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:6px;align-items:center;margin-bottom:10px;">
-              <input class="fi" type="number" id="cc-dim-w" placeholder="가로" step="0.1" oninput="calcCbmFromDims()" style="min-height:44px;font-size:14px;font-weight:800;text-align:center;padding:0 6px;">
-              <span style="font-size:14px;font-weight:900;color:var(--text3);text-align:center;">×</span>
-              <input class="fi" type="number" id="cc-dim-d" placeholder="세로" step="0.1" oninput="calcCbmFromDims()" style="min-height:44px;font-size:14px;font-weight:800;text-align:center;padding:0 6px;">
-              <span style="font-size:14px;font-weight:900;color:var(--text3);text-align:center;">×</span>
-              <input class="fi" type="number" id="cc-dim-h" placeholder="높이" step="0.1" oninput="calcCbmFromDims()" style="min-height:44px;font-size:14px;font-weight:800;text-align:center;padding:0 6px;">
-              <span style="font-size:11px;font-weight:700;color:var(--text3);">cm</span>
-              <div style="display:flex;flex-direction:column;gap:3px;">
-                <label style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">수량</label>
-                <input class="fi" type="number" id="cc-dim-qty" placeholder="1" min="1" step="1" oninput="calcCbmFromDims()" style="min-height:44px;font-size:14px;font-weight:800;text-align:center;padding:0 6px;">
+          <!-- 컨테이너 선택 -->
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:10px;">📦 컨테이너</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;" id="cbm-container-btns">
+              <div class="cbm-ctn-btn active" data-ctn="20ft" onclick="setCbmContainer('20ft')" style="padding:9px 6px;border-radius:12px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));cursor:pointer;text-align:center;">
+                <div style="font-size:11px;font-weight:800;color:var(--accent);">20ft</div>
+                <div style="font-size:9px;color:var(--text3);margin-top:1px;">25.5 CBM</div>
               </div>
-            </div>
-            <!-- 파렛트 체크 -->
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(255,255,255,.7);border:1px solid rgba(94,75,196,.12);border-radius:12px;padding:10px 12px;cursor:pointer;" onclick="togglePallet()">
-              <div id="cc-pallet-check" style="width:22px;height:22px;border-radius:7px;border:2px solid rgba(94,75,196,.3);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;"></div>
-              <div style="flex:1;">
-                <div style="font-size:12px;font-weight:800;color:var(--text);">🪵 파렛트 포함</div>
-                <div style="font-size:10px;color:var(--text3);">파렛트 CBM 0.2 자동 추가</div>
+              <div class="cbm-ctn-btn" data-ctn="40ft" onclick="setCbmContainer('40ft')" style="padding:9px 6px;border-radius:12px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;">
+                <div style="font-size:11px;font-weight:800;color:var(--text2);">40ft</div>
+                <div style="font-size:9px;color:var(--text3);margin-top:1px;">55.0 CBM</div>
               </div>
-              <div id="cc-pallet-badge" style="display:none;font-size:11px;font-weight:800;padding:4px 10px;background:rgba(79,70,229,.1);color:var(--accent);border-radius:20px;">+0.2 CBM</div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <div id="cc-dim-result" style="font-size:12px;font-weight:700;color:var(--text3);flex:1;">가로 × 세로 × 높이 × 수량 입력 시 자동 계산</div>
-              <button type="button" onclick="applyCbmFromDims()" id="cc-dim-apply-btn"
-                style="display:none;padding:8px 16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
-                CBM 적용
-              </button>
-            </div>
-          </div>
-
-          <div class="f3" style="margin-bottom:12px;">
-            <div class="fg" style="margin-bottom:0">
-              <label class="fl">CBM</label>
-              <input class="fi" type="number" id="cc-cbm" placeholder="예: 1.5" step="0.01" oninput="calcImportCost()" style="font-size:16px;font-weight:800;">
-            </div>
-            <div class="fg" style="margin-bottom:0">
-              <label class="fl">제품가격 (위안)</label>
-              <input class="fi" type="number" id="cc-cny" placeholder="예: 1000" oninput="calcImportCost()" style="font-size:16px;font-weight:800;">
-            </div>
-            <div class="fg" style="margin-bottom:0">
-              <label class="fl">적용환율 (원/위안)</label>
-              <input class="fi" type="number" id="cc-rate" placeholder="예: 215" oninput="calcImportCost()" style="font-size:16px;font-weight:800;">
-            </div>
-          </div>
-          <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">CBM 빠른 입력</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button onclick="setCcCbm(0.5)"  style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">0.5</button>
-            <button onclick="setCcCbm(1)"    style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">1</button>
-            <button onclick="setCcCbm(2)"    style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">2</button>
-            <button onclick="setCcCbm(3)"    style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">3</button>
-            <button onclick="setCcCbm(5)"    style="padding:6px 12px;border-radius:20px;border:1.5px solid rgba(94,75,196,.18);background:#f7f6ff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">5</button>
-          </div>
-          <div style="height:1px;background:rgba(94,75,196,.08);margin:16px 0;"></div>
-          <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:10px;">➕ 기타비용 (선택)</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">지게차비용, 파렛트 교체비용 등 추가 비용을 입력하세요</div>
-          <div id="cc-extra-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
-          <button type="button" onclick="addCcExtraItem()" style="width:100%;padding:10px;border:2px dashed rgba(94,75,196,.2);border-radius:14px;background:transparent;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">+ 항목 추가</button>
-        </div>
-
-        <!-- 결과 카드 -->
-        <div id="cc-result" style="display:none;">
-
-          <!-- 비용 상세 내역 -->
-          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-            <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📋 비용 상세 내역</div>
-            <table style="width:100%;border-collapse:collapse;font-size:13px;">
-              <thead>
-                <tr style="background:#f7f6ff;border-radius:10px;">
-                  <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:var(--text3);border-radius:10px 0 0 10px;">항목</th>
-                  <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:700;color:var(--text3);">금액</th>
-                  <th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:700;color:var(--text3);border-radius:0 10px 10px 0;">부가세</th>
-                </tr>
-              </thead>
-              <tbody id="cc-rows"></tbody>
-              <tfoot>
-                <tr style="border-top:2px solid rgba(94,75,196,.12);">
-                  <td style="padding:12px 12px 4px;font-size:12px;font-weight:800;color:var(--text);">부가세 합계</td>
-                  <td></td>
-                  <td style="padding:12px 12px 4px;text-align:right;font-size:14px;font-weight:900;color:var(--accent);" id="cc-vat-total">-</td>
-                </tr>
-                <tr>
-                  <td style="padding:4px 12px 12px;font-size:12px;font-weight:800;color:var(--text);">비용 합계 (부가세 제외)</td>
-                  <td></td>
-                  <td style="padding:4px 12px 12px;text-align:right;font-size:14px;font-weight:900;color:var(--text2);" id="cc-cost-total">-</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- 최종 원가 요약 -->
-          <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:20px;padding:20px 18px;margin-bottom:12px;color:#fff;">
-            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:6px;letter-spacing:.5px;">총 원가 (제품비 + 물류비 + 부가세 전체)</div>
-            <div id="cc-grand-total" style="font-size:34px;font-weight:900;letter-spacing:-1px;margin-bottom:12px;">-</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-              <div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px 10px;text-align:center;">
-                <div style="font-size:10px;opacity:.75;margin-bottom:4px;">제품비 (원화)</div>
-                <div id="cc-prod-krw" style="font-size:14px;font-weight:800;">-</div>
-              </div>
-              <div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px 10px;text-align:center;">
-                <div style="font-size:10px;opacity:.75;margin-bottom:4px;">물류/통관비</div>
-                <div id="cc-logistics" style="font-size:14px;font-weight:800;">-</div>
-              </div>
-              <div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px 10px;text-align:center;">
-                <div style="font-size:10px;opacity:.75;margin-bottom:4px;">부가세 합계</div>
-                <div id="cc-vat-sum" style="font-size:14px;font-weight:800;">-</div>
+              <div class="cbm-ctn-btn" data-ctn="40hc" onclick="setCbmContainer('40hc')" style="padding:9px 6px;border-radius:12px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;">
+                <div style="font-size:11px;font-weight:800;color:var(--text2);">40HC</div>
+                <div style="font-size:9px;color:var(--text3);margin-top:1px;">67.0 CBM</div>
               </div>
             </div>
           </div>
 
-          <button onclick="resetImportCost()" style="width:100%;padding:14px;background:#f3f1fd;border:1.5px solid rgba(94,75,196,.14);border-radius:16px;color:var(--text2);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 초기화</button>
-        </div>
-
-        <!-- 입력 전 안내 -->
-        <div id="cc-empty" style="text-align:center;padding:30px 20px;color:var(--text3);">
-          <div style="font-size:36px;margin-bottom:10px;">🚢</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:4px;">CBM, 위안, 환율을 입력하세요</div>
-          <div style="font-size:11px;line-height:1.7;">사업자해운 기준 수입 원가를 자동으로 계산해드려요</div>
-        </div>
-      </div>
-
-      <!-- 컨테이너 선택 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📦 컨테이너 선택</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="cbm-container-btns">
-          <div class="cbm-ctn-btn active" data-ctn="20ft" onclick="setCbmContainer('20ft')" style="padding:10px 6px;border-radius:14px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));cursor:pointer;text-align:center;transition:all .2s;">
-            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
-            <div style="font-size:12px;font-weight:800;color:var(--accent);">20ft</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:2px;">25.5 CBM</div>
+          <!-- 품목 입력 -->
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:800;color:var(--text2);">📋 품목 입력 <span style="font-size:9px;color:var(--text3);font-weight:600;">단위: cm</span></div>
+              <button onclick="cbmAddRow()" style="padding:5px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 추가</button>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;padding:0 2px;margin-bottom:5px;">
+              <div style="font-size:10px;font-weight:700;color:var(--text3);">품명</div>
+              <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">가로</div>
+              <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">세로</div>
+              <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">높이</div>
+              <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">수량</div>
+              <div></div>
+            </div>
+            <div id="cbm-rows"></div>
+            <div id="cbm-empty-hint" style="text-align:center;padding:14px 0;color:var(--text3);font-size:12px;font-weight:600;">＋ 추가 버튼으로 품목을 입력하세요</div>
           </div>
-          <div class="cbm-ctn-btn" data-ctn="40ft" onclick="setCbmContainer('40ft')" style="padding:10px 6px;border-radius:14px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;transition:all .2s;">
-            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
-            <div style="font-size:12px;font-weight:800;color:var(--text2);">40ft</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:2px;">55.0 CBM</div>
+
+          <!-- 3D 시뮬레이션 -->
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:800;color:var(--text2);">🧱 3D 적재 시뮬레이션</div>
+              <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:5px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
+            </div>
+            <div id="cbm-3d-wrap" style="position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#1a1040,#24243e);aspect-ratio:4/3;">
+              <canvas id="cbm-3d-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
+              <div id="cbm-3d-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                <div style="font-size:28px;margin-bottom:6px;">📦</div>
+                <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);">품목 입력 후 ▶ 실행</div>
+              </div>
+              <div id="cbm-3d-legend" style="position:absolute;bottom:8px;left:8px;display:none;"></div>
+              <div id="cbm-3d-info" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.45);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#fff;display:none;text-align:right;backdrop-filter:blur(6px);"></div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center;">드래그 회전 · 두 손가락 핀치 확대/축소</div>
           </div>
-          <div class="cbm-ctn-btn" data-ctn="40hc" onclick="setCbmContainer('40hc')" style="padding:10px 6px;border-radius:14px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;cursor:pointer;text-align:center;transition:all .2s;">
-            <div style="font-size:18px;margin-bottom:2px;">🚢</div>
-            <div style="font-size:12px;font-weight:800;color:var(--text2);">40HC</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:2px;">67.0 CBM</div>
+
+          <!-- 적재 상세 -->
+          <div id="cbm-layout-detail" style="display:none;background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:12px;">📐 적재 상세 정보</div>
+            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">🚢 컨테이너 내부 치수</div>
+              <div id="cbm-detail-ctn" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
+            </div>
+            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 적재 물품 치수 · 여유</div>
+              <div id="cbm-detail-box" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;"></div>
+              <div id="cbm-detail-margin" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
+            </div>
+            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 줄별 배치 방식</div>
+              <div id="cbm-detail-rows"></div>
+            </div>
+            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:8px;">
+              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">↔ 폭 사용 현황</div>
+              <div id="cbm-detail-width-bar" style="margin-bottom:6px;"></div>
+              <div id="cbm-detail-width-txt" style="font-size:11px;font-weight:700;color:var(--text2);"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="cbm-detail-summary"></div>
           </div>
-        </div>
-      </div>
 
-      <!-- 품목 입력 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:12px;font-weight:800;color:var(--text2);">📋 품목 입력</div>
-          <button onclick="cbmAddRow()" style="padding:6px 14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 추가</button>
-        </div>
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;padding:0 2px;margin-bottom:5px;">
-          <div style="font-size:10px;font-weight:700;color:var(--text3);">품명</div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">가로(cm)</div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">세로(cm)</div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">높이(cm)</div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">수량</div>
-          <div></div>
-        </div>
-        <div id="cbm-rows"></div>
-        <div id="cbm-empty-hint" style="text-align:center;padding:18px 0;color:var(--text3);font-size:12px;font-weight:600;">＋ 추가 버튼으로 품목을 입력하세요</div>
-      </div>
-
-      <!-- 3D 시뮬레이션 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:12px;font-weight:800;color:var(--text2);">🧱 3D 적재 시뮬레이션</div>
-          <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:6px 14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
-        </div>
-        <div id="cbm-3d-wrap" style="position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#1a1040,#24243e);aspect-ratio:4/3;">
-          <canvas id="cbm-3d-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
-          <div id="cbm-3d-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-            <div style="font-size:32px;margin-bottom:8px;">📦</div>
-            <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.7);">품목 입력 후 ▶ 실행</div>
-            <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;">드래그로 회전 · 핀치로 확대</div>
-          </div>
-          <div id="cbm-3d-legend" style="position:absolute;bottom:10px;left:10px;display:none;"></div>
-          <div id="cbm-3d-info" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;color:#fff;display:none;text-align:right;backdrop-filter:blur(6px);"></div>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center;">드래그 회전 · 두 손가락 핀치 확대/축소</div>
-      </div>
-
-      <!-- 적재 상세 정보 -->
-      <div id="cbm-layout-detail" style="display:none;background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">📐 적재 상세 정보</div>
-
-        <!-- 컨테이너 치수 -->
-        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">🚢 컨테이너 내부 치수</div>
-          <div id="cbm-detail-ctn" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
-        </div>
-
-        <!-- 박스 치수 + 여유 -->
-        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 적재 물품 치수 · 여유</div>
-          <div id="cbm-detail-box" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;"></div>
-          <div id="cbm-detail-margin" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
-        </div>
-
-        <!-- 줄별 배치 -->
-        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">📦 줄별 배치 방식</div>
-          <div id="cbm-detail-rows"></div>
-        </div>
-
-        <!-- 폭 여유 시각화 -->
-        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:8px;">↔ 폭 사용 현황</div>
-          <div id="cbm-detail-width-bar" style="margin-bottom:6px;"></div>
-          <div id="cbm-detail-width-txt" style="font-size:11px;font-weight:700;color:var(--text2);"></div>
-        </div>
-
-        <!-- 층/총계 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="cbm-detail-summary"></div>
-      </div>
-
-      <!-- 계산 결과 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);" id="cbm-result-box">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:14px;">📊 계산 결과</div>
-
-        <div style="background:linear-gradient(135deg,#7c5cfc,#6344e8);border-radius:16px;padding:16px;margin-bottom:12px;color:#fff;">
-          <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;">총 CBM</div>
-          <div id="cbm-total-val" style="font-size:36px;font-weight:900;letter-spacing:-1px;">0.000</div>
-          <div id="cbm-total-sub" style="font-size:11px;opacity:.75;margin-top:2px;">품목을 입력하면 자동 계산</div>
-        </div>
-
-        <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:14px;padding:14px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">🚢 컨테이너 적재 현황</div>
-          <div id="cbm-ctn-result" style="font-size:13px;font-weight:700;color:var(--text2);">-</div>
-          <div style="margin-top:10px;height:18px;background:#e9e6ff;border-radius:10px;overflow:hidden;">
-            <div id="cbm-gauge" style="height:100%;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:5px;">
-            <div id="cbm-gauge-pct" style="font-size:11px;font-weight:800;color:var(--accent);">0%</div>
-            <div id="cbm-gauge-max" style="font-size:11px;font-weight:700;color:var(--text3);">/ 25.5 CBM</div>
+          <!-- 계산 결과 -->
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);" id="cbm-result-box">
+            <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:12px;">📊 계산 결과</div>
+            <div style="background:linear-gradient(135deg,#7c5cfc,#6344e8);border-radius:14px;padding:14px;margin-bottom:10px;color:#fff;">
+              <div style="font-size:10px;font-weight:700;opacity:.8;margin-bottom:3px;">총 CBM</div>
+              <div id="cbm-total-val" style="font-size:32px;font-weight:900;letter-spacing:-1px;">0.000</div>
+              <div id="cbm-total-sub" style="font-size:10px;opacity:.75;margin-top:2px;">품목을 입력하면 자동 계산</div>
+            </div>
+            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:10px;">
+              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:7px;">🚢 컨테이너 적재 현황</div>
+              <div id="cbm-ctn-result" style="font-size:12px;font-weight:700;color:var(--text2);">-</div>
+              <div style="margin-top:8px;height:16px;background:#e9e6ff;border-radius:8px;overflow:hidden;">
+                <div id="cbm-gauge" style="height:100%;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:8px;transition:width .5s;width:0%;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                <div id="cbm-gauge-pct" style="font-size:10px;font-weight:800;color:var(--accent);">0%</div>
+                <div id="cbm-gauge-max" style="font-size:10px;font-weight:700;color:var(--text3);">/ 25.5 CBM</div>
+              </div>
+            </div>
+            <div id="cbm-item-breakdown" style="display:none;">
+              <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:7px;">품목별 CBM</div>
+              <div id="cbm-item-list"></div>
+            </div>
           </div>
         </div>
 
-        <div id="cbm-item-breakdown" style="display:none;">
-          <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:8px;">품목별 CBM</div>
-          <div id="cbm-item-list"></div>
+        <!-- 수입원가 섹션 -->
+        <div id="cbm-sec-import" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);">🚢 수입 원가 계산기</div>
+            <button onclick="cbmCloseSection('import')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
+          <div id="pc-cost-calc-wrap"></div>
         </div>
-      </div>
 
-      <!-- 저장/불러오기 -->
-      <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-        <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:12px;">💾 저장 · 불러오기</div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <input id="cbm-save-name" class="fi" placeholder="저장 이름 (예: 7월 위해 발주)" style="flex:1;min-height:42px;font-size:13px;">
-          <button onclick="cbmSave()" style="padding:0 16px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">저장</button>
+        <!-- 견적 요청서 섹션 -->
+        <div id="cbm-sec-quote" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);">📋 포워딩 견적 요청서</div>
+            <button onclick="cbmCloseSection('quote')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
+          <!-- 운송 구분 -->
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">운송 구분</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+              <div id="fq-tgl-fcl" onclick="fqSetType('FCL')" style="padding:12px 8px;border-radius:12px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));text-align:center;cursor:pointer;">
+                <div style="font-size:16px;margin-bottom:2px;">🏗️</div>
+                <div style="font-size:13px;font-weight:800;color:var(--accent);">FCL</div>
+              </div>
+              <div id="fq-tgl-lcl" onclick="fqSetType('LCL')" style="padding:12px 8px;border-radius:12px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                <div style="font-size:16px;margin-bottom:2px;">📦</div>
+                <div style="font-size:13px;font-weight:800;color:var(--text2);">LCL</div>
+              </div>
+            </div>
+            <div id="fq-fcl-wrap">
+              <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px;">컨테이너 타입</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;" id="fq-ctn-grid">
+                <div class="fq-ctn" data-ctn="20FT DRY" data-cbm="25.5" data-dim="590×235×239cm" data-max="21,700kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--accent);">20ft DRY</div>
+                  <div style="font-size:9px;color:var(--text3);">25.5 CBM · 590×235×239cm</div>
+                </div>
+                <div class="fq-ctn" data-ctn="40FT DRY" data-cbm="55.0" data-dim="1203×235×239cm" data-max="26,680kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--text2);">40ft DRY</div>
+                  <div style="font-size:9px;color:var(--text3);">55.0 CBM · 1203×235×239cm</div>
+                </div>
+                <div class="fq-ctn" data-ctn="40FT HC" data-cbm="67.0" data-dim="1203×235×269cm" data-max="26,300kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--text2);">40ft HC</div>
+                  <div style="font-size:9px;color:var(--text3);">67.0 CBM · 1203×235×269cm</div>
+                </div>
+                <div class="fq-ctn" data-ctn="45FT HC" data-cbm="72.0" data-dim="1360×235×269cm" data-max="27,600kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--text2);">45ft HC</div>
+                  <div style="font-size:9px;color:var(--text3);">72.0 CBM · 1360×235×269cm</div>
+                </div>
+                <div class="fq-ctn" data-ctn="20FT RF(냉동)" data-cbm="냉동" data-dim="545×225×220cm" data-max="21,200kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--text2);">20ft RF</div>
+                  <div style="font-size:9px;color:var(--text3);">냉동 · 545×225×220cm</div>
+                </div>
+                <div class="fq-ctn" data-ctn="40FT RF HC(냉동)" data-cbm="냉동" data-dim="1145×225×240cm" data-max="29,300kg" onclick="fqSetCtn(this)" style="padding:9px 8px;border-radius:10px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                  <div style="font-size:12px;font-weight:800;color:var(--text2);">40ft RF HC</div>
+                  <div style="font-size:9px;color:var(--text3);">냉동 · 1145×225×240cm</div>
+                </div>
+              </div>
+              <div class="fg"><label class="fl">컨테이너 수량</label><input class="fi" type="number" id="fq-fcl-qty" placeholder="1" min="1" value="1"></div>
+            </div>
+            <div id="fq-lcl-wrap" style="display:none;">
+              <div class="f2">
+                <div class="fg"><label class="fl">화물 CBM</label><input class="fi" type="number" id="fq-lcl-cbm" placeholder="예: 3.5" step="0.1"></div>
+                <div class="fg"><label class="fl">중량 (kg)</label><input class="fi" type="number" id="fq-lcl-kg" placeholder="예: 500"></div>
+              </div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">거래조건 (Incoterms)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+              <div id="fq-inco-exw" onclick="fqSetInco('EXW')" style="padding:12px;border-radius:12px;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));text-align:center;cursor:pointer;">
+                <div style="font-size:14px;font-weight:900;color:var(--accent);">EXW</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px;">공장 인도</div>
+              </div>
+              <div id="fq-inco-fob" onclick="fqSetInco('FOB')" style="padding:12px;border-radius:12px;border:2px solid rgba(94,75,196,.15);background:#f8f7ff;text-align:center;cursor:pointer;">
+                <div style="font-size:14px;font-weight:900;color:var(--text2);">FOB</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px;">본선 인도</div>
+              </div>
+            </div>
+            <div class="fg"><label class="fl">품명</label><input class="fi" type="text" id="fq-cargo-name" placeholder="예: 디퓨저 유리병, 섬유스틱"></div>
+            <div class="f2">
+              <div class="fg"><label class="fl">선적지</label><input class="fi" type="text" id="fq-origin" placeholder="예: 중국 광저우"></div>
+              <div class="fg"><label class="fl">도착지</label><input class="fi" type="text" id="fq-dest" placeholder="예: 인천항"></div>
+            </div>
+            <div class="f2">
+              <div class="fg"><label class="fl">희망 선적일</label><input class="fi" type="date" id="fq-date"></div>
+              <div class="fg"><label class="fl">화물 가액 (USD)</label><input class="fi" type="number" id="fq-value" placeholder="예: 5000"></div>
+            </div>
+            <div class="f2">
+              <div class="fg"><label class="fl">담당자</label><input class="fi" type="text" id="fq-contact" placeholder="유상하"></div>
+              <div class="fg"><label class="fl">연락처</label><input class="fi" type="text" id="fq-tel" placeholder="010-0000-0000"></div>
+            </div>
+            <div class="fg"><label class="fl">요청사항</label><textarea class="fi" id="fq-remarks" rows="3" placeholder="통관 대행, 보험, 기타 특이사항" style="resize:none;"></textarea></div>
+            <button onclick="fqGenerate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(124,92,252,.3);margin-top:4px;">📄 PDF 생성 · 인쇄</button>
+          </div>
         </div>
-        <div id="cbm-saved-list"></div>
-      </div>
 
+        <!-- 저장 목록 섹션 -->
+        <div id="cbm-sec-save" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);">💾 저장 목록</div>
+            <button onclick="cbmCloseSection('save')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+              <input id="cbm-save-name" class="fi" placeholder="저장 이름 (예: 7월 위해 발주)" style="flex:1;min-height:42px;font-size:13px;">
+              <button onclick="cbmSave()" style="padding:0 16px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">저장</button>
+            </div>
+            <div id="cbm-saved-list"></div>
+          </div>
+        </div>
+
+      </div>
     </div>
     <!-- ── /CBM 계산기 탭 ─────────────────────────────────────────────────────── -->
 
@@ -2300,7 +2273,7 @@ const ADMIN_TABS=[
   {id:'clients',icon:'🏢',lbl:'거래처'},
   {id:'products',icon:'📦',lbl:'품목'},
   {id:'pricecmp',icon:'💰',lbl:'절감금액'},
-  {id:'cbm',icon:'📐',lbl:'CBM'},
+  {id:'cbm',icon:'🚢',lbl:'물류'},
 ];
 const CLIENT_TABS=[
   {id:'home',icon:'📊',lbl:'현황'},
@@ -2308,7 +2281,6 @@ const CLIENT_TABS=[
   {id:'stmt',icon:'📄',lbl:'명세서'},
   {id:'products',icon:'📦',lbl:'품목'},
   {id:'pricecmp',icon:'💰',lbl:'절감금액'},
-  {id:'cbm',icon:'📐',lbl:'CBM'},
 ];
 
 function initApp(){
@@ -2383,7 +2355,7 @@ function goTab(id){
   document.querySelectorAll('.ti').forEach(t=>t.classList.remove('active'));
   const pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');
   const tb=document.getElementById('tab-'+id);if(tb)tb.classList.add('active');
-  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주',pricecmp:'절감금액',cbm:'CBM 계산기'};
+  const titles={home:me&&me.role==='admin'?'대시보드':'현황',orders:'발주 관리',stmt:'거래명세서',clients:'거래처 관리',products:me&&me.role==='admin'?'품목 관리':'품목',myorders:me&&me.role==='admin'?'내 발주 현황':'발주',pricecmp:'절감금액',cbm:'물류'};
   document.getElementById('tbtitle').textContent=titles[id]||'';
   const fab=document.getElementById('fab');
   fab.className='fab'+(['orders','myorders','clients','products','stmt'].includes(id)?'':' hidden');if(id==='poform'||id==='pricecmp')fab.className='fab hidden';
@@ -8348,22 +8320,45 @@ function renderLayoutDetail(ctnKey, layout) {
       } catch(e){}
     }
 
-    try {
-      const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW,CNY');
-      if(!res.ok) throw new Error('API 오류');
-      const data = await res.json();
-      const usdKrw = data.rates.KRW;
-      const usdCny = data.rates.CNY;
-      const cnyKrw = usdKrw / usdCny;
+    // 여러 API 순차 시도
+    const apis = [
+      async () => {
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        const d = await res.json();
+        if(d.result !== 'success') throw new Error();
+        return { usdKrw: d.rates.KRW, cnyKrw: d.rates.KRW / d.rates.CNY };
+      },
+      async () => {
+        const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
+        const d = await res.json();
+        return { usdKrw: d.usd.krw, cnyKrw: d.usd.krw / d.usd.cny };
+      },
+      async () => {
+        const res = await fetch('https://latest.currency-api.pages.dev/v1/currencies/usd.json');
+        const d = await res.json();
+        return { usdKrw: d.usd.krw, cnyKrw: d.usd.krw / d.usd.cny };
+      },
+    ];
 
-      const payload = { usdKrw, cnyKrw, ts: Date.now() };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
-      renderRates(payload);
-    } catch(e) {
+    let success = false;
+    for(const api of apis) {
+      try {
+        const { usdKrw, cnyKrw } = await api();
+        if(!usdKrw || !cnyKrw) continue;
+        const payload = { usdKrw, cnyKrw, ts: Date.now() };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+        renderRates(payload);
+        success = true;
+        break;
+      } catch(e) { continue; }
+    }
+    if(!success) {
       const usdEl = document.getElementById('ex-usd-change');
       const cnyEl = document.getElementById('ex-cny-change');
       if(usdEl) usdEl.textContent = '조회 실패 — 수동 입력하세요';
       if(cnyEl) cnyEl.textContent = '조회 실패';
+      const updEl = document.getElementById('ex-updated');
+      if(updEl) updEl.textContent = '네트워크 오류 · 수동 입력 후 계산하세요';
     }
   };
 
@@ -8414,6 +8409,227 @@ function renderLayoutDetail(ctnKey, layout) {
 
   // 페이지 로드 후 즉시 조회 시도
   window.addEventListener('load', () => setTimeout(fetchExchangeRates, 1000));
+})();
+</script>
+
+
+<script>
+// ── 포워딩 견적 요청서 ────────────────────────────────────────────────────────
+(function(){
+  let fqType = 'FCL';
+  let fqCtn  = '20FT DRY';
+  let fqInco = 'EXW';
+
+  window.fqSetType = function(t) {
+    fqType = t;
+    const isFcl = t === 'FCL';
+    // 토글 스타일
+    const fcl = document.getElementById('fq-tgl-fcl');
+    const lcl = document.getElementById('fq-tgl-lcl');
+    if(fcl) { fcl.style.border = isFcl ? '2px solid var(--accent)' : '2px solid rgba(94,75,196,.15)'; fcl.style.background = isFcl ? 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))' : '#f8f7ff'; fcl.querySelector('div:last-child').style.color = isFcl ? 'var(--accent)' : 'var(--text2)'; }
+    if(lcl) { lcl.style.border = !isFcl ? '2px solid var(--accent)' : '2px solid rgba(94,75,196,.15)'; lcl.style.background = !isFcl ? 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))' : '#f8f7ff'; lcl.querySelector('div:last-child').style.color = !isFcl ? 'var(--accent)' : 'var(--text2)'; }
+    document.getElementById('fq-fcl-wrap').style.display = isFcl ? 'block' : 'none';
+    document.getElementById('fq-lcl-wrap').style.display = !isFcl ? 'block' : 'none';
+  };
+
+  window.fqSetCtn = function(el) {
+    document.querySelectorAll('.fq-ctn').forEach(b => {
+      b.style.border = '2px solid rgba(94,75,196,.15)';
+      b.style.background = '#f8f7ff';
+      b.querySelector('div').style.color = 'var(--text2)';
+    });
+    el.style.border = '2px solid var(--accent)';
+    el.style.background = 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))';
+    el.querySelector('div').style.color = 'var(--accent)';
+    fqCtn = el.dataset.ctn;
+  };
+
+  window.fqSetInco = function(i) {
+    fqInco = i;
+    const exw = document.getElementById('fq-inco-exw');
+    const fob = document.getElementById('fq-inco-fob');
+    if(exw) { exw.style.border = i==='EXW' ? '2px solid var(--accent)' : '2px solid rgba(94,75,196,.15)'; exw.style.background = i==='EXW' ? 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))' : '#f8f7ff'; exw.querySelector('div').style.color = i==='EXW' ? 'var(--accent)' : 'var(--text2)'; }
+    if(fob) { fob.style.border = i==='FOB' ? '2px solid var(--accent)' : '2px solid rgba(94,75,196,.15)'; fob.style.background = i==='FOB' ? 'linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06))' : '#f8f7ff'; fob.querySelector('div').style.color = i==='FOB' ? 'var(--accent)' : 'var(--text2)'; }
+  };
+
+  function fqV(id) { return (document.getElementById(id)?.value||'').trim(); }
+
+  function fqToday() {
+    const d = new Date();
+    return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  }
+
+  const CTN_DATA = {
+    '20FT DRY':      {cbm:'25.5 CBM', dim:'590×235×239cm', max:'21,700kg'},
+    '40FT DRY':      {cbm:'55.0 CBM', dim:'1203×235×239cm',max:'26,680kg'},
+    '40FT HC':       {cbm:'67.0 CBM', dim:'1203×235×269cm',max:'26,300kg'},
+    '45FT HC':       {cbm:'72.0 CBM', dim:'1360×235×269cm',max:'27,600kg'},
+    '20FT RF(냉동)': {cbm:'냉동',     dim:'545×225×220cm', max:'21,200kg'},
+    '40FT RF HC(냉동)':{cbm:'냉동',   dim:'1145×225×240cm',max:'29,300kg'},
+  };
+
+  window.fqGenerate = function() {
+    const cargoName  = fqV('fq-cargo-name') || '(미입력)';
+    const origin     = fqV('fq-origin')     || '(미입력)';
+    const dest       = fqV('fq-dest')       || '(미입력)';
+    const shipDate   = fqV('fq-date')       || '(미정)';
+    const cargoValue = fqV('fq-value');
+    const contact    = fqV('fq-contact')    || '유상하';
+    const tel        = fqV('fq-tel');
+    const remarks    = fqV('fq-remarks')    || '-';
+    const refNo      = 'HNL-' + Date.now().toString().slice(-6);
+
+    let cargoRows = '';
+    if(fqType === 'FCL') {
+      const info = CTN_DATA[fqCtn] || {};
+      const qty = fqV('fq-fcl-qty') || '1';
+      cargoRows = `
+        <tr><th>컨테이너 타입</th><td>${fqCtn}</td></tr>
+        <tr><th>내부 용적</th><td>${info.cbm} / ${info.dim}</td></tr>
+        <tr><th>최대 적재중량</th><td>${info.max}</td></tr>
+        <tr><th>수량</th><td>${qty} TEU</td></tr>`;
+    } else {
+      const cbm = fqV('fq-lcl-cbm') || '(미입력)';
+      const kg  = fqV('fq-lcl-kg');
+      cargoRows = `
+        <tr><th>화물 CBM</th><td>${cbm} CBM</td></tr>
+        ${kg ? `<tr><th>화물 중량</th><td>${Number(kg).toLocaleString()} kg</td></tr>` : ''}`;
+    }
+
+    const html = `
+      <div style="width:210mm;min-height:297mm;padding:18mm 18mm 14mm;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:10pt;line-height:1.6;">
+        <div style="border-bottom:3px solid #6d5df6;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div>
+            <div style="font-size:20pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">포워딩 견적 요청서</div>
+            <div style="font-size:9pt;color:#888;margin-top:2px;">Freight Forwarding Quotation Request</div>
+          </div>
+          <div style="font-size:9pt;color:#888;text-align:right;">문서번호: ${refNo}<br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">1. 운송 개요</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
+            <tr><th style="width:30%;background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">운송 구분</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${fqType}</td></tr>
+            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">거래조건</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${fqInco} (${fqInco==='EXW'?'공장 인도':'본선 인도'})</td></tr>
+            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">품명</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${cargoName}</td></tr>
+            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">선적지</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${origin}</td></tr>
+            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">도착지</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${dest}</td></tr>
+            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">희망 선적일</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${shipDate}</td></tr>
+            ${cargoValue?`<tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 가액</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">USD ${Number(cargoValue).toLocaleString()}</td></tr>`:''}
+          </table>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">2. 화물 상세</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
+            ${cargoRows}
+          </table>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">3. 수하인 (Consignee)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
+            <tr><th style="width:30%;background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">회사명</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">㈜허브앤리빙</td></tr>
+            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">주소</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">경기도 고양시 덕양구 통일로140 지하1층 비동 비159호</td></tr>
+            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">담당자</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${contact}${tel?' · '+tel:''}</td></tr>
+            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">이메일</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">herbnliving@daum.net</td></tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">4. 요청사항</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
+            <tr><td style="padding:10px;border:1px solid #e8e4f8;min-height:50px;">${remarks.replace(/
+/g,'<br>')}</td></tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">5. 견적 요청 항목</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
+            <thead><tr style="background:#f0edff;"><th style="padding:8px 10px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">항목</th><th style="padding:8px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:80px;">포함</th><th style="padding:8px 10px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">비고</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">해상 운임 (Ocean Freight)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">내륙 운송비 (Inland Haulage)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">수입 통관비 (Customs Clearance)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">부대비용 (THC / D/O fee 등)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">화물 보험 (Cargo Insurance)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">기타</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:24px;">
+          <div style="border:1px solid #ddd;border-radius:8px;padding:14px;min-height:70px;">
+            <div style="font-size:8pt;color:#aaa;margin-bottom:8px;">요청인 서명</div>
+            <div style="font-size:9pt;color:#666;">${contact} (인)</div>
+          </div>
+          <div style="border:1px solid #ddd;border-radius:8px;padding:14px;min-height:70px;">
+            <div style="font-size:8pt;color:#aaa;">포워더 확인</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;border-top:1px solid #eee;padding-top:10px;font-size:8.5pt;color:#aaa;display:flex;justify-content:space-between;">
+          <div>㈜허브앤리빙 · 사업자번호 562-81-02960 · herbnliving@daum.net</div>
+          <div>${refNo}</div>
+        </div>
+      </div>`;
+
+    // 인쇄용 iframe 생성
+    let iframe = document.getElementById('fq-print-iframe');
+    if(!iframe){
+      iframe = document.createElement('iframe');
+      iframe.id = 'fq-print-iframe';
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
+      document.body.appendChild(iframe);
+    }
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;}
+      @page{size:A4;margin:0;}
+      @media print{body{margin:0;}}
+    </style></head><body>${html}
+<script>
+// ── CBM 탭 섹션 열기/닫기 ────────────────────────────────────────────────────
+const CBM_SECTIONS = ['calc','import','quote','save'];
+
+window.cbmOpenSection = function(id) {
+  // 다른 섹션 닫기
+  CBM_SECTIONS.forEach(s => {
+    const el = document.getElementById('cbm-sec-' + s);
+    if(el) el.style.display = 'none';
+  });
+  const sec = document.getElementById('cbm-sec-' + id);
+  if(!sec) return;
+  sec.style.display = 'block';
+  // 수입원가 섹션: pc-cost-calc-wrap 이동
+  if(id === 'import') {
+    const slot = document.getElementById('pc-cost-calc-wrap');
+    const wrap = document.getElementById('cbm-sec-import');
+    if(slot && wrap && slot.parentElement !== wrap) wrap.appendChild(slot);
+    if(slot) slot.style.display = 'block';
+  }
+  // 저장 섹션: 목록 갱신
+  if(id === 'save') renderCbmSavedList();
+  // 스크롤
+  setTimeout(() => sec.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+};
+
+window.cbmCloseSection = function(id) {
+  const sec = document.getElementById('cbm-sec-' + id);
+  if(sec) sec.style.display = 'none';
+  // 메뉴 카드로 스크롤
+  const pg = document.getElementById('pg-cbm');
+  if(pg) pg.scrollIntoView({behavior:'smooth', block:'start'});
+};
+</script>
+
+</body></html>`);
+    doc.close();
+    setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
+  };
 })();
 </script>
 
