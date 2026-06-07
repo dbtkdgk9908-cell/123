@@ -1301,10 +1301,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- CBM 계산 섹션 -->
         <div id="cbm-sec-calc" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:var(--text);">📐 CBM 계산</div>
-            <button onclick="cbmCloseSection('calc')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
-          </div>
+          
 
           <!-- 컨테이너 선택 -->
           <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
@@ -1413,19 +1410,104 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- 수입원가 섹션 -->
         <div id="cbm-sec-import" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:var(--text);">🚢 수입 원가 계산기</div>
-            <button onclick="cbmCloseSection('import')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+          
+          <div id="pc-cost-calc-wrap">
+            <!-- 센터 선택 -->
+            <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(37,30,84,.04);">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">물류 센터</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <button id="cc-center-weihai" type="button" onclick="window.setCcCenter('weihai')" style="border:2px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border-radius:12px;padding:10px 8px;font-family:inherit;cursor:pointer;text-align:center;">
+                  <div style="font-size:13px;font-weight:800;color:var(--accent);">위해센터</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:2px;">6,500원/0.1CBM</div>
+                </button>
+                <button id="cc-center-guangzhou" type="button" onclick="window.setCcCenter('guangzhou')" style="border:1.5px solid rgba(94,75,196,.15);background:#fff;border-radius:12px;padding:10px 8px;font-family:inherit;cursor:pointer;text-align:center;">
+                  <div style="font-size:13px;font-weight:800;color:var(--text);">광저우센터</div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:2px;">11,500원/0.1CBM</div>
+                </button>
+              </div>
+            </div>
+            <!-- 입력 -->
+            <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(37,30,84,.04);">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;">기본 정보 입력</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">CBM</div>
+                  <input id="cc-cbm" type="number" step="0.01" placeholder="예: 3.5" oninput="calcImportCost()" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(94,75,196,.18);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f9f8ff;">
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">제품비(위안)</div>
+                  <input id="cc-cny" type="number" step="0.01" placeholder="예: 5000" oninput="calcImportCost()" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(94,75,196,.18);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f9f8ff;">
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">환율(원)</div>
+                  <input id="cc-rate" type="number" step="1" placeholder="예: 195" oninput="calcImportCost()" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(94,75,196,.18);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f9f8ff;">
+                </div>
+              </div>
+              <!-- 박스 치수 자동계산 -->
+              <div style="background:#f4f5fb;border-radius:10px;padding:10px;margin-bottom:8px;">
+                <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px;">박스 치수로 CBM 자동계산</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+                  <input id="cc-dim-w" type="number" placeholder="가로cm" oninput="(function(){var w=parseFloat(document.getElementById('cc-dim-w').value)||0,d=parseFloat(document.getElementById('cc-dim-d').value)||0,h=parseFloat(document.getElementById('cc-dim-h').value)||0,q=parseInt(document.getElementById('cc-dim-qty').value)||0;if(w&&d&&h&&q){var c=(w*d*h*q/1000000).toFixed(3);document.getElementById('cc-dim-result').textContent=c+' CBM';document.getElementById('cc-dim-apply-btn').style.display='block';}else{document.getElementById('cc-dim-apply-btn').style.display='none';}})()" style="border:1px solid rgba(94,75,196,.15);border-radius:8px;padding:6px 8px;font-size:11px;font-family:inherit;background:#fff;width:100%;box-sizing:border-box;">
+                  <input id="cc-dim-d" type="number" placeholder="세로cm" oninput="document.getElementById('cc-dim-w').oninput()" style="border:1px solid rgba(94,75,196,.15);border-radius:8px;padding:6px 8px;font-size:11px;font-family:inherit;background:#fff;width:100%;box-sizing:border-box;">
+                  <input id="cc-dim-h" type="number" placeholder="높이cm" oninput="document.getElementById('cc-dim-w').oninput()" style="border:1px solid rgba(94,75,196,.15);border-radius:8px;padding:6px 8px;font-size:11px;font-family:inherit;background:#fff;width:100%;box-sizing:border-box;">
+                  <input id="cc-dim-qty" type="number" placeholder="수량" oninput="document.getElementById('cc-dim-w').oninput()" style="border:1px solid rgba(94,75,196,.15);border-radius:8px;padding:6px 8px;font-size:11px;font-family:inherit;background:#fff;width:100%;box-sizing:border-box;">
+                </div>
+                <div id="cc-dim-result" style="font-size:11px;color:var(--text3);margin-bottom:6px;">가로 × 세로 × 높이 × 수량 입력 시 자동 계산</div>
+                <button id="cc-dim-apply-btn" type="button" onclick="(function(){var w=parseFloat(document.getElementById('cc-dim-w').value)||0,d=parseFloat(document.getElementById('cc-dim-d').value)||0,h=parseFloat(document.getElementById('cc-dim-h').value)||0,q=parseInt(document.getElementById('cc-dim-qty').value)||0;if(w&&d&&h&&q){var c=(w*d*h*q/1000000).toFixed(3);document.getElementById('cc-cbm').value=c;calcImportCost();}})()" style="display:none;width:100%;padding:7px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">CBM 적용</button>
+              </div>
+              <!-- 파렛트 -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button id="cc-pallet-check" type="button" onclick="_ccPallet=!_ccPallet;updatePalletUI();calcImportCost();" style="width:22px;height:22px;border-radius:6px;border:1.5px solid rgba(94,75,196,.3);background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;"></button>
+                <span style="font-size:12px;color:var(--text2);">파렛트 포함</span>
+                <span id="cc-pallet-badge" style="display:none;font-size:10px;background:var(--accent);color:#fff;border-radius:5px;padding:2px 6px;">+1 CBM</span>
+              </div>
+            </div>
+            <!-- 기타비용 -->
+            <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(37,30,84,.04);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-size:11px;font-weight:700;color:var(--text3);">기타비용</div>
+                <button type="button" onclick="addCcExtraItem()" style="font-size:11px;font-weight:700;color:var(--accent);background:#f0edff;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;font-family:inherit;">+ 추가</button>
+              </div>
+              <div id="cc-extra-items"></div>
+            </div>
+            <!-- 결과 -->
+            <div id="cc-empty" style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">CBM · 제품비(위안) · 환율을 입력하면<br>수입원가가 자동 계산됩니다</div>
+            <div id="cc-result" style="display:none;">
+              <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(37,30,84,.04);">
+                <table style="width:100%;border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:#f0edff;">
+                      <th style="padding:9px 12px;text-align:left;font-size:11px;color:var(--text3);">항목</th>
+                      <th style="padding:9px 12px;text-align:right;font-size:11px;color:var(--text3);">금액</th>
+                      <th style="padding:9px 12px;text-align:right;font-size:11px;color:var(--text3);">부가세</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cc-rows"></tbody>
+                </table>
+              </div>
+              <div style="background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:16px;padding:14px;color:#fff;margin-bottom:10px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px;">
+                  <div><div style="opacity:.65;margin-bottom:2px;">제품비</div><div id="cc-prod-krw" style="font-weight:800;"></div></div>
+                  <div><div style="opacity:.65;margin-bottom:2px;">물류비</div><div id="cc-logistics" style="font-weight:800;"></div></div>
+                  <div><div style="opacity:.65;margin-bottom:2px;">물류비 소계</div><div id="cc-cost-total" style="font-weight:800;"></div></div>
+                  <div><div style="opacity:.65;margin-bottom:2px;">부가세 합계</div><div id="cc-vat-sum" style="font-weight:800;color:#a78bfa;"></div></div>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px;">
+                  <div style="font-size:11px;opacity:.7;margin-bottom:3px;">총 수입원가</div>
+                  <div id="cc-grand-total" style="font-size:22px;font-weight:900;letter-spacing:-0.5px;"></div>
+                  <div style="font-size:10px;opacity:.55;margin-top:2px;">부가세 합계: <span id="cc-vat-total"></span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" onclick="window.resetImportCost()" style="flex:1;padding:11px;background:#f0edff;color:var(--accent);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">초기화</button>
+              </div>
+            </div>
           </div>
-          <div id="pc-cost-calc-wrap"></div>
         </div>
 
         <!-- 견적 요청서 섹션 -->
         <div id="cbm-sec-quote" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:var(--text);">📋 포워딩 견적 요청서</div>
-            <button onclick="cbmCloseSection('quote')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
-          </div>
+          
           <!-- 운송 구분 -->
           <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
             <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">운송 구분</div>
@@ -1508,10 +1590,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- 저장 목록 섹션 -->
         <div id="cbm-sec-save" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:14px;font-weight:800;color:var(--text);">💾 저장 목록</div>
-            <button onclick="cbmCloseSection('save')" style="width:28px;height:28px;background:#f0edff;border:none;border-radius:8px;color:var(--accent);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
-          </div>
+          
           <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
             <div style="display:flex;gap:8px;margin-bottom:10px;">
               <input id="cbm-save-name" class="fi" placeholder="저장 이름 (예: 7월 위해 발주)" style="flex:1;min-height:42px;font-size:13px;">
