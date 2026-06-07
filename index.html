@@ -8591,12 +8591,12 @@ function renderLayoutDetail(ctnKey, layout) {
       @page{size:A4;margin:0;}
       @media print{body{margin:0;}}
     </style></head><body>${html}
+
 <script>
 // ── CBM 탭 섹션 열기/닫기 ────────────────────────────────────────────────────
 const CBM_SECTIONS = ['calc','import','quote','save'];
 
 window.cbmOpenSection = function(id) {
-  // 다른 섹션 닫기
   CBM_SECTIONS.forEach(s => {
     const el = document.getElementById('cbm-sec-' + s);
     if(el) el.style.display = 'none';
@@ -8604,28 +8604,23 @@ window.cbmOpenSection = function(id) {
   const sec = document.getElementById('cbm-sec-' + id);
   if(!sec) return;
   sec.style.display = 'block';
-  // 수입원가 섹션: pc-cost-calc-wrap 이동
   if(id === 'import') {
     const slot = document.getElementById('pc-cost-calc-wrap');
     const wrap = document.getElementById('cbm-sec-import');
     if(slot && wrap && slot.parentElement !== wrap) wrap.appendChild(slot);
     if(slot) slot.style.display = 'block';
   }
-  // 저장 섹션: 목록 갱신
   if(id === 'save') renderCbmSavedList();
-  // 스크롤
   setTimeout(() => sec.scrollIntoView({behavior:'smooth', block:'start'}), 100);
 };
 
 window.cbmCloseSection = function(id) {
   const sec = document.getElementById('cbm-sec-' + id);
   if(sec) sec.style.display = 'none';
-  // 메뉴 카드로 스크롤
-  const pg = document.getElementById('pg-cbm');
-  if(pg) pg.scrollIntoView({behavior:'smooth', block:'start'});
+  const pg = document.getElementById('content');
+  if(pg) pg.scrollTop = 0;
 };
 </script>
-
 </body></html>`);
     doc.close();
     setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
