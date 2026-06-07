@@ -8604,17 +8604,19 @@ function renderLayoutDetail(ctnKey, layout) {
 const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",quote:"📋 포워딩 견적 요청서",save:"💾 저장 목록"};
 function cbmModalClose(e,force){if(force||(e&&e.target===document.getElementById('cbm-modal'))){document.getElementById('cbm-modal').style.display='none';document.body.style.overflow='';}}
 window.cbmOpenSection=function(id){
-  const modal=document.getElementById('cbm-modal');
-  const title=document.getElementById('cbm-modal-title');
-  const body=document.getElementById('cbm-modal-body');
-  if(!modal||!body)return;
-  title.textContent=_CBM_TITLES[id]||'';
-  const sec=document.getElementById('cbm-sec-'+id);
-  if(!sec)return;
+  var titles={calc:'📐 CBM 계산',import:'🚢 수입원가 계산기',quote:'📋 포워딩 견적 요청서',save:'💾 저장 목록'};
+  var modal=document.getElementById('cbm-modal');
+  var title=document.getElementById('cbm-modal-title');
+  var body=document.getElementById('cbm-modal-body');
+  if(!modal){alert('모달없음');return;}
+  if(!body){alert('바디없음');return;}
+  var sec=document.getElementById('cbm-sec-'+id);
+  if(!sec){alert('섹션없음:cbm-sec-'+id);return;}
+  if(title) title.textContent=titles[id]||id;
   body.innerHTML='';
   body.appendChild(sec);
   sec.style.display='block';
-  if(id==='import'){const w=document.getElementById('pc-cost-calc-wrap');if(w&&w.parentElement!==sec)sec.appendChild(w);if(w)w.style.display='block';}
+  if(id==='import'){var w=document.getElementById('pc-cost-calc-wrap');if(w)sec.appendChild(w);if(w)w.style.display='block';}
   if(id==='save'&&typeof renderCbmSavedList==='function')renderCbmSavedList();
   if(id==='calc'){if(typeof renderCbmRows==='function')renderCbmRows();if(typeof cbmCalc==='function')cbmCalc();}
   modal.style.display='block';
@@ -8638,17 +8640,49 @@ function bindCbmButtons() {
   });
 }
 // goTab cbm 탭 전환 시 바인딩
-var _origGoTabFinal = window.goTab;
-window.goTab = function(id) {
-  _origGoTabFinal(id);
-  if(id === 'cbm') {
-    setTimeout(bindCbmButtons, 50);
-    if(typeof fetchExchangeRates === 'function') fetchExchangeRates();
+
+
+
+// ── 물류 카드 바인딩: goTab 의존 없이 직접 설정 ─────────────────────────────
+(function waitAndBind() {
+  var ids = {
+    'cbmbtn-calc':   'calc',
+    'cbmbtn-import': 'import',
+    'cbmbtn-quote':  'quote',
+    'cbmbtn-save':   'save'
+  };
+  function bind() {
+    var found = 0;
+    Object.keys(ids).forEach(function(btnId) {
+      var btn = document.getElementById(btnId);
+      if(btn) {
+        btn.onclick = null;
+        btn.onclick = (function(sec){ return function(){ window.cbmOpenSection(sec); }; })(ids[btnId]);
+        found++;
+      }
+    });
+    return found;
   }
-};
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(bindCbmButtons, 200);
-});
+  // 즉시 시도
+  if(bind() < 4) {
+    // 못 찾으면 100ms마다 재시도 (최대 20번)
+    var tries = 0;
+    var t = setInterval(function() {
+      if(bind() === 4 || ++tries > 20) clearInterval(t);
+    }, 100);
+  }
+  // goTab cbm 호출 시에도 재바인딩
+  var _g = window.goTab;
+  if(typeof _g === 'function') {
+    window.goTab = function(id) {
+      _g(id);
+      if(id === 'cbm') {
+        setTimeout(bind, 100);
+        if(typeof fetchExchangeRates === 'function') fetchExchangeRates();
+      }
+    };
+  }
+})();
 </script>
 
 
