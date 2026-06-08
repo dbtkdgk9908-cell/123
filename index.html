@@ -1275,22 +1275,22 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
         <!-- ② 메뉴 카드 4개 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-          <button id="cbmbtn-calc" onclick="window.cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+          <button id="cbmbtn-calc" onclick="window.cbmOpenSection('calc')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">📐</div>
             <div style="font-size:13px;font-weight:800;color:#17162b;">CBM 계산</div>
             <div style="font-size:10px;color:#9893b3;margin-top:3px;">박스 크기 → 적재량</div>
           </button>
-          <button id="cbmbtn-import" onclick="window.cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+          <button id="cbmbtn-import" onclick="window.cbmOpenSection('import')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">🚢</div>
             <div style="font-size:13px;font-weight:800;color:#17162b;">수입원가</div>
             <div style="font-size:10px;color:#9893b3;margin-top:3px;">CBM·위안·환율 계산</div>
           </button>
-          <button id="cbmbtn-quote" onclick="window.cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+          <button id="cbmbtn-quote" onclick="window.cbmOpenSection('quote')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">📋</div>
             <div style="font-size:13px;font-weight:800;color:#17162b;">견적 요청서</div>
             <div style="font-size:10px;color:#9893b3;margin-top:3px;">FCL/LCL PDF 출력</div>
           </button>
-          <button id="cbmbtn-save" onclick="window.cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);">
+          <button id="cbmbtn-save" onclick="window.cbmOpenSection('save')" style="background:#fff;border:1.5px solid rgba(94,75,196,.12);border-radius:18px;padding:16px 14px;box-shadow:0 4px 14px rgba(37,30,84,.05);text-align:center;font-family:inherit;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(109,93,246,.1);touch-action:manipulation;">
             <div style="font-size:26px;margin-bottom:6px;">💾</div>
             <div style="font-size:13px;font-weight:800;color:#17162b;">저장 목록</div>
             <div style="font-size:10px;color:#9893b3;margin-top:3px;">계산 내역 불러오기</div>
@@ -8677,6 +8677,7 @@ const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",q
 // cbmModalClose는 아래 cbmOpenSection 블록에서 정의됨
 var _cbmSecContainer=null; // 섹션 원래 부모(pg-cbm 내 컨테이너)
 var _cbmSecCurrent=null;  // 현재 모달에 올려진 sec 노드
+var _cbmModalOpenedAt=0;  // ghost click 방지용 타임스탬프
 window.cbmOpenSection=function(id){
   var titles={calc:'📐 CBM 계산',import:'🚢 수입원가 계산기',quote:'📋 포워딩 견적 요청서',save:'💾 저장 목록'};
   var modal=document.getElementById('cbm-modal');
@@ -8701,10 +8702,13 @@ window.cbmOpenSection=function(id){
   if(id==='import'){var w=document.getElementById('pc-cost-calc-wrap');if(w){sec.appendChild(w);w.style.display='block';}}
   if(id==='save'&&typeof renderCbmSavedList==='function')renderCbmSavedList();
   if(id==='calc'){if(typeof renderCbmRows==='function')renderCbmRows();if(typeof cbmCalc==='function')cbmCalc();}
+  _cbmModalOpenedAt=Date.now();
   modal.style.display='block';
   document.body.style.overflow='hidden';
 };
 function cbmModalClose(e,force){
+  // ghost click 방지: 모달 열린 후 400ms 이내 배경 클릭은 무시
+  if(!force && Date.now()-_cbmModalOpenedAt < 400) return;
   if(force||(e&&e.target===document.getElementById('cbm-modal'))){
     // sec 원위치 복구
     if(_cbmSecCurrent&&_cbmSecContainer){
