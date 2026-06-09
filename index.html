@@ -1342,7 +1342,10 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
           <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <div style="font-size:11px;font-weight:800;color:var(--text2);">🧱 3D 적재 시뮬레이션</div>
-              <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:5px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
+              <div style="display:flex;gap:6px;">
+                <button onclick="cbmCapture3D()" id="cbm-3d-capture-btn" style="display:none;padding:5px 10px;background:#fff;border:1.5px solid rgba(94,75,196,.25);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">📷 견적에 포함</button>
+                <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:5px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
+              </div>
             </div>
             <div id="cbm-3d-wrap" style="position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#1a1040,#24243e);aspect-ratio:4/3;">
               <canvas id="cbm-3d-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
@@ -1388,19 +1391,7 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
               <div id="cbm-total-val" style="font-size:32px;font-weight:900;letter-spacing:-1px;">0.000</div>
               <div id="cbm-total-sub" style="font-size:10px;opacity:.75;margin-top:2px;">품목을 입력하면 자동 계산</div>
             </div>
-            <div style="background:#f8f7ff;border:1.5px solid rgba(94,75,196,.14);border-radius:12px;padding:12px;margin-bottom:10px;">
-              <div style="font-size:10px;font-weight:800;color:var(--accent);margin-bottom:7px;">🚢 컨테이너 적재 현황</div>
-              <div id="cbm-ctn-result" style="font-size:12px;font-weight:700;color:var(--text2);">-</div>
-              <div style="margin-top:8px;height:16px;background:#e9e6ff;border-radius:8px;overflow:hidden;">
-                <div id="cbm-gauge" style="height:100%;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:8px;transition:width .5s;width:0%;"></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-top:4px;">
-                <div id="cbm-gauge-pct" style="font-size:10px;font-weight:800;color:var(--accent);">0%</div>
-                <div id="cbm-gauge-max" style="font-size:10px;font-weight:700;color:var(--text3);">/ 25.5 CBM</div>
-              </div>
-            </div>
             <div id="cbm-item-breakdown" style="display:none;">
-              <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:7px;">품목별 CBM</div>
               <div id="cbm-item-list"></div>
             </div>
           </div>
@@ -1570,15 +1561,83 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
             <div class="fg"><label class="fl">품명</label><input class="fi" type="text" id="fq-cargo-name" placeholder="예: 디퓨저 유리병, 섬유스틱"></div>
             <div class="f2">
               <div class="fg"><label class="fl">선적지</label><input class="fi" type="text" id="fq-origin" placeholder="예: 중국 광저우"></div>
-              <div class="fg"><label class="fl">도착지</label><input class="fi" type="text" id="fq-dest" placeholder="예: 인천항"></div>
+              <div class="fg" style="position:relative;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <label class="fl" style="margin-bottom:0;">도착지</label>
+                  <button type="button" onclick="fqToggleSaved('dest')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <input class="fi" type="text" id="fq-dest" placeholder="예: 인천항" style="flex:1;">
+                  <button type="button" onclick="fqSaveField('dest')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
+                </div>
+                <div id="fq-saved-dest" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
+              </div>
             </div>
             <div class="f2">
-              <div class="fg"><label class="fl">희망 선적일</label><input class="fi" type="date" id="fq-date"></div>
-              <div class="fg"><label class="fl">화물 가액 (USD)</label><input class="fi" type="number" id="fq-value" placeholder="예: 5000"></div>
+              <div class="fg">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <label class="fl" style="margin-bottom:0;">희망 선적일</label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;">
+                    <input type="checkbox" id="fq-date-tbd" onchange="(function(){var d=document.getElementById('fq-date');d.disabled=this.checked;d.style.opacity=this.checked?'0.3':'1';}).call(this)" style="accent-color:var(--accent);">
+                    미정
+                  </label>
+                </div>
+                <input class="fi" type="date" id="fq-date">
+              </div>
+              <div class="fg">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <label class="fl" style="margin-bottom:0;">화물 가액</label>
+                  <div style="display:flex;gap:4px;">
+                    <button type="button" id="fq-cur-usd" onclick="fqSetCurrency('USD')" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;border:1.5px solid var(--accent);background:linear-gradient(135deg,rgba(109,93,246,.15),rgba(109,93,246,.06));color:var(--accent);cursor:pointer;font-family:inherit;">USD</button>
+                    <button type="button" id="fq-cur-cny" onclick="fqSetCurrency('CNY')" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;border:1.5px solid rgba(94,75,196,.2);background:#f8f7ff;color:var(--text2);cursor:pointer;font-family:inherit;">CNY</button>
+                  </div>
+                </div>
+                <input class="fi" type="number" id="fq-value" placeholder="예: 5000">
+              </div>
             </div>
+            <!-- 화물 품목 입력 -->
+            <div class="fg">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <label class="fl" style="margin-bottom:0;">화물 상세</label>
+                <button type="button" onclick="fqAddItem()" style="font-size:11px;font-weight:700;padding:4px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;cursor:pointer;font-family:inherit;">＋ 추가</button>
+              </div>
+              <!-- 헤더 -->
+              <div style="display:grid;grid-template-columns:1fr 48px 48px 48px 52px 60px 28px;gap:4px;margin-bottom:4px;padding:0 2px;">
+                <div style="font-size:10px;font-weight:700;color:var(--text3);">품명</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">가로</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">세로</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">높이</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">수량</div>
+                <div style="font-size:10px;font-weight:700;color:var(--text3);text-align:center;">무게(kg)</div>
+                <div></div>
+              </div>
+              <div id="fq-items-wrap"></div>
+              <div id="fq-items-empty" style="font-size:12px;color:var(--text3);text-align:center;padding:10px 0;">＋ 추가 버튼으로 품목을 입력하세요</div>
+            </div>
+
             <div class="f2">
-              <div class="fg"><label class="fl">담당자</label><input class="fi" type="text" id="fq-contact" placeholder="유상하"></div>
-              <div class="fg"><label class="fl">연락처</label><input class="fi" type="text" id="fq-tel" placeholder="010-0000-0000"></div>
+              <div class="fg" style="position:relative;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <label class="fl" style="margin-bottom:0;">담당자</label>
+                  <button type="button" onclick="fqToggleSaved('contact')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <input class="fi" type="text" id="fq-contact" placeholder="유상하" style="flex:1;">
+                  <button type="button" onclick="fqSaveField('contact')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
+                </div>
+                <div id="fq-saved-contact" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
+              </div>
+              <div class="fg" style="position:relative;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <label class="fl" style="margin-bottom:0;">연락처</label>
+                  <button type="button" onclick="fqToggleSaved('tel')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <input class="fi" type="text" id="fq-tel" placeholder="010-0000-0000" style="flex:1;">
+                  <button type="button" onclick="fqSaveField('tel')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
+                </div>
+                <div id="fq-saved-tel" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
+              </div>
             </div>
             <div class="fg"><label class="fl">요청사항</label><textarea class="fi" id="fq-remarks" rows="3" placeholder="통관 대행, 보험, 기타 특이사항" style="resize:none;"></textarea></div>
             <button onclick="fqGenerate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(124,92,252,.3);margin-top:4px;">📄 PDF 생성 · 인쇄</button>
@@ -7874,7 +7933,7 @@ function initRenderer(){
   const H = wrap.clientHeight || 270;
 
   if(!renderer){
-    renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, preserveDrawingBuffer:true});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -8195,7 +8254,32 @@ window.cbmRun3D = function(){
   const btn = document.getElementById('cbm-3d-btn');
   if(btn) btn.textContent='🔄 재실행';
 
+  // 캡처 버튼 표시
+  const capBtn = document.getElementById('cbm-3d-capture-btn');
+  if(capBtn) capBtn.style.display='block';
+
+  // 이전 캡처 초기화
+  window._fqSimImage = null;
+
   startRenderLoop();
+};
+
+// 3D 시뮬레이션 캡처 → 견적서에 포함
+window.cbmCapture3D = function(){
+  const canvas = document.getElementById('cbm-3d-canvas');
+  if(!canvas){ if(typeof toast==='function') toast('먼저 시뮬레이션을 실행하세요'); return; }
+  try {
+    // WebGL은 렌더 직후 캡처해야 함
+    if(typeof renderer!=='undefined' && renderer) renderer.render(scene, camera);
+    const img = canvas.toDataURL('image/jpeg', 0.92);
+    if(!img || img==='data:,') throw new Error('empty');
+    window._fqSimImage = img;
+    const capBtn = document.getElementById('cbm-3d-capture-btn');
+    if(capBtn){ capBtn.textContent='✅ 포함됨'; capBtn.style.background='linear-gradient(135deg,rgba(109,93,246,.15),rgba(109,93,246,.06))'; capBtn.style.border='1.5px solid var(--accent)'; }
+    if(typeof toast==='function') toast('시뮬레이션 이미지가 견적서에 포함됩니다');
+  } catch(e) {
+    if(typeof toast==='function') toast('캡처 실패: 시뮬레이션을 다시 실행해보세요');
+  }
 };
 
 // 탭 비활성화 시 렌더 중단 (배터리 절약)
@@ -8493,9 +8577,121 @@ function renderLayoutDetail(ctnKey, layout) {
 <script>
 // ── 포워딩 견적 요청서 ────────────────────────────────────────────────────────
 (function(){
-  let fqType = 'FCL';
-  let fqCtn  = '20FT DRY';
-  let fqInco = 'EXW';
+  let fqType     = 'FCL';
+  let fqCtn      = '20FT DRY';
+  let fqInco     = 'EXW';
+  let fqCurrency = 'USD';
+  let fqItems    = []; // [{name,w,d,h,qty}]
+
+  function fqRenderItems(){
+    const wrap  = document.getElementById('fq-items-wrap');
+    const empty = document.getElementById('fq-items-empty');
+    if(!wrap) return;
+    if(!fqItems.length){ wrap.innerHTML=''; if(empty) empty.style.display='block'; return; }
+    if(empty) empty.style.display='none';
+    wrap.innerHTML = fqItems.map((it,i)=>`
+      <div style="display:grid;grid-template-columns:1fr 48px 48px 48px 52px 60px 28px;gap:4px;margin-bottom:4px;">
+        <input value="${it.name||''}" oninput="fqItemSet(${i},'name',this.value)" placeholder="품명" style="padding:6px 8px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;width:100%;box-sizing:border-box;">
+        <input value="${it.w||''}" oninput="fqItemSet(${i},'w',this.value)" placeholder="cm" type="number" style="padding:6px 4px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;">
+        <input value="${it.d||''}" oninput="fqItemSet(${i},'d',this.value)" placeholder="cm" type="number" style="padding:6px 4px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;">
+        <input value="${it.h||''}" oninput="fqItemSet(${i},'h',this.value)" placeholder="cm" type="number" style="padding:6px 4px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;">
+        <input value="${it.qty||''}" oninput="fqItemSet(${i},'qty',this.value)" placeholder="수량" type="number" style="padding:6px 4px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;">
+        <input value="${it.kg||''}" oninput="fqItemSet(${i},'kg',this.value)" placeholder="kg" type="number" style="padding:6px 4px;border:1.5px solid rgba(94,75,196,.15);border-radius:8px;font-size:12px;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;">
+        <button type="button" onclick="fqRemoveItem(${i})" style="width:28px;height:34px;border:none;background:#fff0f0;border-radius:8px;color:#e05;font-size:14px;cursor:pointer;font-family:inherit;">✕</button>
+      </div>`).join('');
+  }
+
+  window.fqAddItem = function(){
+    fqItems.push({name:'',w:'',d:'',h:'',qty:'',kg:''});
+    fqRenderItems();
+  };
+  window.fqRemoveItem = function(i){
+    fqItems.splice(i,1);
+    fqRenderItems();
+  };
+  window.fqItemSet = function(i,key,val){
+    if(fqItems[i]) fqItems[i][key]=val;
+  };
+
+  // ── 저장 필드 헬퍼 ──────────────────────────────────────────────
+  const FQ_FIELD_MAP = { dest:'fq-dest', contact:'fq-contact', tel:'fq-tel' };
+  const FQ_STORE_KEY = 'fq_saved_fields_v1';
+
+  function fqLoadStore() {
+    try { return JSON.parse(localStorage.getItem(FQ_STORE_KEY)||'{}'); } catch(e){ return {}; }
+  }
+  function fqSaveStore(data) {
+    localStorage.setItem(FQ_STORE_KEY, JSON.stringify(data));
+  }
+
+  window.fqSaveField = function(field) {
+    const inputId = FQ_FIELD_MAP[field];
+    const val = (document.getElementById(inputId)?.value||'').trim();
+    if(!val){ if(typeof toast==='function') toast('값을 먼저 입력하세요'); return; }
+    const store = fqLoadStore();
+    if(!store[field]) store[field]=[];
+    if(store[field].includes(val)){ if(typeof toast==='function') toast('이미 저장된 항목입니다'); return; }
+    store[field].unshift(val);
+    if(store[field].length>10) store[field]=store[field].slice(0,10);
+    fqSaveStore(store);
+    if(typeof toast==='function') toast('저장됐습니다');
+  };
+
+  window.fqToggleSaved = function(field) {
+    const box = document.getElementById('fq-saved-'+field);
+    if(!box) return;
+    // 다른 드롭다운 닫기
+    ['dest','contact','tel'].forEach(f=>{ if(f!==field){ const b=document.getElementById('fq-saved-'+f); if(b) b.style.display='none'; } });
+    if(box.style.display!=='none'){ box.style.display='none'; return; }
+    const store = fqLoadStore();
+    const items = store[field]||[];
+    if(!items.length){ box.innerHTML='<div style="padding:10px;font-size:12px;color:var(--text3);text-align:center;">저장된 항목 없음</div>'; }
+    else {
+      box.innerHTML = items.map((v,i)=>`
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:8px;cursor:pointer;" onmouseenter="this.style.background='#f4f3ff'" onmouseleave="this.style.background='transparent'">
+          <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);" onclick="fqPickSaved('${field}','${v.replace(/'/g,"\\'")}');">${v}</span>
+          <button type="button" onclick="fqDeleteSaved('${field}',${i})" style="width:20px;height:20px;border:none;background:none;color:#bbb;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;">✕</button>
+        </div>`).join('');
+    }
+    box.style.display='block';
+    // 외부 클릭 시 닫기
+    setTimeout(()=>{
+      function closeHandler(e){ if(!box.contains(e.target)){ box.style.display='none'; document.removeEventListener('click',closeHandler,true); } }
+      document.addEventListener('click',closeHandler,true);
+    },0);
+  };
+
+  window.fqPickSaved = function(field, val) {
+    const inputId = FQ_FIELD_MAP[field];
+    const input = document.getElementById(inputId);
+    if(input){ input.value=val; }
+    const box = document.getElementById('fq-saved-'+field);
+    if(box) box.style.display='none';
+  };
+
+  window.fqDeleteSaved = function(field, idx) {
+    const store = fqLoadStore();
+    if(store[field]) store[field].splice(idx,1);
+    fqSaveStore(store);
+    window.fqToggleSaved(field);
+    window.fqToggleSaved(field);
+  };
+
+  window.fqSetCurrency = function(cur) {
+    fqCurrency = cur;
+    const usdBtn = document.getElementById('fq-cur-usd');
+    const cnyBtn = document.getElementById('fq-cur-cny');
+    if(usdBtn) {
+      usdBtn.style.border   = cur==='USD' ? '1.5px solid var(--accent)' : '1.5px solid rgba(94,75,196,.2)';
+      usdBtn.style.background = cur==='USD' ? 'linear-gradient(135deg,rgba(109,93,246,.15),rgba(109,93,246,.06))' : '#f8f7ff';
+      usdBtn.style.color    = cur==='USD' ? 'var(--accent)' : 'var(--text2)';
+    }
+    if(cnyBtn) {
+      cnyBtn.style.border   = cur==='CNY' ? '1.5px solid var(--accent)' : '1.5px solid rgba(94,75,196,.2)';
+      cnyBtn.style.background = cur==='CNY' ? 'linear-gradient(135deg,rgba(109,93,246,.15),rgba(109,93,246,.06))' : '#f8f7ff';
+      cnyBtn.style.color    = cur==='CNY' ? 'var(--accent)' : 'var(--text2)';
+    }
+  };
 
   window.fqSetType = function(t) {
     fqType = t;
@@ -8545,127 +8741,163 @@ function renderLayoutDetail(ctnKey, layout) {
     '40FT RF HC(냉동)':{cbm:'냉동',   dim:'1145×225×240cm',max:'29,300kg'},
   };
 
-  window.fqGenerate = function() {
+  window.fqGenerate = async function() {
     const cargoName  = fqV('fq-cargo-name') || '(미입력)';
     const origin     = fqV('fq-origin')     || '(미입력)';
     const dest       = fqV('fq-dest')       || '(미입력)';
-    const shipDate   = fqV('fq-date')       || '(미정)';
+    const isTbd      = document.getElementById('fq-date-tbd')?.checked;
+    const shipDate   = isTbd ? '미정' : (fqV('fq-date') || '(미정)');
     const cargoValue = fqV('fq-value');
     const contact    = fqV('fq-contact')    || '유상하';
     const tel        = fqV('fq-tel');
     const remarks    = fqV('fq-remarks')    || '-';
     const refNo      = 'HNL-' + Date.now().toString().slice(-6);
 
-    let cargoRows = '';
-    if(fqType === 'FCL') {
-      const info = CTN_DATA[fqCtn] || {};
-      const qty = fqV('fq-fcl-qty') || '1';
-      cargoRows = `
-        <tr><th>컨테이너 타입</th><td>${fqCtn}</td></tr>
-        <tr><th>내부 용적</th><td>${info.cbm} / ${info.dim}</td></tr>
-        <tr><th>최대 적재중량</th><td>${info.max}</td></tr>
-        <tr><th>수량</th><td>${qty} TEU</td></tr>`;
+    // 2번: fqItems 품목 테이블
+    const validItems = fqItems.filter(r=>(r.name||'').trim()||(parseFloat(r.w)||0)>0);
+    let itemRows = '';
+    let totalCbm = 0, totalKg = 0;
+    if(validItems.length){
+      itemRows = validItems.map((r,i)=>{
+        const nm  = (r.name||'').trim() || `품목 ${i+1}`;
+        const w=parseFloat(r.w)||0, d=parseFloat(r.d)||0, h=parseFloat(r.h)||0;
+        const dim = (w&&d&&h) ? `${r.w}×${r.d}×${r.h} cm` : '-';
+        const qty = parseInt(r.qty)||1;
+        const kg  = parseFloat(r.kg)||0;
+        const cbmVal = (w&&d&&h) ? ((w/100)*(d/100)*(h/100)*qty) : 0;
+        totalCbm += cbmVal;
+        totalKg  += kg;
+        return `<tr style="${i%2?'background:#faf9ff':''}">
+          <td style="padding:5px 8px;border:1px solid #e8e4f8;">${nm}</td>
+          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${dim}</td>
+          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${qty}개</td>
+          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${kg ? kg.toLocaleString()+' kg' : '-'}</td>
+          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${cbmVal ? cbmVal.toFixed(3)+' CBM' : '-'}</td>
+        </tr>`;
+      }).join('');
+      // 합계 행
+      itemRows += `<tr style="background:#f0edff;font-weight:800;">
+        <td style="padding:5px 8px;border:1px solid #ddd8f8;color:#5f5a7a;">합계</td>
+        <td style="border:1px solid #ddd8f8;"></td>
+        <td style="border:1px solid #ddd8f8;"></td>
+        <td style="padding:5px 8px;border:1px solid #ddd8f8;text-align:center;color:#5f5a7a;">${totalKg ? totalKg.toLocaleString()+' kg' : '-'}</td>
+        <td style="padding:5px 8px;border:1px solid #ddd8f8;text-align:center;color:#6d5df6;">${totalCbm ? totalCbm.toFixed(3)+' CBM' : '-'}</td>
+      </tr>`;
     } else {
-      const cbm = fqV('fq-lcl-cbm') || '(미입력)';
-      const kg  = fqV('fq-lcl-kg');
-      cargoRows = `
-        <tr><th>화물 CBM</th><td>${cbm} CBM</td></tr>
-        ${kg ? `<tr><th>화물 중량</th><td>${Number(kg).toLocaleString()} kg</td></tr>` : ''}`;
+      itemRows = `<tr><td colspan="5" style="padding:8px;border:1px solid #e8e4f8;color:#aaa;text-align:center;">품목 미입력</td></tr>`;
     }
 
     const html = `
-      <div style="width:210mm;min-height:297mm;padding:18mm 18mm 14mm;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:10pt;line-height:1.6;">
-        <div style="border-bottom:3px solid #6d5df6;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;">
+      <div id="pdf-wrap" style="width:210mm;padding:12mm 14mm 10mm;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:8.5pt;line-height:1.45;box-sizing:border-box;">
+        <!-- 헤더 -->
+        <div style="border-bottom:3px solid #6d5df6;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
-            <div style="font-size:20pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">포워딩 견적 요청서</div>
-            <div style="font-size:9pt;color:#888;margin-top:2px;">Freight Forwarding Quotation Request</div>
+            <div style="font-size:17pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">포워딩 견적 요청서</div>
+            <div style="font-size:8pt;color:#888;margin-top:1px;">Freight Forwarding Quotation Request</div>
           </div>
-          <div style="font-size:9pt;color:#888;text-align:right;">문서번호: ${refNo}<br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
+          <div style="font-size:8pt;color:#888;text-align:right;">문서번호: ${refNo}<br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">1. 운송 개요</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            <tr><th style="width:30%;background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">운송 구분</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${fqType}</td></tr>
-            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">거래조건</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${fqInco} (${fqInco==='EXW'?'공장 인도':'본선 인도'})</td></tr>
-            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">품명</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${cargoName}</td></tr>
-            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">선적지</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${origin}</td></tr>
-            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">도착지</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${dest}</td></tr>
-            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">희망 선적일</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${shipDate}</td></tr>
-            ${cargoValue?`<tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 가액</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">USD ${Number(cargoValue).toLocaleString()}</td></tr>`:''}
+        <!-- 1. 운송 개요 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">1. 운송 개요</div>
+          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+            <tr><th style="width:28%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">운송 구분</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqType}</td><th style="width:28%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">거래조건</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqInco} (${fqInco==='EXW'?'공장 인도':'본선 인도'})</td></tr>
+            <tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">선적지</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${origin}</td><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">도착지</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${dest}</td></tr>
+            <tr><th style="background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">희망 선적일</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${shipDate}</td>${cargoValue?`<th style="background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 가액</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqCurrency} ${Number(cargoValue).toLocaleString()}</td>`:'<td colspan="2" style="border:1px solid #e8e4f8;"></td>'}</tr>
           </table>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">2. 화물 상세</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            ${cargoRows}
+        <!-- 2. 화물 상세 (품목별) -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">2. 화물 상세</div>
+          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+            <thead><tr style="background:#f0edff;">
+              <th style="padding:5px 8px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">품명</th>
+              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:30%;">박스 크기 (가로×세로×높이)</th>
+              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:10%;">수량</th>
+              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:14%;">무게</th>
+              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:14%;">CBM</th>
+            </tr></thead>
+            <tbody>${itemRows}</tbody>
           </table>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">3. 수하인 (Consignee)</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            <tr><th style="width:30%;background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">회사명</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">㈜허브앤리빙</td></tr>
-            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">주소</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">경기도 고양시 덕양구 통일로140 지하1층 비동 비159호</td></tr>
-            <tr><th style="background:#f0edff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">담당자</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">${contact}${tel?' · '+tel:''}</td></tr>
-            <tr><th style="background:#faf9ff;padding:8px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">이메일</th><td style="padding:8px 10px;border:1px solid #e8e4f8;">herbnliving@daum.net</td></tr>
+        <!-- 3. 수하인 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">3. 수하인 (Consignee)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+            <tr><th style="width:22%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">회사명</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">㈜허브앤리빙</td><th style="width:22%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">담당자</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${contact}${tel?' · '+tel:''}</td></tr>
+            <tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">주소</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">경기도 고양시 덕양구 통일로140 지하1층 비동 비159호</td><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">이메일</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">herbnliving@daum.net</td></tr>
           </table>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">4. 요청사항</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            <tr><td style="padding:10px;border:1px solid #e8e4f8;min-height:50px;">${remarks.replace(/\n/g,'<br>')}</td></tr>
+        <!-- 4. 요청사항 -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">4. 요청사항</div>
+          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+            <tr><td style="padding:8px;border:1px solid #e8e4f8;min-height:36px;">${remarks.replace(/\n/g,'<br>')}</td></tr>
           </table>
         </div>
 
-        <div style="margin-bottom:14px;">
-          <div style="font-size:10pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:8px;margin-bottom:8px;">5. 견적 요청 항목</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9.5pt;">
-            <thead><tr style="background:#f0edff;"><th style="padding:8px 10px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">항목</th><th style="padding:8px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:80px;">포함</th><th style="padding:8px 10px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">비고</th></tr></thead>
-            <tbody>
-              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">해상 운임 (Ocean Freight)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">내륙 운송비 (Inland Haulage)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">수입 통관비 (Customs Clearance)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">부대비용 (THC / D/O fee 등)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-              <tr><td style="padding:8px 10px;border:1px solid #e8e4f8;">화물 보험 (Cargo Insurance)</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-              <tr style="background:#faf9ff;"><td style="padding:8px 10px;border:1px solid #e8e4f8;">기타</td><td style="border:1px solid #e8e4f8;"></td><td style="border:1px solid #e8e4f8;"></td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:24px;">
-          <div style="border:1px solid #ddd;border-radius:8px;padding:14px;min-height:70px;">
-            <div style="font-size:8pt;color:#aaa;margin-bottom:8px;">요청인 서명</div>
-            <div style="font-size:9pt;color:#666;">${contact} (인)</div>
-          </div>
-          <div style="border:1px solid #ddd;border-radius:8px;padding:14px;min-height:70px;">
-            <div style="font-size:8pt;color:#aaa;">포워더 확인</div>
-          </div>
-        </div>
-
-        <div style="margin-top:18px;border-top:1px solid #eee;padding-top:10px;font-size:8.5pt;color:#aaa;display:flex;justify-content:space-between;">
+        <div style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between;">
           <div>㈜허브앤리빙 · 사업자번호 562-81-02960 · herbnliving@daum.net</div>
           <div>${refNo}</div>
         </div>
       </div>`;
 
-    // 인쇄용 iframe 생성
-    let iframe = document.getElementById('fq-print-iframe');
-    if(!iframe){
-      iframe = document.createElement('iframe');
-      iframe.id = 'fq-print-iframe';
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
-      document.body.appendChild(iframe);
+    // ── 고화질 PDF 저장 (html2canvas + jsPDF) ──
+    if(typeof toast==='function') toast('PDF 생성 중...');
+
+    // 렌더용 숨김 컨테이너 (A4 픽셀 크기: 794×1123px @96dpi)
+    let wrap = document.getElementById('fq-pdf-render');
+    if(wrap) wrap.remove();
+    wrap = document.createElement('div');
+    wrap.id = 'fq-pdf-render';
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+
+    // 폰트·이미지 로드 대기
+    await new Promise(r => setTimeout(r, 400));
+
+    // 콘텐츠 높이에 맞게 자동 스케일
+    const contentH = wrap.scrollHeight;
+    const pageH = 1123; // A4 height px
+    if(contentH > pageH){
+      const s = pageH / contentH;
+      const inner = wrap.querySelector('#pdf-wrap');
+      if(inner){
+        inner.style.transformOrigin = 'top left';
+        inner.style.transform = `scale(${s})`;
+        inner.style.width = `${100/s}%`;
+      }
     }
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    const _pdfHead = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;}@page{size:A4;margin:0;}@media print{body{margin:0;}}</style></head><body>';
-    const _pdfFoot = '</' + 'body></' + 'html>';
-    doc.write(_pdfHead + html + _pdfFoot);
-    doc.close();
-    setTimeout(()=>{ iframe.contentWindow.print(); }, 400);
+    wrap.style.height = pageH + 'px';
+    wrap.style.overflow = 'hidden';
+
+    try {
+      // 3배 스케일 = 약 288dpi 고화질
+      const canvas = await html2canvas(wrap, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: pageH,
+        logging: false
+      });
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, '', 'FAST');
+      pdf.save(`포워딩_견적요청서_${refNo}.pdf`);
+      if(typeof toast==='function') toast('PDF 저장 완료!');
+    } catch(e) {
+      if(typeof toast==='function') toast('PDF 생성 실패: ' + e.message);
+    } finally {
+      wrap.remove();
+    }
   };
 })();
 
@@ -8762,7 +8994,7 @@ function bindCbmButtons() {
 
 
 <!-- ── 물류 탭 모달 오버레이 ─────────────────────────────────────────────── -->
-<div id="cbm-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(15,12,41,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;" onclick="cbmModalClose(event)">
+<div id="cbm-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(15,12,41,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
   <div id="cbm-modal-inner" style="position:relative;width:100%;max-width:520px;max-height:88vh;background:#f4f5fb;border-radius:24px;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 24px 60px rgba(15,12,41,.35);">
     <!-- 헤더 -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;position:sticky;top:0;background:#f4f5fb;z-index:1;border-bottom:1px solid rgba(94,75,196,.08);">
