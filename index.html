@@ -1561,16 +1561,9 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
             <div class="fg"><label class="fl">품명</label><input class="fi" type="text" id="fq-cargo-name" placeholder="예: 디퓨저 유리병, 섬유스틱"></div>
             <div class="f2">
               <div class="fg"><label class="fl">선적지</label><input class="fi" type="text" id="fq-origin" placeholder="예: 중국 광저우"></div>
-              <div class="fg" style="position:relative;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                  <label class="fl" style="margin-bottom:0;">도착지</label>
-                  <button type="button" onclick="fqToggleSaved('dest')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
-                </div>
-                <div style="display:flex;gap:6px;">
-                  <input class="fi" type="text" id="fq-dest" placeholder="예: 인천항" style="flex:1;">
-                  <button type="button" onclick="fqSaveField('dest')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
-                </div>
-                <div id="fq-saved-dest" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
+              <div class="fg">
+                <label class="fl">도착지</label>
+                <input class="fi" type="text" id="fq-dest" placeholder="예: 인천항">
               </div>
             </div>
             <div class="f2">
@@ -1615,29 +1608,13 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
               <div id="fq-items-empty" style="font-size:12px;color:var(--text3);text-align:center;padding:10px 0;">＋ 추가 버튼으로 품목을 입력하세요</div>
             </div>
 
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <label class="fl" style="margin-bottom:0;">담당자 · 연락처 · 도착지</label>
+              <button type="button" onclick="fqOpenBook()" style="font-size:11px;font-weight:700;padding:5px 12px;background:#fff;border:1.5px solid rgba(94,75,196,.25);border-radius:10px;color:var(--accent);cursor:pointer;font-family:inherit;">📋 불러오기</button>
+            </div>
             <div class="f2">
-              <div class="fg" style="position:relative;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                  <label class="fl" style="margin-bottom:0;">담당자</label>
-                  <button type="button" onclick="fqToggleSaved('contact')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
-                </div>
-                <div style="display:flex;gap:6px;">
-                  <input class="fi" type="text" id="fq-contact" placeholder="유상하" style="flex:1;">
-                  <button type="button" onclick="fqSaveField('contact')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
-                </div>
-                <div id="fq-saved-contact" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
-              </div>
-              <div class="fg" style="position:relative;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                  <label class="fl" style="margin-bottom:0;">연락처</label>
-                  <button type="button" onclick="fqToggleSaved('tel')" style="font-size:10px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">📋 저장목록</button>
-                </div>
-                <div style="display:flex;gap:6px;">
-                  <input class="fi" type="text" id="fq-tel" placeholder="010-0000-0000" style="flex:1;">
-                  <button type="button" onclick="fqSaveField('tel')" title="현재값 저장" style="width:34px;height:42px;background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(109,93,246,.06));border:1.5px solid rgba(94,75,196,.2);border-radius:10px;color:var(--accent);font-size:15px;cursor:pointer;flex-shrink:0;">＋</button>
-                </div>
-                <div id="fq-saved-tel" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1.5px solid rgba(94,75,196,.15);border-radius:14px;box-shadow:0 8px 24px rgba(37,30,84,.12);padding:6px;margin-top:4px;max-height:160px;overflow-y:auto;"></div>
-              </div>
+              <div class="fg"><label class="fl">담당자</label><input class="fi" type="text" id="fq-contact" placeholder="유상하"></div>
+              <div class="fg"><label class="fl">연락처</label><input class="fi" type="text" id="fq-tel" placeholder="010-0000-0000"></div>
             </div>
             <div class="fg"><label class="fl">요청사항</label><textarea class="fi" id="fq-remarks" rows="3" placeholder="통관 대행, 보험, 기타 특이사항" style="resize:none;"></textarea></div>
             <button onclick="fqGenerate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(124,92,252,.3);margin-top:4px;">📄 PDF 생성 · 인쇄</button>
@@ -8613,68 +8590,78 @@ function renderLayoutDetail(ctnKey, layout) {
     if(fqItems[i]) fqItems[i][key]=val;
   };
 
-  // ── 저장 필드 헬퍼 ──────────────────────────────────────────────
-  const FQ_FIELD_MAP = { dest:'fq-dest', contact:'fq-contact', tel:'fq-tel' };
-  const FQ_STORE_KEY = 'fq_saved_fields_v1';
+  // ── 주소록 ──────────────────────────────────────────────────────
+  const FQ_BOOK_KEY = 'fq_address_book_v1';
 
-  function fqLoadStore() {
-    try { return JSON.parse(localStorage.getItem(FQ_STORE_KEY)||'{}'); } catch(e){ return {}; }
+  function fqBookLoad() {
+    try { return JSON.parse(localStorage.getItem(FQ_BOOK_KEY)||'[]'); } catch(e){ return []; }
   }
-  function fqSaveStore(data) {
-    localStorage.setItem(FQ_STORE_KEY, JSON.stringify(data));
-  }
+  function fqBookSave(list) { localStorage.setItem(FQ_BOOK_KEY, JSON.stringify(list)); }
 
-  window.fqSaveField = function(field) {
-    const inputId = FQ_FIELD_MAP[field];
-    const val = (document.getElementById(inputId)?.value||'').trim();
-    if(!val){ if(typeof toast==='function') toast('값을 먼저 입력하세요'); return; }
-    const store = fqLoadStore();
-    if(!store[field]) store[field]=[];
-    if(store[field].includes(val)){ if(typeof toast==='function') toast('이미 저장된 항목입니다'); return; }
-    store[field].unshift(val);
-    if(store[field].length>10) store[field]=store[field].slice(0,10);
-    fqSaveStore(store);
-    if(typeof toast==='function') toast('저장됐습니다');
+  window.fqOpenBook = function() {
+    const modal = document.getElementById('fq-book-modal');
+    if(!modal) return;
+    document.getElementById('fq-book-search').value = '';
+    fqRenderBook();
+    modal.style.display = 'flex';
+  };
+  window.fqCloseBook = function() {
+    const modal = document.getElementById('fq-book-modal');
+    if(modal) modal.style.display = 'none';
   };
 
-  window.fqToggleSaved = function(field) {
-    const box = document.getElementById('fq-saved-'+field);
+  window.fqRenderBook = function() {
+    const list = fqBookLoad();
+    const q = (document.getElementById('fq-book-search')?.value||'').trim().toLowerCase();
+    const filtered = q ? list.filter(e=>(e.contact+e.tel+e.dest).toLowerCase().includes(q)) : list;
+    const box = document.getElementById('fq-book-list');
     if(!box) return;
-    // 다른 드롭다운 닫기
-    ['dest','contact','tel'].forEach(f=>{ if(f!==field){ const b=document.getElementById('fq-saved-'+f); if(b) b.style.display='none'; } });
-    if(box.style.display!=='none'){ box.style.display='none'; return; }
-    const store = fqLoadStore();
-    const items = store[field]||[];
-    if(!items.length){ box.innerHTML='<div style="padding:10px;font-size:12px;color:var(--text3);text-align:center;">저장된 항목 없음</div>'; }
-    else {
-      box.innerHTML = items.map((v,i)=>`
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:8px;cursor:pointer;" onmouseenter="this.style.background='#f4f3ff'" onmouseleave="this.style.background='transparent'">
-          <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);" onclick="fqPickSaved('${field}','${v.replace(/'/g,"\\'")}');">${v}</span>
-          <button type="button" onclick="fqDeleteSaved('${field}',${i})" style="width:20px;height:20px;border:none;background:none;color:#bbb;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;">✕</button>
-        </div>`).join('');
+    if(!filtered.length){
+      box.innerHTML = `<div style="text-align:center;padding:20px;font-size:13px;color:var(--text3);">저장된 주소가 없습니다</div>`;
+      return;
     }
-    box.style.display='block';
-    // 외부 클릭 시 닫기
-    setTimeout(()=>{
-      function closeHandler(e){ if(!box.contains(e.target)){ box.style.display='none'; document.removeEventListener('click',closeHandler,true); } }
-      document.addEventListener('click',closeHandler,true);
-    },0);
+    box.innerHTML = filtered.map((e,i)=>`
+      <div onclick="fqBookPick(${list.indexOf(e)})" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;cursor:pointer;border:1.5px solid rgba(94,75,196,.08);margin-bottom:6px;transition:background .15s;" onmouseenter="this.style.background='#f4f3ff'" onmouseleave="this.style.background='#fff'">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c5cfc,#6344e8);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">👤</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);">${e.contact||'(이름 없음)'} ${e.tel?'<span style="font-size:11px;font-weight:500;color:var(--text3);">· '+e.tel+'</span>':''}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.dest||'도착지 없음'}</div>
+        </div>
+        <button type="button" onclick="event.stopPropagation();fqBookDelete(${list.indexOf(e)})" style="width:26px;height:26px;border:none;background:#fff0f0;border-radius:8px;color:#e05;font-size:13px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>`).join('');
   };
 
-  window.fqPickSaved = function(field, val) {
-    const inputId = FQ_FIELD_MAP[field];
-    const input = document.getElementById(inputId);
-    if(input){ input.value=val; }
-    const box = document.getElementById('fq-saved-'+field);
-    if(box) box.style.display='none';
+  window.fqBookPick = function(idx) {
+    const list = fqBookLoad();
+    const e = list[idx];
+    if(!e) return;
+    if(e.contact) document.getElementById('fq-contact').value = e.contact;
+    if(e.tel)     document.getElementById('fq-tel').value     = e.tel;
+    if(e.dest)    document.getElementById('fq-dest').value    = e.dest;
+    fqCloseBook();
+    if(typeof toast==='function') toast('불러왔습니다');
   };
 
-  window.fqDeleteSaved = function(field, idx) {
-    const store = fqLoadStore();
-    if(store[field]) store[field].splice(idx,1);
-    fqSaveStore(store);
-    window.fqToggleSaved(field);
-    window.fqToggleSaved(field);
+  window.fqBookDelete = function(idx) {
+    const list = fqBookLoad();
+    list.splice(idx, 1);
+    fqBookSave(list);
+    fqRenderBook();
+  };
+
+  window.fqBookAddCurrent = function() {
+    const contact = (document.getElementById('fq-contact')?.value||'').trim();
+    const tel     = (document.getElementById('fq-tel')?.value||'').trim();
+    const dest    = (document.getElementById('fq-dest')?.value||'').trim();
+    if(!contact && !tel && !dest){ if(typeof toast==='function') toast('담당자·연락처·도착지를 먼저 입력하세요'); return; }
+    const list = fqBookLoad();
+    const dup = list.some(e=>e.contact===contact&&e.tel===tel&&e.dest===dest);
+    if(dup){ if(typeof toast==='function') toast('이미 저장된 항목입니다'); return; }
+    list.unshift({contact, tel, dest});
+    if(list.length>30) list.pop();
+    fqBookSave(list);
+    fqRenderBook();
+    if(typeof toast==='function') toast('주소록에 저장됐습니다');
   };
 
   window.fqSetCurrency = function(cur) {
@@ -8992,6 +8979,33 @@ function bindCbmButtons() {
 
 
 
+
+<!-- ── 포워딩 주소록 팝업 ──────────────────────────────────────────────────── -->
+<div id="fq-book-modal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(15,12,41,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(15,12,41,.25);overflow:hidden;">
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;">
+      <div>
+        <div style="font-size:15px;font-weight:900;color:var(--text);">📋 주소록</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">담당자·연락처·도착지를 저장하고 불러오세요</div>
+      </div>
+      <button type="button" onclick="fqCloseBook()" style="width:32px;height:32px;background:#f4f3ff;border:none;border-radius:10px;color:var(--accent);font-size:18px;cursor:pointer;font-family:inherit;">✕</button>
+    </div>
+    <!-- 검색 -->
+    <div style="padding:0 14px 10px;">
+      <div style="position:relative;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);">🔍</span>
+        <input id="fq-book-search" type="text" placeholder="이름 또는 연락처로 검색..." oninput="fqRenderBook()" style="width:100%;padding:10px 12px 10px 34px;border:1.5px solid rgba(94,75,196,.2);border-radius:12px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='rgba(94,75,196,.2)'">
+      </div>
+    </div>
+    <!-- 새 항목 추가 버튼 -->
+    <div style="padding:0 14px 8px;">
+      <button type="button" onclick="fqBookAddCurrent()" style="width:100%;padding:11px;background:#f8f7ff;border:1.5px dashed rgba(94,75,196,.3);border-radius:12px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">＋ 현재 입력값 저장</button>
+    </div>
+    <!-- 목록 -->
+    <div id="fq-book-list" style="max-height:260px;overflow-y:auto;padding:0 14px 16px;"></div>
+  </div>
+</div>
 
 <!-- ── 물류 탭 모달 오버레이 ─────────────────────────────────────────────── -->
 <div id="cbm-modal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(15,12,41,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
