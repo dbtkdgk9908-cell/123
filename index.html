@@ -8204,41 +8204,50 @@ function renderLegend(rows, placedCount, totalCount){
 
 // 외부 진입점
 window.cbmRun3D = function(){
-  if(typeof cbmRows === 'undefined' || !cbmRows.length){
-    if(typeof toast==='function') toast('품목을 먼저 입력하세요');
-    return;
+  try {
+    if(typeof THREE === 'undefined'){
+      if(typeof toast==='function') toast('3D 라이브러리 로드 실패. 인터넷 연결을 확인해주세요');
+      return;
+    }
+    if(typeof cbmRows === 'undefined' || !cbmRows.length){
+      if(typeof toast==='function') toast('품목을 먼저 입력하세요');
+      return;
+    }
+    const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
+    if(!validRows.length){
+      if(typeof toast==='function') toast('가로/세로/높이를 입력하세요');
+      return;
+    }
+
+    const overlay = document.getElementById('cbm-3d-overlay');
+    if(overlay) overlay.style.display='none';
+
+    if(!initRenderer()){
+      if(typeof toast==='function') toast('3D 캔버스를 찾을 수 없습니다');
+      return;
+    }
+    setupControls();
+
+    const totalBoxCount = validRows.reduce((s,r)=>s+(parseInt(r.qty)||1),0);
+    const {placedBoxes, dims, cx, cy, cz_} = buildScene(validRows, cbmCurrentContainer);
+    _target = {cx, cy, cz: cz_};
+
+    renderLegend(validRows, placedBoxes.length, totalBoxCount);
+    renderLayoutDetail(cbmCurrentContainer, window._cbmLastLayout);
+
+    const btn = document.getElementById('cbm-3d-btn');
+    if(btn) btn.textContent='🔄 재실행';
+
+    const capBtn = document.getElementById('cbm-3d-capture-btn');
+    if(capBtn) capBtn.style.display='block';
+
+    window._fqSimImage = null;
+
+    startRenderLoop();
+  } catch(e) {
+    if(typeof toast==='function') toast('3D 오류: ' + e.message);
+    console.error('cbmRun3D error:', e);
   }
-  const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
-  if(!validRows.length){
-    if(typeof toast==='function') toast('가로/세로/높이를 입력하세요');
-    return;
-  }
-
-  const overlay = document.getElementById('cbm-3d-overlay');
-  if(overlay) overlay.style.display='none';
-
-  if(!initRenderer()) return;
-  setupControls();
-
-  const totalBoxCount = validRows.reduce((s,r)=>s+(parseInt(r.qty)||1),0);
-  const {placedBoxes, dims, cx, cy, cz_} = buildScene(validRows, cbmCurrentContainer);
-  _target = {cx, cy, cz: cz_};
-
-  renderLegend(validRows, placedBoxes.length, totalBoxCount);
-  renderLayoutDetail(cbmCurrentContainer, window._cbmLastLayout);
-
-  // 버튼 텍스트 변경
-  const btn = document.getElementById('cbm-3d-btn');
-  if(btn) btn.textContent='🔄 재실행';
-
-  // 캡처 버튼 표시
-  const capBtn = document.getElementById('cbm-3d-capture-btn');
-  if(capBtn) capBtn.style.display='block';
-
-  // 이전 캡처 초기화
-  window._fqSimImage = null;
-
-  startRenderLoop();
 };
 
 // 3D 시뮬레이션 캡처 → 견적서에 포함
