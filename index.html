@@ -1340,17 +1340,12 @@ select.fi:focus{background-color:#fff;box-shadow:0 0 0 4px rgba(124,92,252,.10);
 
           <!-- 3D 시뮬레이션 -->
           <div style="background:#fff;border:1px solid rgba(94,75,196,.1);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,30,84,.05);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <div style="font-size:11px;font-weight:800;color:var(--text2);">🧱 3D 적재 시뮬레이션</div>
               <div style="display:flex;gap:6px;">
                 <button onclick="cbmCapture3D()" id="cbm-3d-capture-btn" style="display:none;padding:5px 10px;background:#fff;border:1.5px solid rgba(94,75,196,.25);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">📷 견적에 포함</button>
                 <button onclick="cbmRun3D()" id="cbm-3d-btn" style="padding:5px 12px;background:linear-gradient(135deg,#7c5cfc,#6344e8);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">▶ 실행</button>
               </div>
-            </div>
-            <!-- 적재 방향 토글 -->
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-              <button id="cbm-dir-up" onclick="cbmSetStackDir('up')" style="flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--accent);background:linear-gradient(135deg,#7c5cfc,#6344e8);color:#fff;">⬆ 위로 적재</button>
-              <button id="cbm-dir-down" onclick="cbmSetStackDir('down')" style="flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(94,75,196,.25);background:#f8f7ff;color:var(--accent);">⬇ 아래로 적재</button>
             </div>
             <div id="cbm-3d-wrap" style="position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#1a1040,#24243e);aspect-ratio:4/3;">
               <canvas id="cbm-3d-canvas" style="width:100%;height:100%;display:block;touch-action:none;"></canvas>
@@ -7691,7 +7686,7 @@ function renderCbmRows() {
   }
   if (hint) hint.style.display = 'none';
   box.innerHTML = cbmRows.map(r => `
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;margin-bottom:6px;align-items:center;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;margin-bottom:4px;align-items:center;">
       <input value="${r.name}" placeholder="품명" oninput="cbmUpdateRow(${r.id},'name',this.value)"
         style="min-height:40px;padding:0 8px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
       <input type="number" value="${r.w}" placeholder="0" oninput="cbmUpdateRow(${r.id},'w',this.value)"
@@ -8047,29 +8042,22 @@ function buildScene(rows, ctnKey){
   }
 
   const placedBoxes = [];
-  // 위로 적재: 큰 박스 바닥→위 / 아래로 적재: 큰 박스 천장→아래
-  const stackDir = window._cbmStackDir || 'up';
 
-  // 품목을 높이(h) 기준 내림차순 정렬 → 큰 박스가 먼저(아래)
-  const sortedRows = [...rows].sort((a, b) => {
-    const ha = Math.max(parseFloat(a.w)||0, parseFloat(a.d)||0, parseFloat(a.h)||0);
-    const hb = Math.max(parseFloat(b.w)||0, parseFloat(b.d)||0, parseFloat(b.h)||0);
-    return hb - ha;
-  });
+  // 높이 기준 내림차순 정렬 → 큰 박스 아래
+  const sortedRows = [...rows].sort((a, b) => (parseFloat(b.h)||0) - (parseFloat(a.h)||0));
 
-  // 각 품목은 현재 y오프셋부터 자신의 레이어를 쌓고, 끝나면 y오프셋 이동
-  let yOffset = stackDir === 'down' ? cH : 0;
+  let yOffset = 0;
 
-  sortedRows.forEach((r, rIdx) => {
-    // 원본 색상/이름은 rows 기준 인덱스로
+  sortedRows.forEach((r) => {
     const origIdx = rows.indexOf(r);
     const w0 = (parseFloat(r.w)||0)/100;
     const d0 = (parseFloat(r.d)||0)/100;
     const h0 = (parseFloat(r.h)||0)/100;
     const qty = parseInt(r.qty)||1;
     if(w0<=0||d0<=0||h0<=0) return;
-    const color = BOX_COLORS[(origIdx >= 0 ? origIdx : rIdx) % BOX_COLORS.length];
-    const name  = r.name||'품목'+(rIdx+1);
+
+    const color = BOX_COLORS[(origIdx >= 0 ? origIdx : 0) % BOX_COLORS.length];
+    const name  = r.name||'품목'+(origIdx+1);
 
     const layout = findBestRowLayout(w0, d0, h0);
     if(!layout) return;
@@ -8077,27 +8065,18 @@ function buildScene(rows, ctnKey){
 
     const {rows: rowDefs, layerH} = layout;
     let placed = 0;
-    let li = 0; // 이 품목 내에서의 레이어 인덱스
+    let li = 0;
 
     while(placed < qty) {
-      // 이 품목의 li번째 레이어 y좌표
-      const yBase = stackDir === 'down'
-        ? yOffset - (li + 1) * layerH   // 천장부터 내려옴
-        : yOffset + li * layerH;         // 바닥부터 올라감
-
-      // 컨테이너 범위 초과 시 중단
-      if(stackDir === 'down' && yBase < -0.001) break;
-      if(stackDir === 'up'   && yBase + layerH > cH + 0.001) break;
+      const yBase = yOffset + li * layerH;
+      if(yBase + layerH > cH + 0.001) break;
 
       let zOff = 0;
       for(let ri = 0; ri < rowDefs.length && placed < qty; ri++) {
         const {bX, bZ, bY} = rowDefs[ri];
         const nx = Math.floor((cW + 0.001) / bX);
         for(let ix = 0; ix < nx && placed < qty; ix++) {
-          placedBoxes.push({
-            x: ix * bX, y: yBase, z: zOff,
-            w: bX, h: bY, d: bZ, color, name
-          });
+          placedBoxes.push({ x: ix*bX, y: yBase, z: zOff, w: bX, h: bY, d: bZ, color, name });
           placed++;
         }
         zOff += bZ;
@@ -8105,10 +8084,7 @@ function buildScene(rows, ctnKey){
       li++;
     }
 
-    // 이 품목이 실제 차지한 높이만큼 y오프셋 이동
-    const usedH = li * layerH;
-    if(stackDir === 'down') yOffset -= usedH;
-    else                    yOffset += usedH;
+    yOffset += li * layerH;
   });
 
   // 박스 메시 생성
@@ -8230,18 +8206,6 @@ function renderLegend(rows, placedCount, totalCount){
 }
 
 // 외부 진입점
-window.cbmSetStackDir = function(dir) {
-  window._cbmStackDir = dir;
-  const btnUp   = document.getElementById('cbm-dir-up');
-  const btnDown = document.getElementById('cbm-dir-down');
-  if(!btnUp || !btnDown) return;
-  const activeStyle   = 'flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--accent);background:linear-gradient(135deg,#7c5cfc,#6344e8);color:#fff;';
-  const inactiveStyle = 'flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(94,75,196,.25);background:#f8f7ff;color:var(--accent);';
-  btnUp.style.cssText   = dir === 'up'   ? activeStyle : inactiveStyle;
-  btnDown.style.cssText = dir === 'down' ? activeStyle : inactiveStyle;
-};
-if(!window._cbmStackDir) window._cbmStackDir = 'up';
-
 window.cbmRun3D = function(){
   try {
     if(typeof THREE === 'undefined'){
@@ -8252,7 +8216,7 @@ window.cbmRun3D = function(){
       if(typeof toast==='function') toast('품목을 먼저 입력하세요');
       return;
     }
-    const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
+    const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0).map(r=>({...r}));
     if(!validRows.length){
       if(typeof toast==='function') toast('가로/세로/높이를 입력하세요');
       return;
