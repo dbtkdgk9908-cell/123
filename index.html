@@ -8047,20 +8047,28 @@ function buildScene(rows, ctnKey){
   }
 
   const placedBoxes = [];
-  // 위로 적재: y=0부터 위로 / 아래로 적재: y=cH부터 아래로
+  // 위로 적재: 큰 박스 바닥→위 / 아래로 적재: 큰 박스 천장→아래
   const stackDir = window._cbmStackDir || 'up';
 
-  // 여러 품목이 공간을 나눠 쓰도록 occupancy grid (층별 슬롯 추적)
-  // key: "layerIdx,rowIdx,colIdx" → true
-  const occupied = {};
+  // 품목을 높이(h) 기준 내림차순 정렬 → 큰 박스가 먼저(아래)
+  const sortedRows = [...rows].sort((a, b) => {
+    const ha = Math.max(parseFloat(a.w)||0, parseFloat(a.d)||0, parseFloat(a.h)||0);
+    const hb = Math.max(parseFloat(b.w)||0, parseFloat(b.d)||0, parseFloat(b.h)||0);
+    return hb - ha;
+  });
 
-  rows.forEach((r, rIdx) => {
+  // 각 품목은 현재 y오프셋부터 자신의 레이어를 쌓고, 끝나면 y오프셋 이동
+  let yOffset = stackDir === 'down' ? cH : 0;
+
+  sortedRows.forEach((r, rIdx) => {
+    // 원본 색상/이름은 rows 기준 인덱스로
+    const origIdx = rows.indexOf(r);
     const w0 = (parseFloat(r.w)||0)/100;
     const d0 = (parseFloat(r.d)||0)/100;
     const h0 = (parseFloat(r.h)||0)/100;
     const qty = parseInt(r.qty)||1;
     if(w0<=0||d0<=0||h0<=0) return;
-    const color = BOX_COLORS[rIdx % BOX_COLORS.length];
+    const color = BOX_COLORS[(origIdx >= 0 ? origIdx : rIdx) % BOX_COLORS.length];
     const name  = r.name||'품목'+(rIdx+1);
 
     const layout = findBestRowLayout(w0, d0, h0);
@@ -8069,34 +8077,38 @@ function buildScene(rows, ctnKey){
 
     const {rows: rowDefs, layerH} = layout;
     let placed = 0;
+    let li = 0; // 이 품목 내에서의 레이어 인덱스
 
-    const maxLayers = Math.floor((cH + 0.001) / layerH);
-
-    for(let li = 0; li < maxLayers && placed < qty; li++) {
+    while(placed < qty) {
+      // 이 품목의 li번째 레이어 y좌표
       const yBase = stackDir === 'down'
-        ? cH - (li + 1) * layerH          // 아래로: 천장부터 내려옴
-        : li * layerH;                     // 위로: 바닥부터 올라감
+        ? yOffset - (li + 1) * layerH   // 천장부터 내려옴
+        : yOffset + li * layerH;         // 바닥부터 올라감
 
-      let zOffset = 0;
+      // 컨테이너 범위 초과 시 중단
+      if(stackDir === 'down' && yBase < -0.001) break;
+      if(stackDir === 'up'   && yBase + layerH > cH + 0.001) break;
+
+      let zOff = 0;
       for(let ri = 0; ri < rowDefs.length && placed < qty; ri++) {
         const {bX, bZ, bY} = rowDefs[ri];
         const nx = Math.floor((cW + 0.001) / bX);
         for(let ix = 0; ix < nx && placed < qty; ix++) {
-          const key = `${li},${ri},${ix}`;
-          if(occupied[key]) continue;  // 다른 품목이 이미 사용한 슬롯 건너뜀
-          occupied[key] = true;
           placedBoxes.push({
-            x: ix * bX,
-            y: yBase,
-            z: zOffset,
-            w: bX, h: bY, d: bZ,
-            color, name
+            x: ix * bX, y: yBase, z: zOff,
+            w: bX, h: bY, d: bZ, color, name
           });
           placed++;
         }
-        zOffset += bZ;
+        zOff += bZ;
       }
+      li++;
     }
+
+    // 이 품목이 실제 차지한 높이만큼 y오프셋 이동
+    const usedH = li * layerH;
+    if(stackDir === 'down') yOffset -= usedH;
+    else                    yOffset += usedH;
   });
 
   // 박스 메시 생성
