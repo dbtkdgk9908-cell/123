@@ -3574,6 +3574,7 @@ function renderProducts(){
             ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
             : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
           ) : ''}
+          <button type="button" class="cbtn" style="background:linear-gradient(135deg,#18b67a,#0ea564);color:#fff;border:none;" onclick="event.stopPropagation();openBoxLabel('${p.id}')">📦 라벨</button>
           ${me&&me.role==='admin' ? `<button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>
           <button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>` : ``}
         </div>
@@ -9030,5 +9031,91 @@ function bindCbmButtons() {
   </div>
 </div>
 
+<!-- 박스 라벨 모달 -->
+<div id="box-label-ov" style="position:fixed;inset:0;background:rgba(30,27,58,.45);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)closeBoxLabel()">
+  <div style="background:#fff;border-radius:24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(37,30,84,.18);overflow:hidden;">
+    <div style="padding:20px 22px 14px;border-bottom:1px solid rgba(94,75,196,.08);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:16px;font-weight:900;color:var(--text)">📦 박스 라벨 생성</div>
+      <button onclick="closeBoxLabel()" style="width:32px;height:32px;border:1px solid rgba(94,75,196,.12);border-radius:12px;background:var(--surface-soft);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div style="padding:18px 22px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">박스당 수량</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input id="box-qty-input" type="number" placeholder="예: 1000" style="flex:1;padding:12px 14px;border:1px solid rgba(94,75,196,.14);border-radius:14px;font-size:15px;font-weight:700;outline:none;" oninput="updateBoxLabelPreview()">
+        <div style="font-size:13px;color:var(--text3);display:flex;align-items:center;font-weight:600;">개</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">미리보기</div>
+      <div id="box-label-preview" style="background:#f8f7ff;border:1.5px solid rgba(109,93,246,.14);border-radius:14px;padding:16px 18px;font-size:14px;font-weight:700;line-height:2;color:var(--text);white-space:pre;font-family:inherit;min-height:100px;"></div>
+    </div>
+    <div style="padding:0 22px 22px;display:flex;gap:8px;">
+      <button onclick="closeBoxLabel()" style="flex:1;padding:14px;border:1px solid rgba(94,75,196,.14);border-radius:14px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:var(--text2);">취소</button>
+      <button onclick="copyBoxLabel()" id="box-label-copy-btn" style="flex:2;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#18b67a,#0ea564);color:#fff;font-size:14px;font-weight:800;cursor:pointer;">📋 복사하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _boxLabelProduct = null;
+
+function toChineseNum(n) {
+  if (!n || n === 0) return '零个';
+  const units = ['', '十', '百', '千', '万', '十万', '百万', '千万'];
+  const digits = ['零','一','二','三','四','五','六','七','八','九'];
+  if (n === 10000) return '一万个';
+  if (n === 100000) return '十万个';
+  let str = n.toString();
+  let result = '';
+  let len = str.length;
+  for (let i = 0; i < len; i++) {
+    let d = parseInt(str[i]);
+    let u = len - 1 - i;
+    if (d !== 0) result += digits[d] + units[u];
+    else if (result && result[result.length-1] !== '零') result += '零';
+  }
+  result = result.replace(/零+$/, '');
+  return result + '个';
+}
+
+function openBoxLabel(pid) {
+  _boxLabelProduct = (DATA.products||[]).find(p=>p.id===pid);
+  if (!_boxLabelProduct) return;
+  document.getElementById('box-qty-input').value = '';
+  document.getElementById('box-label-preview').textContent = '';
+  document.getElementById('box-label-ov').style.display = 'flex';
+  setTimeout(()=>document.getElementById('box-qty-input').focus(), 100);
+}
+
+function closeBoxLabel() {
+  document.getElementById('box-label-ov').style.display = 'none';
+  _boxLabelProduct = null;
+}
+
+function updateBoxLabelPreview() {
+  if (!_boxLabelProduct) return;
+  const qty = parseInt(document.getElementById('box-qty-input').value) || 0;
+  const p = _boxLabelProduct;
+  const name = p.name || '-';
+  const spec = p.spec || '-';
+  const qtyZh = qty > 0 ? toChineseNum(qty) : '(수량 입력)';
+  const text = `품목명: ${name}\n규격: ${spec}\n수량: ${qtyZh}\n원산지: Made In China`;
+  document.getElementById('box-label-preview').textContent = text;
+}
+
+function copyBoxLabel() {
+  if (!_boxLabelProduct) return;
+  const qty = parseInt(document.getElementById('box-qty-input').value) || 0;
+  if (!qty) { alert('수량을 입력해주세요.'); return; }
+  const text = document.getElementById('box-label-preview').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('box-label-copy-btn');
+    btn.textContent = '✅ 복사됐습니다!';
+    btn.style.background = 'linear-gradient(135deg,#6d5df6,#5645e8)';
+    setTimeout(() => {
+      btn.textContent = '📋 복사하기';
+      btn.style.background = 'linear-gradient(135deg,#18b67a,#0ea564)';
+    }, 2000);
+  });
+}
+</script>
 
 </body>
