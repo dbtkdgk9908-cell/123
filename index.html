@@ -9040,11 +9040,6 @@ function bindCbmButtons() {
       <button onclick="closeBoxLabel()" style="width:32px;height:32px;border:1px solid rgba(94,75,196,.12);border-radius:12px;background:var(--surface-soft);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
     <div style="padding:18px 22px;">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">박스당 수량</div>
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <input id="box-qty-input" type="number" placeholder="예: 1000" style="flex:1;padding:12px 14px;border:1px solid rgba(94,75,196,.14);border-radius:14px;font-size:15px;font-weight:700;outline:none;" oninput="updateBoxLabelPreview()">
-        <div style="font-size:13px;color:var(--text3);display:flex;align-items:center;font-weight:600;">개</div>
-      </div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">미리보기</div>
       <div id="box-label-preview" style="background:#f8f7ff;border:1.5px solid rgba(109,93,246,.14);border-radius:14px;padding:16px 18px;font-size:14px;font-weight:700;line-height:2;color:var(--text);white-space:pre;font-family:inherit;min-height:100px;"></div>
     </div>
@@ -9080,10 +9075,10 @@ function toChineseNum(n) {
 function openBoxLabel(pid) {
   _boxLabelProduct = (DATA.products||[]).find(p=>p.id===pid);
   if (!_boxLabelProduct) return;
-  document.getElementById('box-qty-input').value = '';
-  document.getElementById('box-label-preview').textContent = '';
+  const p = _boxLabelProduct;
+  const text = `품목명: ${p.name||'-'}\n규격: ${p.spec||'-'}\n数量:\n원산지: Made In China`;
+  document.getElementById('box-label-preview').textContent = text;
   document.getElementById('box-label-ov').style.display = 'flex';
-  setTimeout(()=>document.getElementById('box-qty-input').focus(), 100);
 }
 
 function closeBoxLabel() {
@@ -9104,8 +9099,6 @@ function updateBoxLabelPreview() {
 
 function copyBoxLabel() {
   if (!_boxLabelProduct) return;
-  const qty = parseInt(document.getElementById('box-qty-input').value) || 0;
-  if (!qty) { alert('수량을 입력해주세요.'); return; }
   const text = document.getElementById('box-label-preview').textContent;
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('box-label-copy-btn');
