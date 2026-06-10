@@ -5084,6 +5084,7 @@ function renderProducts(){
                 ? `<button type="button" class="link-btn" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','${p.buyLink||''}','${p.zhName||''}')" style="cursor:pointer;border:none">1688</button>`
                 : `<button type="button" class="link-btn disabled" onclick="event.stopPropagation();open1688Sheet('${p.id}','${p.name||''}','${p.spec||''}','','${p.zhName||''}')" style="border:none" aria-disabled="true">1688</button>`
                 ) : ''}
+                <button type="button" class="cbtn" style="background:linear-gradient(135deg,#18b67a,#0ea564);color:#fff;border:none;" onclick="event.stopPropagation();openBoxLabel('${p.id}')">📦 라벨</button>
                 ${me ? `<button type="button" class="cbtn" onclick="event.stopPropagation();editProd('${p.id}')">수정</button>` : ``}
                 ${me&&me.role==='admin' ? `<button type="button" class="cbtn d" onclick="event.stopPropagation();delProd('${p.id}')">삭제</button>` : ``}
               </div>
