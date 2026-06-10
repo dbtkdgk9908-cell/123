@@ -7686,7 +7686,7 @@ function renderCbmRows() {
   }
   if (hint) hint.style.display = 'none';
   box.innerHTML = cbmRows.map(r => `
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;margin-bottom:4px;align-items:center;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 28px;gap:5px;margin-bottom:6px;align-items:center;">
       <input value="${r.name}" placeholder="품명" oninput="cbmUpdateRow(${r.id},'name',this.value)"
         style="min-height:40px;padding:0 8px;background:#f8f7ff;border:1px solid rgba(94,75,196,.12);border-radius:10px;color:var(--text);font-size:12px;font-weight:700;outline:none;font-family:inherit;width:100%;box-sizing:border-box;">
       <input type="number" value="${r.w}" placeholder="0" oninput="cbmUpdateRow(${r.id},'w',this.value)"
@@ -8043,48 +8043,45 @@ function buildScene(rows, ctnKey){
 
   const placedBoxes = [];
 
-  // 높이 기준 내림차순 정렬 → 큰 박스 아래
-  const sortedRows = [...rows].sort((a, b) => (parseFloat(b.h)||0) - (parseFloat(a.h)||0));
-
-  let yOffset = 0;
-
-  sortedRows.forEach((r) => {
-    const origIdx = rows.indexOf(r);
+  rows.forEach((r, rIdx) => {
     const w0 = (parseFloat(r.w)||0)/100;
     const d0 = (parseFloat(r.d)||0)/100;
     const h0 = (parseFloat(r.h)||0)/100;
     const qty = parseInt(r.qty)||1;
     if(w0<=0||d0<=0||h0<=0) return;
-
-    const color = BOX_COLORS[(origIdx >= 0 ? origIdx : 0) % BOX_COLORS.length];
-    const name  = r.name||'품목'+(origIdx+1);
+    const color = BOX_COLORS[rIdx % BOX_COLORS.length];
+    const name  = r.name||'품목'+(rIdx+1);
 
     const layout = findBestRowLayout(w0, d0, h0);
     if(!layout) return;
-    window._cbmLastLayout = layout;
+    window._cbmLastLayout = layout; // 상세 정보용 저장
 
     const {rows: rowDefs, layerH} = layout;
     let placed = 0;
-    let li = 0;
 
-    while(placed < qty) {
-      const yBase = yOffset + li * layerH;
-      if(yBase + layerH > cH + 0.001) break;
-
-      let zOff = 0;
+    // 층(Y) 반복
+    let y = 0;
+    while(placed < qty && y + layerH <= cH + 0.001) {
+      let z = 0;
+      // 각 줄
       for(let ri = 0; ri < rowDefs.length && placed < qty; ri++) {
         const {bX, bZ, bY} = rowDefs[ri];
-        const nx = Math.floor((cW + 0.001) / bX);
+        const nx = Math.floor((cW+0.001)/bX);
+        // X방향 나열
         for(let ix = 0; ix < nx && placed < qty; ix++) {
-          placedBoxes.push({ x: ix*bX, y: yBase, z: zOff, w: bX, h: bY, d: bZ, color, name });
+          placedBoxes.push({
+            x: ix * bX,
+            y: y,
+            z: z,
+            w: bX, h: bY, d: bZ,
+            color, name
+          });
           placed++;
         }
-        zOff += bZ;
+        z += bZ;
       }
-      li++;
+      y += layerH;
     }
-
-    yOffset += li * layerH;
   });
 
   // 박스 메시 생성
@@ -8216,7 +8213,7 @@ window.cbmRun3D = function(){
       if(typeof toast==='function') toast('품목을 먼저 입력하세요');
       return;
     }
-    const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0).map(r=>({...r}));
+    const validRows = cbmRows.filter(r=>(parseFloat(r.w)||0)>0&&(parseFloat(r.d)||0)>0&&(parseFloat(r.h)||0)>0);
     if(!validRows.length){
       if(typeof toast==='function') toast('가로/세로/높이를 입력하세요');
       return;
