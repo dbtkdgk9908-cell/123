@@ -9076,7 +9076,7 @@ function openBoxLabel(pid) {
   _boxLabelProduct = (DATA.products||[]).find(p=>p.id===pid);
   if (!_boxLabelProduct) return;
   const p = _boxLabelProduct;
-  const text = `품목명(品名): ${p.name||'-'}\n규격(规格): ${p.spec||'-'}\n수량(数量):\n원산지(原产地): Made In China`;
+  const text = `품목명(品名): ${p.name||'-'}\n규격(规格): ${p.spec||'-'}\n수량(数量):\n원산지(原产地): Made In China\n\n请在A4纸或标签纸上填写每箱数量后贴于箱体。`;
   document.getElementById('box-label-preview').textContent = text;
   document.getElementById('box-label-ov').style.display = 'flex';
 }
