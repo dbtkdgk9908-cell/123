@@ -8563,7 +8563,7 @@ function renderLayoutDetail(ctnKey, layout) {
 
 
 <script>
-// ── 포워딩 견적 요청서 ────────────────────────────────────────────────────────
+// ── 견적 요청서 ────────────────────────────────────────────────────────
 (function(){
   let fqType     = 'FCL';
   let fqCtn      = '20FT DRY';
@@ -8790,8 +8790,8 @@ function renderLayoutDetail(ctnKey, layout) {
         <!-- 헤더 -->
         <div style="border-bottom:3px solid #6d5df6;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
-            <div style="font-size:17pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">포워딩 견적 요청서</div>
-            <div style="font-size:8pt;color:#888;margin-top:1px;">Freight Forwarding Quotation Request</div>
+            <div style="font-size:17pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">견적 요청서</div>
+            <div style="font-size:8pt;color:#888;margin-top:1px;">Quotation Request</div>
           </div>
           <div style="font-size:8pt;color:#888;text-align:right;">문서번호: ${refNo}<br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
         </div>
@@ -8890,7 +8890,7 @@ function renderLayoutDetail(ctnKey, layout) {
       const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, '', 'FAST');
-      pdf.save(`포워딩_견적요청서_${refNo}.pdf`);
+      pdf.save(`견적요청서_${refNo}.pdf`);
       if(typeof toast==='function') toast('PDF 저장 완료!');
     } catch(e) {
       if(typeof toast==='function') toast('PDF 생성 실패: ' + e.message);
@@ -8901,13 +8901,13 @@ function renderLayoutDetail(ctnKey, layout) {
 })();
 
 // ── 물류 탭 섹션 열기/닫기 ──────────────────────────────────────
-const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",quote:"📋 포워딩 견적 요청서",save:"💾 저장 목록"};
+const _CBM_TITLES={calc:"📐 CBM 계산",import:"🚢 수입원가 계산기",quote:"📋 견적 요청서",save:"💾 저장 목록"};
 // cbmModalClose는 아래 cbmOpenSection 블록에서 정의됨
 var _cbmSecContainer=null; // 섹션 원래 부모(pg-cbm 내 컨테이너)
 var _cbmSecCurrent=null;  // 현재 모달에 올려진 sec 노드
 var _cbmModalOpenedAt=0;  // ghost click 방지용 타임스탬프
 window.cbmOpenSection=function(id){
-  var titles={calc:'📐 CBM 계산',import:'🚢 수입원가 계산기',quote:'📋 포워딩 견적 요청서',save:'💾 저장 목록'};
+  var titles={calc:'📐 CBM 계산',import:'🚢 수입원가 계산기',quote:'📋 견적 요청서',save:'💾 저장 목록'};
   var modal=document.getElementById('cbm-modal');
   var title=document.getElementById('cbm-modal-title');
   var body=document.getElementById('cbm-modal-body');
