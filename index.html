@@ -8761,85 +8761,86 @@ function renderLayoutDetail(ctnKey, layout) {
         const w=parseFloat(r.w)||0, d=parseFloat(r.d)||0, h=parseFloat(r.h)||0;
         const dim = (w&&d&&h) ? `${r.w}×${r.d}×${r.h} cm` : '-';
         const qty = parseInt(r.qty)||1;
-        const kg  = parseFloat(r.kg)||0;
+        const kgEach = parseFloat(r.kg)||0;
+        const kgTotal = kgEach * qty;
         const cbmVal = (w&&d&&h) ? ((w/100)*(d/100)*(h/100)*qty) : 0;
         totalCbm += cbmVal;
-        totalKg  += kg;
+        totalKg  += kgTotal;
         return `<tr style="${i%2?'background:#faf9ff':''}">
-          <td style="padding:5px 8px;border:1px solid #e8e4f8;">${nm}</td>
-          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${dim}</td>
-          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${qty}개</td>
-          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${kg ? kg.toLocaleString()+' kg' : '-'}</td>
-          <td style="padding:5px 8px;border:1px solid #e8e4f8;text-align:center;">${cbmVal ? cbmVal.toFixed(3)+' CBM' : '-'}</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;">${nm}</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;text-align:center;">${dim}</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;text-align:center;">${qty}개</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;text-align:center;">${kgEach ? kgEach.toLocaleString()+' kg' : '-'}</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;text-align:center;">${kgTotal ? kgTotal.toLocaleString()+' kg' : '-'}</td>
+          <td style="padding:7px 10px;border:1px solid #e8e4f8;text-align:center;">${cbmVal ? cbmVal.toFixed(3)+' CBM' : '-'}</td>
         </tr>`;
       }).join('');
-      // 합계 행
       itemRows += `<tr style="background:#f0edff;font-weight:800;">
-        <td style="padding:5px 8px;border:1px solid #ddd8f8;color:#5f5a7a;">합계</td>
+        <td style="padding:7px 10px;border:1px solid #ddd8f8;color:#5f5a7a;">합계</td>
         <td style="border:1px solid #ddd8f8;"></td>
         <td style="border:1px solid #ddd8f8;"></td>
-        <td style="padding:5px 8px;border:1px solid #ddd8f8;text-align:center;color:#5f5a7a;">${totalKg ? totalKg.toLocaleString()+' kg' : '-'}</td>
-        <td style="padding:5px 8px;border:1px solid #ddd8f8;text-align:center;color:#6d5df6;">${totalCbm ? totalCbm.toFixed(3)+' CBM' : '-'}</td>
+        <td style="border:1px solid #ddd8f8;"></td>
+        <td style="padding:7px 10px;border:1px solid #ddd8f8;text-align:center;color:#5f5a7a;">${totalKg ? totalKg.toLocaleString()+' kg' : '-'}</td>
+        <td style="padding:7px 10px;border:1px solid #ddd8f8;text-align:center;color:#6d5df6;">${totalCbm ? totalCbm.toFixed(3)+' CBM' : '-'}</td>
       </tr>`;
     } else {
-      itemRows = `<tr><td colspan="5" style="padding:8px;border:1px solid #e8e4f8;color:#aaa;text-align:center;">품목 미입력</td></tr>`;
+      itemRows = `<tr><td colspan="6" style="padding:10px;border:1px solid #e8e4f8;color:#aaa;text-align:center;">품목 미입력</td></tr>`;
     }
 
     const html = `
-      <div id="pdf-wrap" style="width:210mm;padding:12mm 14mm 10mm;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:8.5pt;line-height:1.45;box-sizing:border-box;">
+      <div id="pdf-wrap" style="width:210mm;min-height:297mm;padding:13mm 15mm 12mm;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:#111;font-size:9pt;line-height:1.5;box-sizing:border-box;display:flex;flex-direction:column;">
         <!-- 헤더 -->
-        <div style="border-bottom:3px solid #6d5df6;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div style="border-bottom:3.5px solid #6d5df6;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
-            <div style="font-size:17pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">견적 요청서</div>
-            <div style="font-size:8pt;color:#888;margin-top:1px;">Quotation Request</div>
+            <div style="font-size:20pt;font-weight:900;color:#6d5df6;letter-spacing:-1px;">견적 요청서</div>
+            <div style="font-size:8.5pt;color:#999;margin-top:2px;letter-spacing:0.5px;">Quotation Request</div>
           </div>
-          <div style="font-size:8pt;color:#888;text-align:right;">문서번호: ${refNo}<br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
+          <div style="font-size:8.5pt;color:#777;text-align:right;line-height:1.7;">문서번호: <b>${refNo}</b><br>작성일: ${fqToday()}<br>㈜허브앤리빙</div>
         </div>
 
         <!-- 1. 운송 개요 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">1. 운송 개요</div>
-          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
-            <tr><th style="width:28%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">운송 구분</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqType}</td><th style="width:28%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">거래조건</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqInco} (${fqInco==='EXW'?'공장 인도':'본선 인도'})</td></tr>
-            ${fqType==='FCL'?`<tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">컨테이너 타입</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqCtn}</td><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">컨테이너 수량</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqV('fq-fcl-qty')||'1'} TEU</td></tr>`:`<tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 CBM</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqV('fq-lcl-cbm')||'-'} CBM</td><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 중량</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqV('fq-lcl-kg')?Number(fqV('fq-lcl-kg')).toLocaleString()+' kg':'-'}</td></tr>`}
-            <tr><th style="background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">선적지</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${origin}</td><th style="background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">도착지</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${dest}</td></tr>
-            <tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">희망 선적일</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${shipDate}</td>${cargoValue?`<th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 가액</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${fqCurrency} ${Number(cargoValue).toLocaleString()}</td>`:'<td colspan="2" style="border:1px solid #e8e4f8;"></td>'}</tr>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9.5pt;font-weight:800;color:#6d5df6;border-left:4px solid #6d5df6;padding-left:8px;margin-bottom:7px;letter-spacing:-0.3px;">1. 운송 개요</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+            <tr><th style="width:22%;background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">운송 구분</th><td style="padding:7px 10px;border:1px solid #e8e4f8;width:28%;">${fqType}</td><th style="width:22%;background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">거래조건</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqInco} (${fqInco==='EXW'?'공장 인도':'본선 인도'})</td></tr>
+            ${fqType==='FCL'?`<tr><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">컨테이너 타입</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqCtn}</td><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">컨테이너 수량</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqV('fq-fcl-qty')||'1'} TEU</td></tr>`:`<tr><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 CBM</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqV('fq-lcl-cbm')||'-'} CBM</td><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 중량</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqV('fq-lcl-kg')?Number(fqV('fq-lcl-kg')).toLocaleString()+' kg':'-'}</td></tr>`}
+            <tr><th style="background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">선적지</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${origin}</td><th style="background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">도착지</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${dest}</td></tr>
+            <tr><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">희망 선적일</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${shipDate}</td>${cargoValue?`<th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">화물 가액</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${fqCurrency} ${Number(cargoValue).toLocaleString()}</td>`:'<td colspan="2" style="border:1px solid #e8e4f8;"></td>'}</tr>
           </table>
         </div>
 
         <!-- 2. 화물 상세 (품목별) -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">2. 화물 상세</div>
-          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9.5pt;font-weight:800;color:#6d5df6;border-left:4px solid #6d5df6;padding-left:8px;margin-bottom:7px;letter-spacing:-0.3px;">2. 화물 상세</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9pt;">
             <thead><tr style="background:#f0edff;">
-              <th style="padding:5px 8px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">품명</th>
-              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:30%;">박스 크기 (가로×세로×높이)</th>
-              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:10%;">수량</th>
-              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:14%;">무게</th>
-              <th style="padding:5px 8px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:14%;">CBM</th>
+              <th style="padding:7px 10px;text-align:left;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;">품명</th>
+              <th style="padding:7px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:26%;">박스 크기 (가로×세로×높이)</th>
+              <th style="padding:7px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:9%;">수량</th>
+              <th style="padding:7px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:12%;">개당 무게</th>
+              <th style="padding:7px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:12%;">총 무게</th>
+              <th style="padding:7px 10px;text-align:center;border:1px solid #ddd8f8;font-weight:700;color:#5f5a7a;width:12%;">CBM</th>
             </tr></thead>
             <tbody>${itemRows}</tbody>
           </table>
         </div>
 
         <!-- 3. 수하인 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">3. 수하인 (Consignee)</div>
-          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
-            <tr><th style="width:22%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">회사명</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">㈜허브앤리빙</td><th style="width:22%;background:#f0edff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">담당자</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">${contact}${tel?' · '+tel:''}</td></tr>
-            <tr><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">주소</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">경기도 고양시 덕양구 통일로140 지하1층 비동 비159호</td><th style="background:#faf9ff;padding:5px 8px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">이메일</th><td style="padding:5px 8px;border:1px solid #e8e4f8;">herbnliving@daum.net</td></tr>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9.5pt;font-weight:800;color:#6d5df6;border-left:4px solid #6d5df6;padding-left:8px;margin-bottom:7px;letter-spacing:-0.3px;">3. 수하인 (Consignee)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+            <tr><th style="width:22%;background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">회사명</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">㈜허브앤리빙</td><th style="width:22%;background:#f0edff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">담당자</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">${contact}${tel?' · '+tel:''}</td></tr>
+            <tr><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">주소</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">경기도 고양시 덕양구 통일로140 지하1층 비동 비159호</td><th style="background:#faf9ff;padding:7px 10px;text-align:left;font-weight:700;color:#5f5a7a;border:1px solid #ddd8f8;">이메일</th><td style="padding:7px 10px;border:1px solid #e8e4f8;">herbnliving@daum.net</td></tr>
           </table>
         </div>
 
         <!-- 4. 요청사항 -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:9pt;font-weight:800;color:#6d5df6;border-left:3px solid #6d5df6;padding-left:7px;margin-bottom:6px;">4. 요청사항</div>
-          <table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
-            <tr><td style="padding:8px;border:1px solid #e8e4f8;min-height:36px;">${remarks.replace(/\n/g,'<br>')}</td></tr>
-          </table>
+        <div style="flex:1;display:flex;flex-direction:column;margin-bottom:14px;">
+          <div style="font-size:9.5pt;font-weight:800;color:#6d5df6;border-left:4px solid #6d5df6;padding-left:8px;margin-bottom:7px;letter-spacing:-0.3px;">4. 요청사항</div>
+          <div style="flex:1;border:1px solid #e8e4f8;border-radius:2px;padding:10px 12px;font-size:9pt;min-height:80px;">${remarks.replace(/\n/g,'<br>')}</div>
         </div>
 
-        <div style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between;">
+        <div style="border-top:1.5px solid #e8e4f8;padding-top:10px;font-size:8pt;color:#bbb;display:flex;justify-content:space-between;">
           <div>㈜허브앤리빙 · 사업자번호 562-81-02960 · herbnliving@daum.net</div>
           <div>${refNo}</div>
         </div>
